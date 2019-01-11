@@ -1,8 +1,120 @@
 == On fait quoi
 
+# Afficher 1 bouton qui ouvre un dialogue (Swift, programmatique).
+# Afficher 1 bouton qui ouvre un dialogue (Kotlin, programmatique).
 # Afficher 1 image toute seule (chargée en tant que ressource).
 # Afficher 1 image et 1 bouton rond.
 # Faire réagir le bouton (changement de couleur, réarmement avec dégradé).
 # Faire défiler vers une deuxième image quand on appuie sur le bouton.
 # Réaliser un dévoilement progressif de l'image avec un algorithme maison.
+
+
+== La grande idée
+
+Une bande dessinée interactive.
+
+- Personnalisation.
+  - Colorisation.
+  - Sélection d'objets.
+    - Auréoler brièvement les sélections possible.
+  - Noms.
+    - Limitation en taille, mise en page dynamique.
+  - Photographie.
+    - Niveaux de couleur.
+    - Détection faciale.
+    - Détourage.
+- Dévoilement dynamique.
+- Animations.
+  - DragonBones.
+- Jeux d'~énigme`/`patience embarqués.
+- Vendre la grande image à la fin.
+  - Contrat avec un imprimeur.
+
+
+=== Plateforme cible
+
+On cherche la monétisation genre `$1` l'épisode. Les Stores sont là pour monétiser.
+
+Mais si on produit des documents pourquoi ne pas faire du HTML5 ? À cause de l'expérience utilisateur dégradée ? 
+
+Surtout : éviter la capture de tout l'écran. Le dévoilement progressif c'est bien.
+
+
+
+
+== Questions
+
+=== AppStore
+
+- License pour acheter du contenu. Abonnement ? In-app purchase ?
+
+
+=== iOS : construction programmatique
+
+L'Interface Builder (ou équivalent) n'a pas l'air content avec les classes Kotlin.
+
+"Your First iOS App: `100%` Programmatically (`Xcode 7.2`, `Swift 2.1`)"
+https://medium.com/@danstepanov/your-first-ios-app-100-programmatically-xcode-7-2-swift-2-1-9946d09610c4
+
+
+"Stop Using Storyboard, Start Building UI `100%` Programmatically"
+https://softauthor.com/ios-ui-design-programmatically-xcode-9-swift-4/
+(daté de 2018).
+
+"Creating UIViews Constraints Programmatically Using PureLayout"
+https://instabug.com/blog/nslayoutconstraint-programmatically/
+
+
+=== Vectorisation
+
+En se basant sur "Zach's sample"
+https://www.wayfm.com/content/wally/what-your-handwriting-reveals-about-you/
+:
+- PNG : 312 ko.
+- SVG :  107 ko.
+- SVGZ : 47 ko.
+
+La bibliothèque [SVGKit]
+https://github.com/SVGKit/SVGKit
+pour iOS fait tout ce qu'on veut : 
+- Chargement d'un SVG en tant qu'image.
+- Rendu multi-couche avec rendu dynamique.
+
+On a aussi [Macaw]
+https://github.com/exyte/macaw
+qui supporte les animations.
+
+Peut-être qu'on peut utiliser la [``WKWebView``]
+https://stackoverflow.com/questions/32741200/wkwebview-save-to-uiimage
+pour éviter une bibliothèque de plus.
+
+
+
+=== Korlibs
+
+"Korim"
+https://korlibs.soywiz.com/korim/
+supporte la rasterisation SVG. Il appelle du code natif pour un Canvas JavaScript, AWT et Android. 
+Pour les polices de caractères il appelle la rasterisation native.
+
+Hélas iOS n'est mentionné nulle part. La doc de "Korge"
+https://korlibs.soywiz.com/korge/
+:
+
+<<
+Right now with Korge you can target JVM, Android and JavaScript.
+And with JavaScript you can generate ~iOS`/`Android using Apache Cordova.
+>>
+
+
+=== DragonBones
+
+La folie. Peut-être qu'on peut utiliser l'api iOS directement avant le support par Korlibs ?
+
+Sauf que ça n'a pas l'air "super-stable"
+http://2dforever.com/spine-vs-dragonbones/
+. Mais le problème semble se manifester avec Unity.
+
+Les animations d'un sujet doivent rester minoritaires, donc on peut attendre.
+
 
