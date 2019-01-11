@@ -1,0 +1,8 @@
+== On fait quoi
+
+# Afficher 1 image toute seule (chargée en tant que ressource).
+# Afficher 1 image et 1 bouton rond.
+# Faire réagir le bouton (changement de couleur, réarmement avec dégradé).
+# Faire défiler vers une deuxième image quand on appuie sur le bouton.
+# Réaliser un dévoilement progressif de l'image avec un algorithme maison.
+
