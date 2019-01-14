@@ -55,7 +55,7 @@ debug() {
 error() {
   echo "ERROR: $1" >&4
   log "$1"
-  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
+  if [[ -d "$SCRIPTPATH/ProgressDialog.app" ]]; then
     osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
       -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
       -e 'set message of window 1 to "'"ERROR: $1"'."' \
@@ -67,7 +67,7 @@ error() {
 info() {
   echo -n "$1" >&3
   log "$1"
-  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
+  if [[ -d "$SCRIPTPATH/ProgressDialog.app" ]]; then
     osascript -e 'tell application "'"$SCRIPTPATH/ProgressDialog.app"'"' -e 'activate' \
       -e 'set name of window 1 to "Installing macOS Mojave on Virtualbox"' \
       -e 'set message of window 1 to "'"$1"'...'"$2"'%."' \
@@ -89,28 +89,28 @@ log() {
 runChecks() {
   info "Running checks (around 1 second)..." 0
   result "."
-  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
+  if [[ -d "$SCRIPTPATH/ProgressDialog.app" ]]; then
     info "Opening GUI..." 0
     open "$SCRIPTPATH/ProgressDialog.app"
   fi
-  if [ "$INST_VERS" = "0" ]; then
+  if [[ "$INST_VERS" = "0" ]]; then
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     error "No macOS installer found. Opening the web page for you (press enter in the terminal when done)..."
     read -r
     exit 6
   fi
-  if [ ! "$INST_VERS" = "1" ]; then
+  if [[ ! "$INST_VERS" = "1" ]]; then
     error "$INST_VERS macOS installers found. Don't know which one to select."
     exit 7
   fi
-  if [ ! -d "$INST_VER/Contents/SharedSupport/" ]; then
+  if [[ ! -d "$INST_VER/Contents/SharedSupport/" ]]; then
     open 'https://beta.apple.com/sp/betaprogram/redemption#macos'
     error "Seems you've downloaded the macOS Stub Installer. Please download the full installer (google the issue)."
     debug "Follow Step 2 (Download the macOS Public Beta Access Utility). Opening the web page for you (press enter in the terminal when done)..."
     read -r
     exit 8
   fi
-  if [ ! -x "$INST_BIN" ]; then
+  if [[ ! -x "$INST_BIN" ]]; then
     error "'$INST_BIN' not found."
     exit 1
   fi
@@ -123,7 +123,7 @@ runChecks() {
     fi
   fi
   awk >/dev/null 2>&1
-  if [ ! $? -eq 1 ]; then
+  if [[ ! $? -eq 1 ]]; then
     error "Something is wrong with your 'awk' installation. Trying to fix it automatically, if you've brew installed..."
     if type brew >/dev/null 2>&1; then
       brew upgrade awk || exit 6
@@ -131,12 +131,12 @@ runChecks() {
       exit 6
     fi
   fi
-  if [ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]; then
+  if [[ "$(VBoxManage list extpacks | grep 'USB 3.0')" = "" ]]; then
     error "VirtualBox USB 3.0 Extension Pack not installed. Will not install it automatically, due to licensing issues!"
     error "Install e.g. via brew cask install virtualbox-extension-pack"
     exit 4
   fi
-  if [ ! -f "$FILE_CFG" ]; then
+  if [[ ! -f "$FILE_CFG" ]]; then
     error "'$FILE_CFG' not found. Not checked out? (press enter in the terminal when done)..."
     read -r
     exit 5
@@ -168,7 +168,7 @@ ejectAll() {
 createImage() {
   version="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$INST_VER/Contents/Info.plist")"
   info "Creating image '$DST_DMG' (around 20 seconds, version $version, will need sudo)..." 30
-  if [ ! -e "$DST_DMG" ]; then
+  if [[ ! -e "$DST_DMG" ]]; then
     result "."
     ejectAll
     mkdir -p "$DST_DIR"
@@ -181,7 +181,7 @@ createImage() {
     result "already exists."
   fi
   info "Creating iso '$DST_ISO' (around 25 seconds)..." 40
-  if [ ! -e "$DST_ISO" ]; then
+  if [[ ! -e "$DST_ISO" ]]; then
     result "."
     mkdir -p "$DST_DIR"
     hdiutil convert "$DST_DMG" -format UDTO -o "$DST_ISO"
@@ -204,10 +204,10 @@ createClover() {
     fi
   fi
 
-  if [ ! -e "$DST_CLOVER.iso" ]; then
+  if [[ ! -e "$DST_CLOVER.iso" ]]; then
     result "."
     mkdir -p "$DST_DIR"
-    while [ ! -f "Clover-v2.4k-4533-X64.iso" ]; do
+    while [[ ! -f "Clover-v2.4k-4533-X64.iso" ]]; do
       info " - Downloading Clover (needs Internet access)..." 80
       curl -Lk https://sourceforge.net/projects/cloverefiboot/files/Bootable_ISO/CloverISO-4533.tar.lzma/download -o clover.tar.lzma
       xz -d clover.tar.lzma && tar xmf clover.tar
@@ -233,7 +233,7 @@ patchEFI() {
   info "Adding APFS drivers to EFI in '$VM_DIR/$VM_NAME.vdi' (around 5 seconds)..."
   result "."
 
-  if [ ! -f "$VM_DIR/$VM_NAME.vdi" ]; then
+  if [[ ! -f "$VM_DIR/$VM_NAME.vdi" ]]; then
     error "Please create the VM and image first."
     exit 91  
   fi  
@@ -243,7 +243,7 @@ patchEFI() {
   EFI_DEVICE=$(vdmutil attach "$VM_DIR/$VM_NAME.vdi"|grep "/dev"|head -n1)
   
   # initialize disk if needed
-  if [ ! -f  "${EFI_DEVICE}s1" ]; then
+  if [[ ! -f  "${EFI_DEVICE}s1" ]]; then
     diskutil partitionDisk "${EFI_DEVICE}" 1 JHFS+ "$VM_NAME" R  
   fi
   
@@ -273,11 +273,11 @@ EOT
 }
 
 createVM() {
-  if [ ! -e "$VM_DIR" ]; then
+  if [[ ! -e "$VM_DIR" ]]; then
     mkdir -p "$VM_DIR"
   fi
   info "Creating VM HDD '$VM_DIR/$VM_NAME.vdi' (around 5 seconds)..." 90
-  if [ ! -e "$VM_DIR/$VM_NAME.vdi" ]; then
+  if [[ ! -e "$VM_DIR/$VM_NAME.vdi" ]]; then
     result "."
     VBoxManage createhd --filename "$VM_DIR/$VM_NAME.vdi" --variant Standard --size "$VM_SIZE"
   else
@@ -351,13 +351,13 @@ cleanup() {
     error "Look at $FILE_LOG for details (or use Console.app). Press enter in the terminal when done..."
     read -r
   fi
-  if [ -d "$SCRIPTPATH/ProgressDialog.app" ]; then
+  if [[ -d "$SCRIPTPATH/ProgressDialog.app" ]]; then
     osascript -e 'tell application "ProgressDialog"' -e 'quit' -e 'end tell'
   fi
 }
 
 main() {
-  while [ "$#" -ne 0 ]; do
+  while [[ "$#" -ne 0 ]]; do
     ARG="$1"
     shift # get rid of $1, we saved in ARG already
     case "$ARG" in
