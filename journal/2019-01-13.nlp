@@ -1,0 +1,182 @@
+== Les outils
+
+=== Android Studio `+` Multi-OS Engine
+
+Il y a un plugin MOE pour Android Studio. Le build Gradle nécessite un ajout MOE.
+
+Où branche-t-on Kotlin ? Il y a des [exemples]
+https://github.com/multi-os-engine/moe-samples-kotlin
+
+Android Studio (ou ses outils en ligne de commande) est probablement incontournable, il peut générer des stubs Java à partir des en-têtes Objective-C ou un truc comme ça.
+
+
+=== OpenGL
+
+Il y a un [exemple]
+https://doc.multi-os-engine.org/multi-os-engine/9_game/2_opengl/opengl.html
+d'intégration MOE-OpenGL-iOS-Android-Java qui tape dans les API OpenGL. Mais pas moyen de télécharger l'exemple. Ça semble assez barbare et on rêve aussitôt d'une bibliothèque prenant tout ça en compte.
+
+
+=== libGDX
+
+libGDX c'est bien si on veut prendre le contrôle de tout l'affichage. 
+
+Avantages :
+- API normalisée pour la 2D ou 3D.
+- Prévisualisation sans déployer dans un simulateur.
+
+Inconvénients : 
+- Gradle.
+- Pas de support des Coroutines. Mais peut-être que KTX fournit la solution.
+
+Il y a un [exemple d'intégration libGDX-MOE-iOS]
+https://doc.multi-os-engine.org/multi-os-engine/9_game/1_libgdx/libgdx.html
+. 
+
+On a plus d'exemples en [pur Java]
+https://github.com/multi-os-engine/moe-samples-java
+.
+
+libGDX pousse vers l'utilisation de Spine, pas de support de DragonBones. Mais DragonBones peut exporter des bitmaps.
+
+
+[Limitation avec Kotlin]
+https://github.com/libgdx/libgdx/wiki/Using-libGDX-with-Kotlin
+:
+
+<<
+Due to how GWT works, you will not be able to use the HTML5 target with Kotlin. This could be fixed in the future by using Kotlin’s JavaScript back-end. It might be possible to utilize TeaVM as a replacement for GWT, though.
+>>
+
+
+
+=== RoboVM et MOE
+
+Voir le billet "libGDX 1.9.3` released -- New iOS backends-_"
+https://www.badlogicgames.com/wordpress/?p=3934
+
+
+
+=== KTX
+
+On n'a pas besoin de KTX, que les auteurs décrivent comme "late beta". Kotlin peut taper directement dans les API Java de libGDX.
+
+Mais KTX est là pour "boucher les trous" entre Kotlin et l'API Java. Notamment, KTX apporte [le support des Coroutines]
+https://github.com/libktx/ktx/issues/47
+.
+
+Versions utilisée par `KTX 1.9.8-b5` :
+
+| Produit    | KTX           | Dernière  |
+| Kotlin     | **`1.2.70`**  | `1.3`     |
+| Coroutines | **`0.26.1.`** | `1.1.0` ? |
+| Gradle     | **`4.10.2.`** | |
+| libGDX     | **`1.9.8`**   | `1.9.9`   |
+
+[Versions des Coroutines]
+https://github.com/Kotlin/kotlinx.coroutines/releases
+
+[Versions de libGDX]
+https://libgdx.badlogicgames.com/versions.html
+et les [détails]
+https://github.com/libgdx/libgdx/blob/master/CHANGES
+
+
+
+
+
+=== Korlibs
+
+Bien en théorie mais pas de support iOS pour l'instant. Il y a un passage assez suspect par du `C++` pour iOS.
+
+<<
+Targets:
+- Right now with Korge you can target JVM, Android and JavaScript.
+- And with JavaScript you can generate iOS/Android using Apache Cordova.
+
+`Kotlin.JS` and `Kotlin.Native`
+
+At this point KorGE uses JTransc for generating other targets than normal ~Java`/`~Kotlin targets. When Kotlin supports reflection in JavaScript and Native, KorGE will target that instead of using JTransc. While keeping JTransc for other targets like `C#/AS3` or when mixing Java libraries with Kotlin code.
+
+Future:
+- It is planned a target for AS3 Adobe AIR (iOS and Android).
+- A `C#` target for UWP applications.
+- And native `C++` targets for iOS, Android and other platforms.
+>>
+
+Korlibs n'est pas utilisable pour l'instant.
+
+
+
+
+=== Ou sinon
+
+Il y a moyen de taper directement dans les API iOS grâce aux bindings Kotlin générés automatiquement.
+
+Il y a moyen de coder des bouts en Swift, Objective-C ou C++``.
+
+Mais ça veut dire faire le boulot d'intégration à la main.
+
+
+
+=== Premières impression 
+
+Le choix des vainqueurs : Multi-OS Engine `+` libGDX `+` Kotlin `+` KTX.
+
+Les inconvénients sont les suivants :
+- Gros flou sur le support des Coroutines.
+- On ne bénéficie pas du compilateur de JetBrains pour Kotlin.
+- Il y a //peut-être// un retard dans les versions des dépendances.
+- Gradle est quasiment obligatoire.
+
+On peut aussi créer de la logique en Kotlin (data classes et comportements) et câbler libGDX avec du pur Java.
+
+
+
+== Trouvailles
+
+"How to draw around a texture in LibGDX?"
+https://stackoverflow.com/questions/43905127/how-to-draw-around-a-texture-in-libgdx
+
+"FrameBuffer Objects"
+https://github.com/mattdesl/lwjgl-basics/wiki/FrameBufferObjects
+
+
+"Porting libGDX games to iOS, for Apple dummies (part `2/2`)"
+https://frozenfractal.com/blog/2016/3/18/porting-libgdx-games-to-ios-for-apple-dummies-2/
+
+
+=== Applications libGDX `+` Kotlin
+
+"Splinter Sweets"
+https://github.com/reime005/splintersweets
+Nécessite de régénerer ``gradle-wrapper.jar`` ?
+
+"blockbunny"
+https://github.com/haxpor/blockbunny
+
+"omo"
+https://github.com/haxpor/omo
+
+"asteroids"
+https://github.com/haxpor/asteroids
+
+
+
+== Racontages
+
+J'opte pour [le choix des vainqueurs]. Korlibs est loin d'être utilisable, et ne supporte pas iOS. 
+
+- Avoir un Mac musclé avec macOS Mojave.
+- Installer Homebrew, iTerm, TextMate, Gradle.
+- Installer Xcode.
+- Installer Android Studio.
+
+Lire "Examples of libGDX projects using Kotlin"
+https://github.com/libgdx/libgdx/wiki/Using-libGDX-with-Kotlin#examples-of-libgdx-projects-using-kotlin
+, git-cloner, démarrer.
+
+La qualité de la chaîne d'outilllage (notamment Android Studio, motorisé par IntelliJ IDEA) semble impressionnante. Mais ça se gâte dès qu'on essaye de faire fonctionner Gradle. 
+
+Si la vision originale d'iOS était de fournir le meilleur outillage (Xcode, Swift) pour rendre les développeurs captifs de leur plateforme, elle n'a pas très bien fonctionné. Quand on est habitué à IDEA, Xcode c'est revenir 15 ans en arrière. En tant que langage, Swift supporte la comparaison avec Kotlin, mais si on veut du multiplateforme, là c'est cuit.
+

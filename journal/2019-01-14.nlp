@@ -1,0 +1,217 @@
+== Blockbunny
+
+"blockbunny"
+https://github.com/haxpor/blockbunny
+est l'exemple d'intégration libGDX-Kotlin qui fonctionne le mieux. En ajoutant la bonne version d'Android dans l'AVD Manager (Android Virtual Device Manager) d'Android Studio on arrive à lancer la démo Desktop et Android (même si ça ne marche plus le lendemain). Pour iOS ça se gâte. Blockbunny a été conçu pour des versions relativement anciennes d'Android et iOS et probablement MOE.
+
+
+== macOS virtualisé dans VirtualBox !
+
+Une solution répétable c'est de construire une VirtualBox avec Mojave. Comme ça on peut tester une installation propre.
+
+Il y a des moyens d'automatiser //partiellement// la création de la VM :
+
+--- "bkuhlmann macOS"
+https://github.com/bkuhlmann/mac_os
+
+--- "Munki"
+https://www.munki.org/munki/
+ressemble à un dépôt-miroir. Il ne prend pas en compte l'installation initiale.
+
+Il est probable que la solution raisonnable soit de :
+- Créer une VM avec macOS Mojave.
+  - Beaucoup de RAM.
+  - Host-only Adapter.
+- Manuellement :
+  - Ouvrir un accès VRDP (l'interface graphique déportée).
+  - Ouvrir un accès SSH limité à la carte réseau virtuelle Host-only.
+- Snapshotter la VM. Exporter.
+- (Éventuellement : importer sur un serveur hébergé.)
+- À partir de SSH :  
+  - Installer Xcode.
+  - Installer Homebrew.
+  - Installer Gradle, Android Studio, etc.
+- Snapshotter la VM.
+
+Avec ça on peut construire des livrables, ou [exporter]
+https://stackoverflow.com/a/51977478/1923328
+la version compilée pour du x86.
+
+
+L'installation de l'AVD Manager en-dehors d'Android Studio n'est pas documentée mais la [doc nous dit]
+https://developer.android.com/studio/intro/update#sdk-manager
+:
+
+<<
+When you run a build from the command line, Gradle can automatically download missing SDK packages that a project depends on, as long as the corresponding SDK license agreements have already been accepted using the SDK Manager.
+>>
+
+
+=== Mémoire de masse nécessitée
+
+<<<
+du -h /Applications/Android\ Studio.app
+1.6G	/Applications/Android Studio.app
+
+du -h ~/Library/Android
+5.2G	/Users/laurent/Library/Android
+
+du -h ~/.gradle/
+1002M	/Users/laurent/.gradle/
+
+du -h /Applications/Xcode
+6.5G	/Applications/Xcode.app
+>>>
+
+Mojave prend environ 13 Go selon la "doc officielle"
+https://support.apple.com/macos/mojave
+.
+
+Donc prévoir un VMDK de 100 Go.
+
+
+
+
+
+=== Récupération de l'installeur de Mojave (pas bon)
+
+"How to Download a Full Size MacOS Mojave Installer"
+http://osxdaily.com/2018/09/29/download-full-macos-mojave-installer/
+utilise Dosdude. Pas bon.
+
+"MacOS Mojave `10.14.1` DMG Files Direct Download Links"
+https://www.itechtics.com/macos-mojave-10-14/
+fournit le lien suivant :
+http://updates-http.cdn-apple.com/2018/macos/091-99991-20181030-10052238-C103-11E8-A480-9257C82E983B/macOSUpd10.14.1.dmg
+qui pointe vers une archive de `3,1 Go`. Pas bon !
+
+Le domaine ``cdn-apple.com`` appartient à Apple (selon 2 consultations Whois) et apparaît dans la [documentation officielle]
+https://support.apple.com/en-us/HT201999
+. 
+
+La vraie archive fait 6,1 Go.
+
+
+=== Récupération de l'installeur de Mojave (inutile ?)
+
+"How to Download a Full Size MacOS Mojave Installer"
+http://osxdaily.com/2018/09/29/download-full-macos-mojave-installer
+
+<<
+How to build your own full macOS Mojave installer
+
+To get the full "legit" version [of Install macOS Mojave.app] from Apple, start the mini installer that you get from the App Store and follow the prompts until you get to the point that it starts counting down to reboot your machine. Quickly CANCEL the reboot.
+
+Once you cancel, you will have the full 6gb installer files since the mini installer downloads all required files. It will create a folder titled ``macOS install Data`` on the root of your primary hard drive.
+
+Once you have all of the files, you now have to make the installer package by running the following 3 commands in Terminal:
+
+At the command line, first type the following for super user privileges:
+
+``sudo -s``
+
+Enter your password then type the following 3 commands followed by return after each command:
+
+``mkdir /Applications/Install\ macOS\ Mojave.app/Contents/SharedSupport``
+
+``cd /macOS\ Install\ Data``
+
+``find . -mount | cpio -pvdm /Applications/Install\ macOS\ Mojave.app/Contents/SharedSupport``
+
+After you've followed those steps, right click the installer that you originally downloaded from the App Store in your Applications directory and you'll see that its now 6GB instead of the 23mb or 25mb that you get from the App store.
+>>
+
+=== Récupération de l'installeur de Mojave (bon)
+
+Sur un Mojave déjà installé on peut à nouveau faire "GET" dans l'AppStore. Cela ouvre le Software Update qui ouvre peu après un dialogue "Download". À la fin l'installeur est bien dans ``/Applications`` et il pèse `6,03 Go`.
+
+
+
+
+=== Installation de Mojave dans VirtualBox
+
+--- [AlexanderWillner runMacOSinVirtualBox]
+https://github.com/AlexanderWillner/runMacOSinVirtualBox
+fait un peu peur, le dépôt Github contient des exécutables, rien de moins. Mais il soulève un point intéressant :
+
+<<
+Since VirtualBox does not support booting from APFS volumes, this script is copying the APFS EFI drivers automatically.
+>>
+
+Et on peut s'intéresser à son [script]
+https://github.com/AlexanderWillner/runMacOSinVirtualBox/blob/master/runMojaveVirtualbox.sh
+sauf qu'il télécharge une beta de Mojave. Mais au moins on voit comment il installe Clover.
+
+L'application avec un binaire est le "ProgressDialog" qui fournit un aperçu graphique de l'avancée de l'installation.
+
+Après il y a le Paragon VMDK Mounter. Un commentaire du script nous dit que les alternatives ne fonctionnent pas. Le Paragon VMDK Mounter est installable avec Homebrew.
+
+Se pourrait-il que le script nous montre qu'il est possible de bricoler le contenu d'une ISO d'installation ? Non, juste le boot.
+
+Modifications à effectuer :
+- Télécharger le DMG de la version finale.
+- Ajouter une carte réseau "Host-only".
+- Fournir des paramètres par défaut pour créer une VM plus musclée.
+- Snapshotter à la fin.
+
+
+=== VRDP
+
+La "doc officielle de VirtualBox"
+https://www.virtualbox.org/manual/ch07.html
+mentionne l'"USB-over-RDP"
+https://www.virtualbox.org/manual/ch07.html#usb-over-rdp
+
+[rdesktop]
+https://www.rdesktop.org/
+
+<<<
+brew install rdesktop
+>>>
+
+[FreeRDP]
+http://www.freerdp.com/screenshots
+
+<<<
+brew install freerdp
+>>>
+
+
+Sur l'AppStore on a [Microsoft Remote Desktop 8]
+https://itunes.apple.com/fr/app/microsoft-remote-desktop-8/id715768417?l=en&mt=12
+en attendant que la 10 soit stable.
+
+Il y a une petite chance que le [Remote USB fonctionne]
+https://forums.virtualbox.org/viewtopic.php?f=7&t=85537#p428734
+.
+
+Faut-il un tunnel SSH ? VirtualBox accepte un [certificat comme paramètre du serveur VRDP]
+https://www.virtualbox.org/manual/ch07.html#vrde-crypt
+. Ça évite de laisser le port ouvert à tous les vents, ou de passer par un tunnel SSH, ou d'ajouter une règle de firewalling (IP whitelisting, rien de mieux). Mais rdesktop ne supporte pas cette option. Pour FreeRDP ce n'est pas clair.
+
+Si on crée un tunnel SSH à la main on se contente d'une interface Host-only, la conf est la même en local et en hébergé.
+
+
+=== Hébergement
+
+Chez OVH :
+
+<<<
+Gravelines FRA
+CPU: Intel Xeon D-1520 - 4c/8t - 2.2 GHz / 2.6 GHz
+RAM: 32GB DDR4 ECC 2133 MHz
+VRack 100 Mbps
+SoftRaid 2 «time» 480 GB SSD
+71 «euro»/month (excluding VAT)
+>>>
+
+Dans le genre soyons fous :
+
+<<<
+CPU: Intel Xeon E5-1650v3 - 6c/12t - 3.5 GHz / 3.8 GHz
+RAM:  64GB DDR4 ECC 2133 MHz
+vRack 1 Gbps
+HardRaid FastPath 3 «time» 960 GB SSD
+221 «euro»/month (excluding VAT)
+>>>
+
