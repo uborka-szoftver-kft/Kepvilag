@@ -1,0 +1,409 @@
+
+
+== MOE : espérance de vie
+
+Sur le [repo Github]
+https://github.com/multi-os-engine
+le dernier commit (tous projets confondus) remonte à avril 2018 (`moe-ide-integration`). La question, [posée sur le forum officiel]
+https://discuss.multi-os-engine.org/t/is-multi-os-engine-alive/1392
+, a reçu la réponse d'un gars de Migeran : ils ont plein de boulot de support. Donc c'est plutôt bon signe.
+
+De plus les [exemples officiels]
+https://github.com/multi-os-engine/moe-samples-java
+sont assez récents (dernier commit : février 2018). Le LibGDXMissileCommand a l'air plus à jour que la [documentation]
+https://multi-os-engine.github.io/doc/multi-os-engine/9_game/1_libgdx/libgdx.html
+. 
+
+
+
+== Xcode et les symlinks
+
+"Soft links and xcode projects"
+https://discussions.apple.com/thread/3240437
+: le gars se plaint que Xcode résolve la cible du lien trop tôt.
+
+Dans "Swift Playgrounds: Symbolic Links"
+https://ericasadun.com/2015/05/25/swift-playgrounds-symbolic-links/
+l'auteur dit que ça fonctionne tant qu'on ne modifie rien (en gros).
+
+La solution qui marche à tous les coups : "Resolve symbolic links when copying bundle resources in Xcode"
+https://stackoverflow.com/questions/540661/resolve-symbolic-links-when-copying-bundle-resources-in-xcode
+consiste à ajouter une phase de construction qui copie les fichiers.
+
+Une [lueur d'espoir]
+https://stackoverflow.com/a/14226998/1923328
+
+<<
+I just want to say that using symbolic links shouldn't be necessary. You can simply drop the folder into xcode, and DO NOT copy the files.
+>>
+
+=== Ça doit marcher car MOE les utilise
+
+Si on regarde dans ``moe-samples-java/OpenGLBox/ios`` (après avoir lancé un ``./gradlew installDebug``) :
+
+<<<
+$ ls -Ala build/moe | awk '{print $9 $10 $11}' | grep moe
+sdk->/Users/laurent/.moe/moe-sdk-1.4.2
+>>>
+
+
+== Construction en ligne de commande
+
+
+=== Problème : pas de SDK Android
+
+<<<
+export ANDROID_HOME=${USER_HOME}/Library/Android/sdk
+>>>
+
+Mais il vaut mieux éditer le ``//local.properties`` vu que Xcode appelle Gradle.
+
+
+=== Problème : acceptation de la license
+
+Démarrer le SDK Manager ou AVD Manager d'Android Studio, lancer le téléchargement, accepter les conditions.
+
+=== Problème : pas d'appareil connecté
+
+<<<
+* What went wrong:
+Execution failed for task ':app:installDebug'.
+> com.android.builder.testing.api.DeviceException: No connected devices!
+>>>
+
+<<<
+$ $ANDROID_HOME/emulator/emulator -list-avds
+Nexus_5X_API_28_x86
+$ $ANDROID_HOME/emulator/emulator -avd Nexus_5X_API_28_x86 &
+>>>
+
+
+=== Préparation de Xcode
+
+<<<
+../gradlew moeUpdateXcodeSettings
+>>>
+
+
+=== Taille du livrable Android
+
+Grâce aux "Android App Bundles"
+https://developer.android.com/guide/app-bundle
+on peut différer la signature et le conditionnement des APK. La taille maximum d'un APK passe à 500 Mo.
+
+
+== Trouvailles 
+
+=== Support de FreeType
+
+[FreeType]
+https://github.com/libgdx/libgdx/wiki/Gdx-freetype
+est supporté.
+
+Une [police simple]
+https://www.fontsquirrel.com/fonts/gloria-hallelujah
+pèse 60 ko non compressée (et elle a l'air de supporter les accents hongrois).
+
+
+=== Masstream
+
+[Cité] 
+https://discuss.multi-os-engine.org/t/finally-release-my-android-ios-app-moe-an-awesome-tool/1733
+par l'auteur : [Masstream]
+http://www.masstream.com
+. 
+
+=== Articles sur la fragmentation des Shaders OpenGL
+
+Article de 2013 : "OpenGL ES Shading Language Potholes And Problems"
+http://bitiotic.com/blog/2013/09/24/opengl-es-shading-language-potholes-and-problems/
+. Genre ça craint. 
+
+
+=== Articles en vrac
+
+"Blog de Biotic"
+http://bitiotic.com/blog.html
+
+"Articles de Xoppa"
+https://github.com/libgdx/libgdx/wiki/Quick-start
+
+"OpenGL `&` GLSL Tutorials"
+https://github.com/mattdesl/lwjgl-basics/wiki
+(avec beaucoup de libGDX)
+
+
+=== Pourcentage pris par Google
+
+"`30 %` comme Apple"
+https://support.google.com/googleplay/android-developer/answer/112622?hl=en
+, dégressif. Sur un abonnement qui dure plus de 12 mois Google ne prend plus que `15 %`.
+
+
+=== Étude de cas
+
+"Sokoban Garden 3D"
+https://libgdx.badlogicgames.com/showentry.html?id=51c81b62-5714-42e4-8d5e-474cfbaf342c
+. Création d'une fonte pour l'occasion (`2:16`, Inkscape puis FontForge).
+
+Commentaire sur le making of :
+
+<<
+This game was made using only open source software:
+- Ubuntu 12.04
+- Eclipse
+- libGDX
+- Universal Tween Engine
+- Gimp
+- Inkscape
+- Blender
+- Audacity
+- FontForge
+>> 
+
+Sur Google Play : //Contains Ads. Offers in-app purchases//
+
+
+=== Sympathiques idées de jeu
+
+[Send a crossword]
+http://sendacrossword.com/
+
+[Who are you Mr Cooper]
+https://tlft.itch.io/who-are-you-mr-cooper
+Steampunk minimaliste. La musique d'ambiance est très bien.
+
+[Maximum Apocalypse Trailer]
+https://youtu.be/FCW_jrvFKxE
+bonne utilisation du parallaxe et de la profondeur de champ (jusqu'à `0:56`). 
+
+[The Marvelous Endeavours of Dr.Croc and Miss Bluebird]
+https://hanalee.itch.io/marvelousendeavours
+
+
+
+
+=== `itch.io`
+
+https://itch.io/docs/general/about
+
+
+=== Ressources libGDX
+
+
+"Tutoriels"
+https://libgdx.info
+
+"Skins"
+https://github.com/czyzby/gdx-skins
+
+"Plugin IDEA"
+https://github.com/BlueBoxWare/LibGDXPlugin
+
+
+== Architecture 
+
+Tout faire à coup de ``Sprite`` au début c'est le plus simple.
+
+Il y a des réponses. 
+
+"How to use multiple shaders with LibGdx `+` SpriteBatch"
+https://gamedev.stackexchange.com/a/145078
+
+"LibGdx Is there a way to apply shader to a section of the sprite batch for a water effect?"
+https://stackoverflow.com/questions/31714279/libgdx-is-there-a-way-to-apply-shader-to-a-section-of-the-sprite-batch-for-a-wat
+
+
+== Compression d'images
+
+=== ETC1
+
+LibGDX [supporte] 
+https://libgdx.badlogicgames.com/ci/nightlies/docs/api/com/badlogic/gdx/graphics/glutils/ETC1.html
+le format ETC1, un format de compression d'image reconnu par OpenGL.
+
+Voir [Wikipedia]
+https://en.wikipedia.org/wiki/Ericsson_Texture_Compression
+. [Sauf que]
+https://frozenfractal.com/blog/2017/2/20/texture-compression-on-mobile-demystified/
+ETC1 ne supporte pas l'alpha. Ça [divise un PNG par 3]
+https://software.intel.com/en-us/articles/android-texture-compression-a-comparison-study-with-code-sample
+. 
+
+Comme on veut surtout diminuer la taille de l'IPA`/`APK le mieux ça reste le JPG à `80 %`.
+
+Selon Intel :
+
+<<
+Advantages:
+- File size is considerably smaller in comparison to the PNG texture compression format
+- GPU hardware acceleration supported on nearly all Android devices
+ 
+Disadvantages:
+- Quality is not as high as PNG texture compression (ETC is a lossy compression format)
+- Does not support alpha ~channels`/`components
+>>
+
+
+=== PVRTC
+
+
+[PVRTC]
+https://www.imgtec.com/blog/pvrtc-the-most-efficient-texture-compression-standard-for-the-mobile-graphics-world/
+a l'air largement supporté, on peut espérer du `80 %`.
+
+Selon Intel ("bpp : bits per pixel, also known as color depth") :
+
+<<
+Advantages:
+
+- Supports alpha ~channels`/`components
+- Supports RGBA data for both 2-bpp and 4-bpp modes
+- File size is much smaller than one using PNG texture compression
+- GPU hardware acceleration on PowerVR GPUs
+ 
+Disadvantages:
+
+- Quality is not as high as PNG texture compression (PVRTC is a lossy compression format)
+- PVRTC is only supported on PowerVR hardware
+- Only square (power-of-two) dimension textures are determined to work consistently, although in some cases, rectangular support is provided for the compressed texture
+- Compressing textures into this format can be slow
+>>
+
+On a peut-être de la chance avec la "libgdx-pvr-android-extention"
+https://github.com/idiottiger/libgdx-pvr-android-extention
+. 
+
+<<
+This is a library base on the libgdx, and make the libgdx android support the pvr texture, it's not the soft decode, it also need the device can support pvr.
+>>
+
+Donc il reste du boulot pour faire pareil avec iOS. C'est [pas] 
+https://www.badlogicgames.com/forum/viewtopic.php?f=11&t=19400
+[gagné]
+https://badlogicgames.com/forum/viewtopic.php?f=11&t=6577#p30710
+.
+
+Moralité on garde du PNG, de toutes façons le choix JPEG`/`ECT`/`PVRT se fait lors du conditionnement.
+
+
+
+== Bilan de mi-journée
+
+
+--- La démo bricolée "LibGDXMissileCommand" fonctionne sur l'émulateur Android. La version de Gradle est à peu près à jour.
+
+--- La démo clonée de libGDX "OpenGLBox" fonctionne sur les émulateurs iOS et Android.
+
+--- La création d'un Guest VirtualBox avec macOS Mojave est partiellement automatisée.
+
+
+=== La suite
+
+--- Étudier l'exemple OpenGLBox.
+
+--- Faire fonctionner au moins une démo sur le Desktop.
+
+--- Passer la version de la démo à `Gradle 4.10.2` (ou `5.1.1` ? C'est plus sûr de commencer par la 4).
+
+--- Valider que toute la construction peut s'effectuer en ligne de commande.
+
+--- Automatiser la préparation de l'environnement dans VirtualBox ?
+
+
+Prochaine mission : une texture qui rebondit, avec du Gradle 4, et le support du Desktop.
+
+
+== OpenGLBox : constatations
+
+Utilise du code natif. Pas de version Desktop.
+
+
+== Architecture
+
+On obtient une animation 2D simple avec les [techniques basées sur ``Texture`` et ``SpriteBatch``]
+https://github.com/libgdx/libgdx/wiki/2D-Animation
+. Le choix du contexte OpenGL n'est pas très clair.
+
+
+
+== Fecske
+
+[Kézikönyvtár]
+https://www.arcanum.hu/hu/online-kiadvanyok/Szolasok-regi-magyar-szolasok-es-kozmondasok-1/dr-margalits-ede-magyar-kozmondasok-es-kozmondasszeru-szolasok-5222/fecske-59CD/
+: Régi magyar szólások és közmondások -- Dr. Margalits -- Ede: MAGYAR KÖZMONDÁSOK ÉS KÖZMONDÁSSZERÜ SZÓLÁSOK -- Fecske -_
+
+<<
+
+Annyi mint őszkor a fecske. D.
+
+Csacsog mint a fecske. E.
+
+Csacska fecske. ME.
+
+Egy fecske nem tavasz. D.
+
+Egy fecske tavaszt nem szerez. M.
+
+Egy fecske nem mutat tavaszt. Pázmán.
+
+Egy fecske nem hoz tavaszt. Cz.
+
+Egy fecske tavaszt nem csinál. D.
+
+Egy fecske nem tesz tavaszt. B.
+
+Egy fecske nem szerez nyarat. B.
+
+Elmegy a fecske, itt marad a túzok. D.
+
+Elmegy őszszel a fecske, de őt a veréb nem követi. D.
+
+Fecskének fecske a fia. D.
+
+Fél éhgyomorral a fecske fecsegésétől. (Ki mit szeret, lel rá okot; enni akar.) D.
+
+Ha mézet akarsz gyüjteni, a fecskefészket meg ne szenvedd házad körül. E.
+
+Hirmondó fecske tavaszt énekel. BSz.
+
+Idővel a fecske még házadra szállhat. (Te is még szerencsés lehetsz.) BSz.
+
+Készülődik, de itthon marad, mint az idétlen fecske. Ny. 10.
+
+Leghangosabb deákságu a fecske. (Fecsegésü, beszédü.) D.
+
+Locska fecske. D.
+
+Nekiszokott mint fecske a repdeséshez. D.
+
+Nem jó fecskének a verébbel pörlekedni. (Veréb erősebb.) B.
+
+Nem sirat egy fecskét egy nyár. E.
+
+Nyári szállásért meg nem telel veled a fecske. (A háladatosságnak is van határa.) E.
+
+Örül a fecske, ha fészkére talál. D.
+
+Ritka mint a fecske a kalickában. D.
+
+Sipítanak mint az éhes fecskefiak. E.
+
+Sok fecske ősznek jele. D.
+
+Fecskefészek körül legtöbb a szó. (Ha gyermek születik, kutatjuk, ki volt apja.) D.
+
+Egy fecskefészekben ellakhatni vele. D.
+
+Talán még akkor a fecske nem fecsegett annyit. D.
+
+>>
+
+== Racontages
+
+Étonnante décision de la part de JetBrains de renoncer aux raccourcis clavier d'IntelliJ IDEA dans Android Studio.
+
+J'allais écrire : "Gradle quelle désolation !" Pour éviter d'être grossier. Ayant découvert que beaucoup de gens laissent atterrir le ``gradle-wrapper.jar`` dans le repo, je corrige : "Quelle bande de gros cons !"
+
+Bazel me plait de plus en plus, les mecs basent toutes les extensions sur un langage impératif super-confiné (Starlark). Ils disent : "Constuire un livrable ne doit présenter aucun risque." On ne peut pas régler tous les problèmes d'un coup, d'abord faire marcher les exemples MOE avec un minimum de changements.
+

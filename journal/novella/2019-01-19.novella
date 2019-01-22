@@ -1,0 +1,9 @@
+=== Image vectorielle ou point ?
+
+LibGDX ne supporte pas le SVG, point.
+
+On obtient des résultats passables avec du JPEG en compressant le PNG à `90 %` (la plus basse qualité). C'est plus lisible que du SVG grâce aux dégradés mais c'est moins propre.
+
+Avec une compression à `80 %` la différence avec l'original est imperceptible.
+
+

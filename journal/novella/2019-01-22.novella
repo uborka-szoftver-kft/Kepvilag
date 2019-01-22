@@ -1,0 +1,65 @@
+== Structure projet
+
+
+On a identifié la structure imposée par libGDX et AndroidStudio :
+
+<<<
+|-- gradle.properties
+|-- build.gradle
+|-- local.properties
+|-- settings.gradle
+|
++-- common
+|   +-- build.gradle
+|   +-- proguard-rules.pro
+|   +-- src
+|       +-- main
+|           |-- AndroidManifest.xml
+|           +-- assets
+|           +-- java
+|           +-- res
++-- ios
+|   |-- ios.iml
+|   |-- build.gradle
+|   |-- proguard.append.cfg
+|   +-- src
+|   |   +-- main
+|   |       \-- java
+|   +-- xcode
+|       +-- TheProject
+|       |   +-- Assets.xcassets
+|       |   |-- Base.lproj
+|       |   |-- info.plist
+|       |   \-- main.cpp
+|       +-- TheProject-Test
+|       +-- TheProject.xcodeproj
+|           |-- project.pbxproj
+|           |-- project.xcworkspace
+|           +-- xcuserdata
++-- app
+|   |-- app.iml
+|   +-- src
+|       +-- androidTest
+|       +-- main
+|       +-- test
+|       +-- 
++-- gradle
+
+>>>
+
+
+On veut entasser les projets expérimentaux donc :
+
+<<<
++-- code
+|   +-- archive
+|   +-- project1
+|   +-- project2
+|   +-- ...
+|
++-- journal
++-- infrastructure
+|   +-- build-platform
+|   
+...
+>>>

@@ -11,7 +11,7 @@ Une solution répétable c'est de construire une VirtualBox avec Mojave. Comme �
 
 Il y a des moyens d'automatiser //partiellement// la création de la VM :
 
---- "bkuhlmann macOS"
+--- "bkuhlmann macos" 
 https://github.com/bkuhlmann/mac_os
 
 --- "Munki"
@@ -51,16 +51,16 @@ When you run a build from the command line, Gradle can automatically download mi
 
 <<<
 du -h /Applications/Android\ Studio.app
-1.6G	/Applications/Android Studio.app
+1.6G /Applications/Android Studio.app
 
 du -h ~/Library/Android
-5.2G	/Users/laurent/Library/Android
+5.2G /Users/laurent/Library/Android
 
 du -h ~/.gradle/
-1002M	/Users/laurent/.gradle/
+1002M /Users/laurent/.gradle/
 
 du -h /Applications/Xcode
-6.5G	/Applications/Xcode.app
+6.5G /Applications/Xcode.app
 >>>
 
 Mojave prend environ 13 Go selon la "doc officielle"
@@ -125,7 +125,11 @@ After you've followed those steps, right click the installer that you originally
 
 Sur un Mojave déjà installé on peut à nouveau faire "GET" dans l'AppStore. Cela ouvre le Software Update qui ouvre peu après un dialogue "Download". À la fin l'installeur est bien dans ``/Applications`` et il pèse `6,03 Go`.
 
+Truc pour nettoyer le répertoire ``/macOS Install Data`` : redémarrer en Recovery Mode (Command-R), ouvrir le Terminal, désactiver la SIP :
 
+<<<
+csrutil disable
+>>>
 
 
 === Installation de Mojave dans VirtualBox
@@ -154,6 +158,161 @@ Modifications à effectuer :
 - Fournir des paramètres par défaut pour créer une VM plus musclée.
 - Snapshotter à la fin.
 
+
+=== Problème, issue Github
+
+"Issue 47"
+https://github.com/AlexanderWillner/runMacOSinVirtualBox/issues/47
+
+
+<<
+I run `runMojaveVirtualbox.sh all`, and I got the following errors in the VM's console:
+
+<<<
+Shell> `fs2:\System\Library\CoreServices\boot.efi` is not recognized as an internal
+or external command, operable program, or script file.
+Shell> `fs2:\macOS Install Data\Locked Files\Boot Files\boot.efi` is not recognized as an internal
+or external command, operable program, or script file.
+>>>
+
+and so on for `fs3:`, `fs4:`, and `fs1:`, which matches what the script did write to `/Volumes/EFI/startup.nsh`.
+
+I remember that after upgrading my Mac from High Sierra to Mojave, the installer was no longer present, or maybe I deleted it (afte disabling the SIP). I downloaded the installer again from the AppStore. I ran it and stopped it before it asked for restart, in order to get the full dmg. But after that `\macOS Install Data\Locked Files\Boot Files` remained empty.
+
+This this script's output:
+
+<<<
+$ ./runMojaveVirtualbox.sh all
+Running checks (around 1 second)....
+Creating image '/Users/laurent/VirtualBox VMs/macOS-Mojave.dmg' (around 20 seconds, version 14.2.2, will need sudo)...already exists.
+Creating iso '/Users/laurent/VirtualBox VMs/macOS-Mojave.iso.cdr' (around 25 seconds)...already exists.
+Creating VM HDD '/Users/laurent/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (around 5 seconds)....
+Creating VM 'macOS-Mojave' (around 2 seconds)....
+Adding APFS drivers to EFI in '/Users/laurent/VirtualBox VMs/macOS-Mojave/macOS-Mojave.vdi' (around 5 seconds)....
+Starting VM 'macOS-Mojave' (3 minutes in the VM)....
+Press enter to stop VM 'macOS-Mojave' (e.g. after installer restarted)....
+>>>
+
+Any idea of what's happening here? Should `\macOS Install Data\Locked Files\Boot Files` remain empty?
+>>
+
+AlexanderWillner:
+
+<<
+My best guess is that the APFS driver has not been copied correctly to the ESP (EFI System Partition). What happens if you enter the commands manually that are at the beginning of the startup script? Alternatively: can you find your system partition by going through the mounted drives (i.e. e.g. ``fs1:``, enter, ``dir``, enter)?
+>>
+
+LC :
+
+<<
+I get something like this (copied by hand):
+
+<<<
+Shell> fs0:
+FS0:\> dir
+Directory of FS0:\
+01/15/2019 07:51 <DIR>       512 EFI
+01/15/2019 07:51             435 startup.nsh
+     1 File(s)       435 bytes
+     1 Dir(s)
+FS0:\> cd EFI
+FS0:\EFI\> dir
+Directory of FS0:\EFI\
+01/15/2019 07:51 <DIR>       512 .
+01/15/2019 07:51 <DIR>         0 ..
+01/15/2019 07:51             512 drivers
+     0 File(s)         0 bytes
+     3 Dir(s)
+FS0:\EFI\> cd drivers
+FS0:\EFI\drivers\> dir
+Directory of FS0:\EFI\drivers\
+01/15/2019 07:51 <DIR>       512 .
+01/15/2019 07:51 <DIR>       512 ..
+01/15/2019 07:51         606,616 apfs.efi
+     1 File(s)   606,616 bytes
+     2 Dir(s)
+
+FS0:\EFI\drivers\> fs1:
+FS1:\> dir
+Directory of FS1:\
+01/15/2019 06:51 <DIR>         3  .fseventd
+01/15/2019 06:51 <DIR>         0  HFS+ Private Directory Data
+01/15/2019 06:51       8,388,608 .journal
+01/15/2019 06:51           4,096 .journal_info_block
+01/15/2019 06:51 <DIR>         3  Spotlight V100
+01/15/2019 06:51 <DIR>         0  
+     2 File(s) 8,392,704 bytes
+     4 Dir(s)
+FS1:\> fs2:
+FS2:\> dir
+Directory of FS2:\
+01/14/2019 17:29 <DIR>         3  .fseventd
+01/14/2019 17:29 <DIR>         0  HFS+ Private Directory Data
+01/14/2019 17:29       8,388,608 .journal
+01/14/2019 17:29           4,096 .journal_info_block
+01/14/2019 17:29 <DIR>         0  
+     2 File(s) 8,392,704 bytes
+     3 Dir(s)
+FS2:\>fs3:
+'fs3' is not a correct mapping.     
+FS2:\>fs4:
+'fs4' is not a correct mapping.     
+>>>
+
+The `06:51` timestamp matches a fresh run of the script. (I don't know why there is this `07:51`.) The timestamp of `17:29` matches a previous attempt.
+
+I run the ``load fs0:\EFI\drivers\*`` command with success (not shown here but I saw it in the console when booting). I edit `startup.nsh` and the content is the one expected.
+
+On the host system the ``/System/Library/CoreServices/boot.efi`` file is present (I guess if it wasn't the system wouldn't start at all).
+
+Now I got something interesting (skipped some ids for brevity):
+
+<<<
+FS0:\> map
+Mapping table
+      FS2: Alias(s):CD7b0a0:;BLK7:
+          PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x1,0x0,0x0)/CDROM(0x0)
+      FS0: Alias(s):HD7a0a1:;BLK1:
+          PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x0,0x0,0x0)/HD(1,GPT,F8C9AB5....)
+      FS1: Alias(s):HD7a0a2:;BLK2:
+          PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x0,0x0,0x0)/HD(2,GPT,126E6FD2....)
+      BLK0:Alias(s):
+          PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x0,0x0,0x0)
+      BLK3:Alias(s):
+          PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x1,0x0,0x0)
+      BLK4:Alias(s):
+          PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x1,0x0,0x0)/CDROM(0x0)
+      BLK5:Alias(s):
+          PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x1,0x0,0x0)/CDROM(0x0)/CDROM(0x0)
+      BLK6:Alias(s):
+          PciRoot(0x0)/Pci(0x1F,0x2)/Sata(0x1,0x0,0x0)/CDROM(0x0)/CDROM(0x0)
+>>>
+
+So it seems that mapping happens as requested by `startup.nsh` with mappings on `FS3:` and `FS4:` just here "in case".
+
+Time to read some code very carefully! This is my understanding of the script.
+
+- `createClover()` copies `apfs.efi` and other stuff to `${DST_DIR}/${VM_NAME}Clover.iso`.
+  - But it is not called by `all` target when circumventing the make command! 
+- `patchEfi()` creates the `startup.nsh` and the `${FILE_EFI}` to the VDI. 
+  - `${FILE_EFI}` seems to come out from nowhere.
+  - Oh, wait, `/usr/standalone/i386/apfs.efi` is a standard Mojave system file!
+
+In my original report I told that I ran `runMojaveVirtualbox.sh all`. I did not use `make all` because I got that:
+
+<<<
+$ make all
+xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun at: /Library/Developer/CommandLineTools/usr/bin/xcrun
+>>>
+
+I said to myself: "Xcode is getting in the way, let's move on!"
+
+After running the script with `clover`, the `all` target outcome starts looking like in the video. Holy crap it's happening!
+
+I suggest to add the `clover` target in the `all`, it would be harmless since it does nothing if the ISO image is already present. I'm creating a Pull Request (48). Not yet tested, but install takes so long.
+
+I'm learning a lot here. Thanks for this amazing script!
+>>
 
 === VRDP
 
@@ -201,7 +360,7 @@ Gravelines FRA
 CPU: Intel Xeon D-1520 - 4c/8t - 2.2 GHz / 2.6 GHz
 RAM: 32GB DDR4 ECC 2133 MHz
 VRack 100 Mbps
-SoftRaid 2 «time» 480 GB SSD
+SoftRaid 2 «times» 480 GB SSD
 71 «euro»/month (excluding VAT)
 >>>
 
@@ -211,7 +370,7 @@ Dans le genre soyons fous :
 CPU: Intel Xeon E5-1650v3 - 6c/12t - 3.5 GHz / 3.8 GHz
 RAM:  64GB DDR4 ECC 2133 MHz
 vRack 1 Gbps
-HardRaid FastPath 3 «time» 960 GB SSD
+HardRaid FastPath 3 «times» 960 GB SSD
 221 «euro»/month (excluding VAT)
 >>>
 

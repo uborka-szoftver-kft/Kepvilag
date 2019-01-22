@@ -45,14 +45,14 @@ https://github.com/libgdx/libgdx/wiki/Using-libGDX-with-Kotlin
 :
 
 <<
-Due to how GWT works, you will not be able to use the HTML5 target with Kotlin. This could be fixed in the future by using Kotlin’s JavaScript back-end. It might be possible to utilize TeaVM as a replacement for GWT, though.
+Due to how GWT works, you will not be able to use the HTML5 target with Kotlin. This could be fixed in the future by using Kotlin's JavaScript back-end. It might be possible to utilize TeaVM as a replacement for GWT, though.
 >>
 
 
 
 === RoboVM et MOE
 
-Voir le billet "libGDX 1.9.3` released -- New iOS backends-_"
+Voir le billet "`libGDX 1.9.3` released -- New iOS backends-_"
 https://www.badlogicgames.com/wordpress/?p=3934
 
 
@@ -92,7 +92,7 @@ Bien en théorie mais pas de support iOS pour l'instant. Il y a un passage assez
 <<
 Targets:
 - Right now with Korge you can target JVM, Android and JavaScript.
-- And with JavaScript you can generate iOS/Android using Apache Cordova.
+- And with JavaScript you can generate ~iOS`/`Android using Apache Cordova.
 
 `Kotlin.JS` and `Kotlin.Native`
 
@@ -113,7 +113,7 @@ Korlibs n'est pas utilisable pour l'instant.
 
 Il y a moyen de taper directement dans les API iOS grâce aux bindings Kotlin générés automatiquement.
 
-Il y a moyen de coder des bouts en Swift, Objective-C ou C++``.
+Il y a moyen de coder des bouts en Swift, Objective-C ou `C++`.
 
 Mais ça veut dire faire le boulot d'intégration à la main.
 

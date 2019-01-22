@@ -1,0 +1,84 @@
+== VirtualBox
+
+Mojave fonctionne sur `VirtualBox 6.0.2` après un "discard saved state".
+
+Idéalement on réinstalle avec le nouveau script d'Alexandre Willner, avec une identité `uborka.robot1@gmail.com`.
+
+
+Prochaines étapes : 
+- Configurer VRDP.
+- Configurer l'accès SSH.
+- Exporter, faire tourner sur un serveur OVH dédié.
+
+
+== Android et Gradle
+
+
+=== Copie des ``.so`` dans un répertoire du projet
+
+Code original :
+
+<<<
+// needed to add JNI shared libraries to APK when compiling on CLI
+tasks.withType(com.android.build.gradle.tasks.PackageApplication) { pkgTask ->
+  pkgTask.jniFolders = new HashSet<File>()
+  pkgTask.jniFolders.add(new File(projectDir, 'libs'))
+}
+>>>
+
+Qui donne :
+
+<<<
+ERROR: Cannot cast object '[]' with class 'java.util.HashSet' to class 'org.gradle.api.file.FileCollection' due to: groovy.lang.GroovyRuntimeException: Could not find matching constructor for: org.gradle.api.file.FileCollection()
+>>>
+
+Pas mieux :
+
+<<<
+  pkgTask.jniFolders= new FileCollection()
+>>>
+
+Mais ``FileCollection`` est une [interface.]
+https://docs.gradle.org/current/javadoc/org/gradle/api/file/FileCollection.html
+
+
+<<<
+  pkgTask.jniFolders = file( 'libs' )
+>>>
+
+
+On a bien les fichiers ``//app/libs/<architecture>/libgdx.so``.
+
+
+=== Copie des ``.so`` dans l'APK
+
+À partir d'un [exemple plus à jour]
+https://git.kpi.fei.tuke.sk/penguins/gamedev-2018/commit/b7665505b465c17581c7bf2361890717446c276b
+Sauf que le build échoue.
+
+[Plus d'espoir ?]
+https://stackoverflow.com/a/24360361/1923328
+Il faut juste copier dans ``//app/src/jniLibs``.
+
+
+=== Copie des ressources dans l'APK
+
+
+
+
+
+
+
+== Taille des APK
+
+Selon la [doc]
+https://developer.android.com/google/play/expansion-files
+un APK ne doit pas faire plus de 100 Mo mais on peut lui adjoindre 1 ficher de 2 Go qui sera distribué par Google Play.
+
+
+== Racontages
+
+Gradle c'est horrible. Est-ce que quelqu'un écrira un outil de construction purement fonctionnel ? Il y a défi vu que l'activité consiste surtout à produire des effets de bord sur le système de fichiers.
+
+
+

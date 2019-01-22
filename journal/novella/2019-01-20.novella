@@ -1,0 +1,58 @@
+== Sozi
+
+Parmi les [exemples cité]
+http://sozi.wikidot.com/presentations
+seul le [Einstein Telescope]
+http://www.gwoptics.org/research/et/layout/ET_layout_02.svg
+utilise les capacités de l'outil.
+
+Conclusion : les gens ne savent pas faire des présentations.
+
+Analyse partagée par l'auteur de "Prezi vs Inkscape's Sozi"
+http://lightcastletech.com/prezi-vs-inkscapes-sozi/
+
+<<
+I think, perhaps, there are two distinct types of users here -- and these tools will evolve over time to meet the needs of those two groups-_.  If you live and die by the effectiveness of your presentations (As I  do),   then you need something like InkScape and Sozi -- which, while not 3D modeled non-linear video editing, offers up a set of tools that will well outstrip the mainstream-_.  If instead, you just want a step beyond PowerPoint, just to up the ante on your 1990's era competition, then Prezi is the ticket.  Prezi's sleek well defined and intuitive interface provides for very effective presentations that can take you just past the expectations of most audiences.
+>>
+
+
+== Persistance
+
+La solution ultime : [Apache Kafka ?]
+https://kafka.apache.org
+
+On a un journal distribué-répliqué. On met dedans [ce qu'on veut]
+https://www.confluent.io/blog/okay-store-data-apache-kafka/
+. Voir aussi [Stack Overflow]
+https://stackoverflow.com/questions/17708489/using-kafka-as-a-cqrs-eventstore-good-idea
+notamment le paragraphe "Lack of entity isolation" qui montre bien les problèmes... des autres.
+
+La doc de Kafka "Kafka as a Storage System"
+https://kafka.apache.org/intro#kafka_storage
+
+<<
+Any message queue that allows publishing messages decoupled from consuming them is effectively acting as a storage system for the in-flight messages. What is different about Kafka is that it is a very good storage system.
+
+Data written to Kafka is written to disk and replicated for fault-tolerance. Kafka allows producers to wait on acknowledgement so that a write isn't considered complete until it is fully replicated and guaranteed to persist even if the server written to fails.
+
+The disk structures Kafka uses scale well. Kafka will perform the same whether you have 50 KB or 50 TB of persistent data on the server.
+
+As a result of taking storage seriously and allowing the clients to control their read position, you can think of Kafka as a kind of special purpose distributed filesystem dedicated to high-performance, low-latency commit log storage, replication, and propagation.
+>>
+
+Existen en version hébergée : [Amazon Managed Streaming for Kafka (MSK)]
+https://aws.amazon.com/msk
+
+Existe en version embarquée : [Salesforce kafka-junit]
+https://github.com/salesforce/kafka-junit
+, [Mayvenn embedded-kafka]
+https://github.com/Mayvenn/embedded-kafka
+, [embedded-kafka]
+https://github.com/embeddedkafka/embedded-kafka
+
+À regarder : [Apache Samza]
+http://samza.apache.org/learn/documentation/0.7.0/container/state-management.html
+
+Comment relire un enregistrement : avec le [``KafkaConsumer``]
+https://kafka.apache.org/21/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html#seek-org.apache.kafka.common.TopicPartition-long-
+

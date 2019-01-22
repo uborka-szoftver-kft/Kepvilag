@@ -1,0 +1,106 @@
+== Évolutions de runMacOSinVirtualBox
+
+- Délégation de la création de la VM.
+- Désactivation de l'application graphique.
+- Snapshot ? 
+
+<<
+I'd like to use your script as a git submodule in a project of mine. Submodules are great for opt-in upgrades. On the other hand I'd like to customize it in the following ways:
+- Disable graphical tracking application.
+- More creation parameters for the VM (Host-only network).
+
+For disabling graphical tracking application I guess that a parameter (defaulted to false) is enough.
+
+For VM creation you can't embed all VBoxManage features, so delegating to a custom script sounds OK. Would work like this: if name-of-the-script is defined then run it, and fail if absent; otherwise use current behavior.
+>>
+
+
+== MOE, suite
+
+Migeran fournit un [exemple complet]
+https://multi-os-engine.github.io/doc/multi-os-engine/9_game/1_libgdx/libgdx.html
+.
+
+Le [Gradle plugin]
+https://github.com/multi-os-engine/moe-plugin-gradle
+
+
+`MOE 1.3` date de début 2017. Un commentaire effrayant :
+
+<<
+`MOE 1.3` support `Xcode 8.x`. To support `Xcode 9.2`, use `MOE 1.4+`
+>>
+
+Super, la dernière version de Xcode est la 10. Au pire on fait tout à la main mais bon.
+
+Dans le [repo Maven]
+https://mvnrepository.com/artifact/org.multi-os-engine/moe-gradle?repo=springio-plugins-release
+on a une `2.0.0-alpha-1` qui date d'avril 2018.
+
+Sur le forum : "Is Multi Os Engine alive?"
+https://discuss.multi-os-engine.org/t/is-multi-os-engine-alive/1392
+
+
+[Au passage :]
+https://discuss.multi-os-engine.org/t/is-multi-os-engine-alive/1392/6
+
+<<
+personally, I think that Kotlin-Native (and `Kotlin.JS`) is a very ugly vendor (and language) lock-in. Basically, you are required to write your code in Kotlin, you have no access to the rest of the Java platform ... etc. I am going to provide an analysis of it, and why I think that MOE is a better and safer alternative to Kotlin-Native.
+>>
+
+[Encourageant :]
+https://discuss.multi-os-engine.org/t/is-multi-os-engine-alive/1392/37
+
+<<
+I'm using it in the following environment.
+
+- macOS `10.14`
+- Xcode `10.1`
+- moe-gradle `1.4.4`
+- iOS `11 ... 12.1.1`
+
+I think that Multi-OS Engine is alive.
+It is because there is a response from the staff.
+
+activity1
+activity2
+There are comparison object when using Java or Kotlin.
+
+RoboVM fork 9 (community-based)
+Kotlin`/`Native 4 (beta version, `java.* javax.*` cannot be used)
+SubstrateVM (under development) comment1 9 comment2 8
+>>
+
+
+=== On fait le [tuto]
+https://multi-os-engine.github.io/doc/multi-os-engine/9_game/1_libgdx/libgdx.html
+!
+
+<<<
+git clone https://github.com/libgdx/libgdx.git
+xcode-select --install
+brew install ant
+ant -f fetch.xml
+mvn install
+>>>
+
+
+
+== Racontages
+
+La reconstruction de LibGDX indiquée dans le tutoriel MOE télécharge tout un tas de binaires non-signés, non-versionnés, c'est la teuf.
+
+Tu m'étonnes qu'Unity ça ait du succès. 
+
+Le bonheur de la construction multiplateforme, c'est d'être un terrible bric-à-brac faisant de Gradle un choix logique pour bricoler comme un fou. 
+
+Ça me rappelle un membre de cette liste qui racontait que son frère faisait son propre vin. Comme un gros plouc j'ai imaginé le truc façon télé avec le gars qui renifle des arômes passionnants dans un rai lumière modorée descendue d'un soupirail.
+
+--- Oh ça doit être chouette.
+
+--- Mouais faut surtout aimer faire la vaisselle.
+
+Celui qui n'a jamais testé la construction multiplateforme s'imaginera peut-être jouer avec les cubes OpenGL avec des framerates pas dégueulasses et des palettes de couleur savamment choisies.
+
+--- Mouais il faut surtout aimer déboguer Gradle.
+
