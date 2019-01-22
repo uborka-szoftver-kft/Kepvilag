@@ -63,3 +63,73 @@ On veut entasser les projets expérimentaux donc :
 |   
 ...
 >>>
+
+
+== Où récupérer les morceaux
+
+<<<
+/Users/laurent/Projects/Clone/moe-samples-java/OpenGLBox/android
+/Users/laurent/Projects/Clone/moe-samples-java/OpenGLBox/ios
+/Users/laurent/Projects/Clone/julienvillegas/libgdx.info-Parallax/desktop
+/Users/laurent/Projects/Clone/julienvillegas/libgdx.info-Parallax/android
+/Users/laurent/Projects/Clone/julienvillegas/libgdx.info-Basic_Animation/desktop
+>>>
+
+Le nouveau projet est dans ``//code/bounce1``. On commence dans Android Studio avec 
+
+
+
+== Fecske mese
+
+Szeretnék írni égy grafikai alkalmazást a mobil platformoknak. 
+
+Ererdetileg azt hittem, hogy jó lenne egy rajzprogram, ami felveszi minden lépést a rajzolásban. Ez egy kis (vagy hosszú) videóvá válhat. 
+
+A szegény ember rajzfilm studióját akartam létre hozni; például jó lenne, ha változik a kamera szempontja, hogy legyen mozgás.
+
+Már sok időt töltöttem ennek a tervezésével. Nemrég rájöttem, hogy nem sikerülhet. Regen ismerem a
+[Sozi]
+http://sozi.baierouge.fr/pages/10-about.html
+kis alkalmazás, ami hozzáad animaciót egy állóképnek. Nagyon ügyes, nézd meg a animaciójukat! Változtatja a kamera szempontját egy vektor képre fordítással, forgatással, és zoommal. Ezzel biztosan izgalmas bemutatókat hozhatunk létre!
+
+Szeretem a "nagy kép" fogalmat. [Már ilyet csináltam.]
+https://start.hubzilla.org/photos/laurent/image/d0d4a4dd91558bfd26d4e49ac633674ddf3e6b50787b2ddcdcfb4f538a1c119d
+
+Ez már sok-sok munka volt, és ez a kép nem animált. De én hiszem el az animált kép hatalmában, különösen attól, hogy láttam RSA Animate bemutatójait.
+
+Ha nem ismered RSA Animate, nézd meg csak 10 percig ebből a videóból:
+https://youtu.be/BG46IwVfSu8
+A 10 perc 10 másodpercében van egy kicsinyítés és minden rajz darab egy nagy rajzzá válik. Ekkor okosabbnak érzed magad!
+
+Perce a rajzoló nagyon ügyes, és nagyon kevesen ilyen animaciót meg tudnak csinálni.
+
+Megtaláltam [az oldalt]
+http://sozi.wikidot.com/presentations
+, ami ajánl a legjobb Sozinak köszönhetően csinált bemutatókat. 
+A legjobb az [Einstein Teleszkópjaé]
+http://www.gwoptics.org/research/et/layout/ET_layout_02.svg
+ami egyáltalán nem lélegzetelállító.
+
+Mi a baj a Sozival? A szoftver nagyon jó, de az ember nem tud használni megfelelően.
+
+Franciaországban a fiatal építészmernőköknek alig `10 %-a` tud magyarázni egy technikai tárgyat helyes mondatokat. 
+
+Kevesebben tudnak rajzolni egy diagramot. 
+
+És képzeld el, az animació sokkal nehezbb a diagram rajzolásnál.
+
+Egy kis animació szoftverrel, mint Sozi, buta animaciót létre fognak hozni, és mindenkinek tengeri beteg lesz. Ez nem segít.
+
+Ennek van egy valószínű következménye: az egyszerű animació alkalmazás mindenkinek nem létezik. 
+
+Sőt azok, akik képesek animaciót létre hozni, elboldogulnak animaciószoftver nélkül.
+
+Nézd meg, mit csinál [AgentXPQ]
+https://www.youtube.com/agentxpq
+. Neki nem kell egy 10-millió animació studió!
+
+Nekem van kedvem valami animaciószoftvert létre hozni, és olyan jó animaciót csinálni, mint az RSA, és pénzt kérni érte. Esetleg az is szeretném, hogy legyen népszerű a képregény Magyarorszagon a felnőttnek. 
+
+Van ötletem róla.
+
+

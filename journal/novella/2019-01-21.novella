@@ -407,3 +407,69 @@ J'allais écrire : "Gradle quelle désolation !" Pour éviter d'être grossier. 
 
 Bazel me plait de plus en plus, les mecs basent toutes les extensions sur un langage impératif super-confiné (Starlark). Ils disent : "Constuire un livrable ne doit présenter aucun risque." On ne peut pas régler tous les problèmes d'un coup, d'abord faire marcher les exemples MOE avec un minimum de changements.
 
+
+
+
+== Képek
+
+Mit csinál RSA Animate? A nagy kép nem csak egy kereket nélküli képregény. Van szerkesztés.
+
+./2019-01-21/ChangingEducationParadigms.png
+
+
+
+Főleg fecskékről lesz szó, akik egy vonalon állnak:
+
+./2019-01-21/fecske-1.jpg
+
+Itt van egy háttér nélküli vonal, de nagyon lineáris, és nem lehet sok érdekeset rajzolni.
+
+./2019-01-21/vonal-1.jpg
+
+Az átlagos pilon nem túl nehéz rajzolni :
+
+./2019-01-21/pilon-1.jpg
+
+Egyszerű házok jó háttér lehetnek:
+
+./2019-01-21/hazak-1.jpg
+
+A bal oldali pilon az átlagos trolley pilon. A jobb oldali található a Margit hídon.
+
+./2019-01-21/pilon-2.jpg
+
+Szép állólámpa a Bartok Bela útban:
+
+./2019-01-21/pilon-3.jpg
+
+
+A tetőkön biztosan találhatók a fecskék.
+
+./2019-01-21/teto-1.jpg
+
+
+A közlekedési lámpáknak köszönhetően sok a vonalok:
+
+./2019-01-21/lampa-1.jpg
+
+./2019-01-21/lampa-2.jpg
+
+
+Itt van néhány kis város darab. A villámos lehet animaciós.
+
+./2019-01-21/varos-1.jpg
+
+A vonaloknak lehet egy háttérük. De csak egy jelenletre működik.
+
+./2019-01-21/varos-2.jpg
+
+
+Egy vonal csak egy jelenethez tartozhat. Ha több van, csak hibásnak tűnik. 
+
+./2019-01-21/varos-3.jpg
+
+
+Meg van a megoldás: nem rajzoljuk az épületek alapját, hogy ne legyen háttérük a vonaloknak. Az ereklyeket rajzoljuk az epületekre.
+
+./2019-01-21/vonal-2.jpg
+
