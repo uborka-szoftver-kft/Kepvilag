@@ -65,6 +65,8 @@ On veut entasser les projets expérimentaux donc :
 >>>
 
 
+== Création projet-modèle "Hello1"
+
 == Où récupérer les morceaux
 
 <<<
@@ -75,8 +77,177 @@ On veut entasser les projets expérimentaux donc :
 /Users/laurent/Projects/Clone/julienvillegas/libgdx.info-Basic_Animation/desktop
 >>>
 
-Le nouveau projet est dans ``//code/bounce1``. On commence dans Android Studio avec 
 
+=== Création en tant que projet "Multi-OS Engine, Kotlin"
+
+Le nouveau projet est dans ``//code/hello1``. On commence dans Android Studio avec un projet "Multi-OS Engine, Kotlin, Single View Application".
+
+Intéressant, il utilise :
+- `gradle-4.5.1`
+- `moe-sdk-1.4.2`
+- `kotlin-stdlib-1.0.6`
+- `kotlin-gradle-plugin-1.0.6`
+
+Mais ça ne fonctionne pas.
+
+
+=== On utilise le générateur de projets de libGDX
+
+<<<
+cd ~/Projects/Clone/libgdx/extensions/gdx-setup
+ant
+java -jar 
+>>>
+
+./2019-01-22/libGdxProjectSetup.png
+
+<<<
+Generating app in /Users/laurent/Projects/kepvilag/code/hello1
+Executing '/Users/laurent/Projects/kepvilag/code/hello1/gradlew clean --no-daemon idea'
+Downloading https://services.gradle.org/distributions/gradle-4.6-bin.zip
+Unzipping /Users/laurent/.gradle/wrapper/dists/gradle-4.6-bin/4jp4stjndanmxuerzfseyb6wo/gradle-4.6-bin.zip to /Users/laurent/.gradle/wrapper/dists/gradle-4.6-bin/4jp4stjndanmxuerzfseyb6wo
+Set executable permissions for: /Users/laurent/.gradle/wrapper/dists/gradle-4.6-bin/4jp4stjndanmxuerzfseyb6wo/gradle-4.6/bin/gradle
+To honour the JVM settings for this build a new JVM will be forked. Please consider using the daemon: https://docs.gradle.org/4.6/userguide/gradle_daemon.html.
+Daemon will be stopped at the end of the build stopping after processing
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-gradle-plugin/2.3.5/robovm-gradle-plugin-2.3.5.pom
+Download https://plugins.gradle.org/m2/org/multi-os-engine/moe-gradle/1.4.0/moe-gradle-1.4.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle/3.2.0/gradle-3.2.0.pom
+Download https://dl.google.com/dl/android/maven2/androidx/databinding/databinding-compiler-common/3.2.0/databinding-compiler-common-3.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/builder/3.2.0/builder-3.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/analytics-library/shared/26.2.0/shared-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/analytics-library/crash/26.2.0/crash-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint-gradle-api/26.2.0/lint-gradle-api-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle-api/3.2.0/gradle-api-3.2.0.pom
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-debugger/2.3.5/robovm-debugger-2.3.5.pom
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-dist-compiler/2.3.5/robovm-dist-compiler-2.3.5.pom
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-dist-parent/2.3.5/robovm-dist-parent-2.3.5.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/sdklib/26.2.0/sdklib-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/analytics-library/tracker/26.2.0/tracker-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/ddms/ddmlib/26.2.0/ddmlib-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/builder-test-api/3.2.0/builder-test-api-3.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/manifest-merger/26.2.0/manifest-merger-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/analytics-library/protos/26.2.0/protos-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/builder-model/3.2.0/builder-model-3.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/common/26.2.0/common-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/apksig/3.2.0/apksig-3.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/apkzlib/3.2.0/apkzlib-3.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/sdk-common/26.2.0/sdk-common-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/annotations/26.2.0/annotations-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/databinding/baseLibrary/3.2.0/baseLibrary-3.2.0.pom
+Download https://dl.google.com/dl/android/maven2/androidx/databinding/databinding-common/3.2.0/databinding-common-3.2.0.pom
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-compiler/2.3.5/robovm-compiler-2.3.5.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-api/26.2.0/layoutlib-api-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/dvlib/26.2.0/dvlib-26.2.0.pom
+Download https://dl.google.com/dl/android/maven2/com/android/tools/repository/26.2.0/repository-26.2.0.pom
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-libimobiledevice/2.3.5/robovm-libimobiledevice-2.3.5.pom
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-llvm/2.3.5/robovm-llvm-2.3.5.pom
+Download https://repo.maven.apache.org/maven2/org/apache/commons/commons-exec/1.0.1/commons-exec-1.0.1.pom
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-soot/2.5.0-5/robovm-soot-2.5.0-5.pom
+Download https://repo.maven.apache.org/maven2/org/simpleframework/simple-xml/2.7/simple-xml-2.7.pom
+Download https://repo.maven.apache.org/maven2/org/ow2/asm/asm-debug-all/5.0.3/asm-debug-all-5.0.3.pom
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-gradle-plugin/2.3.5/robovm-gradle-plugin-2.3.5.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle/3.2.0/gradle-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/analytics-library/tracker/26.2.0/tracker-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/analytics-library/crash/26.2.0/crash-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/analytics-library/shared/26.2.0/shared-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/builder/3.2.0/builder-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/gradle-api/3.2.0/gradle-api-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/manifest-merger/26.2.0/manifest-merger-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/androidx/databinding/databinding-compiler-common/3.2.0/databinding-compiler-common-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/sdk-common/26.2.0/sdk-common-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/builder-test-api/3.2.0/builder-test-api-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/sdklib/26.2.0/sdklib-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/layoutlib/layoutlib-api/26.2.0/layoutlib-api-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/ddms/ddmlib/26.2.0/ddmlib-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/repository/26.2.0/repository-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/dvlib/26.2.0/dvlib-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/common/26.2.0/common-26.2.0.jar
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-debugger/2.3.5/robovm-debugger-2.3.5.jar
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-dist-compiler/2.3.5/robovm-dist-compiler-2.3.5.jar
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-compiler/2.3.5/robovm-compiler-2.3.5.jar
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-libimobiledevice/2.3.5/robovm-libimobiledevice-2.3.5.jar
+Download https://plugins.gradle.org/m2/org/multi-os-engine/moe-gradle/1.4.0/moe-gradle-1.4.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/builder-model/3.2.0/builder-model-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/analytics-library/protos/26.2.0/protos-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/apkzlib/3.2.0/apkzlib-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/build/apksig/3.2.0/apksig-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/annotations/26.2.0/annotations-26.2.0.jar
+Download https://dl.google.com/dl/android/maven2/androidx/databinding/databinding-common/3.2.0/databinding-common-3.2.0.jar
+Download https://dl.google.com/dl/android/maven2/com/android/databinding/baseLibrary/3.2.0/baseLibrary-3.2.0.jar
+Download https://repo.maven.apache.org/maven2/org/apache/commons/commons-exec/1.0.1/commons-exec-1.0.1.jar
+Download https://repo.maven.apache.org/maven2/org/simpleframework/simple-xml/2.7/simple-xml-2.7.jar
+Download https://repo.maven.apache.org/maven2/org/ow2/asm/asm-debug-all/5.0.3/asm-debug-all-5.0.3.jar
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-llvm/2.3.5/robovm-llvm-2.3.5.jar
+Download https://repo.maven.apache.org/maven2/com/mobidevelop/robovm/robovm-soot/2.5.0-5/robovm-soot-2.5.0-5.jar
+Download https://dl.google.com/dl/android/maven2/com/android/tools/lint/lint-gradle-api/26.2.0/lint-gradle-api-26.2.0.jar
+WARNING: Configuration 'compile' is obsolete and has been replaced with 'implementation' and 'api'.
+It will be removed at the end of 2018. For more information see: http://d.android.com/r/tools/update-dependency-configurations.html
+Download https://dl.bintray.com/multi-os-engine/maven/org/multi-os-engine/moe-sdk/1.4.0/moe-sdk-1.4.0.pom
+Download https://dl.bintray.com/multi-os-engine/maven/org/multi-os-engine/moe-sdk/1.4.0/moe-sdk-1.4.0.zip
+Installing MOE SDK (1.4.0), this may take a few minutes...
+:android:clean UP-TO-DATE
+:core:clean UP-TO-DATE
+:desktop:clean UP-TO-DATE
+:ios:clean UP-TO-DATE
+:ios-moe:clean
+:ideaModule
+:ideaProject
+:ideaWorkspace
+:idea
+:android:ideaModule
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-freetype/1.9.9/gdx-freetype-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-android/1.9.9/gdx-backend-android-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-parent/1.9.9/gdx-parent-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx/1.9.9/gdx-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-freetype/1.9.9/gdx-freetype-1.9.9.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx/1.9.9/gdx-1.9.9.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-android/1.9.9/gdx-backend-android-1.9.9.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-android/1.9.9/gdx-backend-android-1.9.9-sources.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-freetype/1.9.9/gdx-freetype-1.9.9-sources.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx/1.9.9/gdx-1.9.9-sources.jar
+:android:idea
+:core:ideaModule
+:core:idea
+:desktop:ideaModule
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-platform/1.9.9/gdx-platform-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-lwjgl/1.9.9/gdx-backend-lwjgl-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-freetype-platform/1.9.9/gdx-freetype-platform-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-lwjgl/1.9.9/gdx-backend-lwjgl-1.9.9.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-platform/1.9.9/gdx-platform-1.9.9-natives-desktop.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-freetype-platform/1.9.9/gdx-freetype-platform-1.9.9-natives-desktop.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-lwjgl/1.9.9/gdx-backend-lwjgl-1.9.9-sources.jar
+:desktop:idea
+:ios:ideaModule
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-robovm/1.9.9/gdx-backend-robovm-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-robovm/1.9.9/gdx-backend-robovm-1.9.9.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-platform/1.9.9/gdx-platform-1.9.9-natives-ios.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-freetype-platform/1.9.9/gdx-freetype-platform-1.9.9-natives-ios.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-robovm/1.9.9/gdx-backend-robovm-1.9.9-sources.jar
+:ios:idea
+:ios-moe:ideaModule
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-moe/1.9.9/gdx-backend-moe-1.9.9.pom
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-moe/1.9.9/gdx-backend-moe-1.9.9.jar
+Download https://repo.maven.apache.org/maven2/com/badlogicgames/gdx/gdx-backend-moe/1.9.9/gdx-backend-moe-1.9.9-sources.jar
+:ios-moe:idea
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 5.0.
+See https://docs.gradle.org/4.6/userguide/command_line_interface.html#sec:command_line_warnings
+
+BUILD SUCCESSFUL in 2m 0s
+13 actionable tasks: 9 executed, 4 up-to-date
+Done!
+To import in Eclipse: File -> Import -> General -> Existing Projects into Workspace
+To import to Intellij IDEA: File -> Open -> YourProject.ipr
+
+>>>
+
+Après on ouvre le répertoire `hello1` dans Android Studio et on accepte la suggesion de mise à jour de la structure du projet.
+
+
+Par contre il y a une couille avec la synchronisation Gradle. C'est la version de Kotlin `1.2.71` qui n'est pas supportée par le plugin Gradle qui veut au moins du `1.3.0`. On ne vire pas le plugin Eclipse tout de suite.
+- Ça démarre dans un AVD.
+- Ça démarre en tant que Desktop (avec ``android/assets`` comme répertoire de travail).
+Pour iOS il manque les projets xCode.
 
 
 == Fecske mese
