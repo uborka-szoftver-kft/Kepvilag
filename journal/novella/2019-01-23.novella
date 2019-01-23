@@ -1,1 +1,189 @@
-==
+
+
+
+== Trouvailles
+
+=== Notification de l'affichage du logo
+
+"How-to do heavy background processes on LibGDX, while showing a splash screen"
+http://duckseason.mobi/heavy-background-processes-libgdxwhile-showing-splash-screen/
+montre comment effectuer une initialisation après l'affichage d'un logo. En gros on ajoute une [``RunnableAction``]
+https://libgdx.badlogicgames.com/ci/nightlies/docs/api/com/badlogic/gdx/scenes/scene2d/actions/RunnableAction.html
+au ``Stage`` du ``LogoScreen``. 
+
+Il n'y a pas vraiment d'arrière-plan, l'initialisation se fait dans le thread OpenGL (pour être compatible avec le JavaScript). Le truc consiste surtout à se brancher sur l'apparition de l'écran qui affiche le logo.
+
+
+=== Généralités sur le multithreading
+
+[``Application#postRunnable(Runnable)``]
+https://github.com/libgdx/libgdx/blob/master/gdx/src/com/badlogic/gdx/Application.java#173
+est l'équivalent du ``SwingUtilities#invokeLater``.
+
+=== GameFromScratch
+
+Un blog avec un "fil libGDX"
+https://www.gamefromscratch.com/?tag=/LibGDX
+. On y découvre l'existence de BDX, l'intégration de libGDX à Blender. Il y a aussi un "tutoriel libGDX"
+https://www.gamefromscratch.com/page/LibGDX-Tutorial-series.aspx
+.
+
+
+
+=== Rendu hors-écran
+
+On a le [``FrameBuffer``]
+https://libgdx.badlogicgames.com/ci/nightlies/docs/api/com/badlogic/gdx/graphics/glutils/FrameBuffer.html
+mais il semble qu'il utilise le contexte OpenGL de l'affichage.
+
+Bon article : "FrameBufferObjects"
+https://github.com/mattdesl/lwjgl-basics/wiki/FrameBufferObjects
+. 
+
+Voir également : "LibGDX-Textures"
+https://github.com/mattdesl/lwjgl-basics/wiki/LibGDX-Textures
+. On apprend que :
+
+<<
+We use ``Pixmap`` for handling image data on the CPU, aka "in software." We use ``Texture`` for handling the image data on GPU, aka "in hardware." [...] If you don't need to render your image to the screen, then there may be no need to use a Texture object. Instead, a simple Pixmap may do the trick.
+>>
+
+
+== RoboVM
+
+Le projet ``ios`` n'a pas été committé, ça aurait sûrement fait planter la construction d'un projet fraîchement restauré à partir de git.
+
+Un coup de Gradle ``ios:robovmInstall`` produit l'erreur suivante : 
+
+<<<
+Caused by: java.lang.IllegalArgumentException: No provisioning profile and signing identity found that matches bundle ID 'io.github.uborkaszoftverkft'
+>>>
+
+Remède probablement bien expliqué : "RoboVM can't see iosProvisioningProfile".
+
+Le "free provisioning"
+http://robovm.mobidevelop.com/docs/en/getting-started/provisioning.html
+simplifie certainement certaines procédures documentées.
+
+
+=== Procédure 
+
+D'après [outofcoffee]
+https://stackoverflow.com/a/24499775/1923328
+:
+
+<<
+First, some prerequisites:
+
+- Open Xcode, go to Preferences `>` Accounts.
+- Make sure you have added your Apple ID to the list of accounts.
+- Once done, click "View Details".
+- Ensure you have an iOS Development and iOS Distribution signing identity (if not, add using the plus button).
+- Press the refresh button.
+>>
+
+Identité : ``uborka.szoftver.kft@gmail.com``.
+
+<<
+To obtain the name of the provisioning profile, see the bottom list of provisioning profiles. The one whose name you use must be a provisioning profile for App Store distribution, and it must be associated with a certificate in the member portal that is for app distribution. This certificate must also be the one you use to sign your IPA.
+
+In my case, I created this provisioning profile in the member portal, and named it something like:
+
+<<<
+MyApp Distribution Provisioning Profile
+>>>
+
+To obtain the name of the signing identity, open the Keychain Access app on your Mac and, under Certificates, look for a certificate named like this:
+
+<<<
+iPhone Distribution: My Company Name (ABC3214QFD)
+>>>
+
+Note, in order to use this certificate you must have an associated private key on your Mac. You should see this in Keychain Access, as an expandable row under the corresponding certificate.
+>>
+
+Euh, ça suppose qu'on ait un compte développeur.
+
+
+=== Conclusion 
+
+Si on peut s'en passer pour l'instant c'est tant mieux. Le truc ça pourrait être de committer les fichiers générés pour les virer juste après.
+
+
+
+== Utilisation de ``ios-moe`` dans la Run Configuration d'Android Studio
+
+Après un ``clean``, on lance à tout hasard :
+
+<<<
+./gradlew moeUpdateXcodeSettings
+>>>
+
+Après on modifie la Run Configuration de ``ios-moe`` pour que l'appareil soit le "First available". Pas de bol :
+
+<<<
+* What went wrong:
+Execution failed for task ':ios-moe:moeMainDebugIphoneosXcodeBuild'.
+> Task failed, you can find the log file here: /Users/laurent/Projects/Kepvilag/code/hello1/ios-moe/build/moe/xcodebuild/XcodeBuild-main-debug-iphoneos.log
+>>>
+
+Contenu du log :
+
+<<<
+xcrun: error: unable to find utility "xcodebuild", not a developer tool or in PATH
+>>>
+
+Par contre à partir de Xcode ça fonctionne toujours.
+
+
+== Mystère de la version de MOE qui réapparaît en `1.4.2`
+
+...Après qu'on ait mis du `1.4.4` partout à la main.
+
+<<<
+$ ./gradlew clean
+
+> Configure project :
+WARNING: Configuration 'compile' is obsolete and has been replaced with 'implementation' and 'api'.
+It will be removed at the end of 2018. For more information see: http://d.android.com/r/tools/update-dependency-configurations.html
+Using already downloaded SDK: /Users/laurent/.moe/moe-sdk-1.4.2
+>>>
+
+Si on regarde la [dernière version officielle]
+https://libgdx.badlogicgames.com/libgdx-site/service/getVersions?release=false
+:
+
+<<<
+{
+  "success":true,
+  "message":"Completed",
+  "release":true,
+  "libgdxRelease":"1.9.9",
+  "libgdxSnapshot":"1.9.10-SNAPSHOT",
+  "robovmVersion":"2.3.5",
+  "robovmPluginVersion":"2.3.5",
+  "androidBuildtoolsVersion":"28.0.3",
+  "androidSDKVersion":"27",
+  "androidGradleToolVersion":"3.2.0",
+  "gwtVersion":"2.8.0",
+  "gwtPluginVersion":"1.0.6"
+}
+>>>
+
+Cela dit c'est peut-être normal, vu que la `1.4.4` n'existe ni sur [Bintray]
+https://bintray.com/multi-os-engine/maven/moe-sdk
+ni sur [MvnRepository]
+https://mvnrepository.com/artifact/org.multi-os-engine/moe-sdk
+.
+
+C'est le [``moe-gradle`` qui existe en `1.4.4`]
+https://mvnrepository.com/artifact/org.multi-os-engine/moe-gradle?repo=multi-os-engine
+.
+
+
+
+== Racontars
+
+La pile Gradle-Xcode-Android Studio c'est horrible, on change une propriété quelque part et comme il n'y a rien de super-clair pour tout régénerer ça se finit avec un "Find in path" dans Textmate.
+
+Dans les cibles Gradle on voit un ``moeSDKProperties`` ou un ``moeXcodeProperties`` mais c'est la misère.
