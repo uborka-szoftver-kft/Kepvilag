@@ -110,3 +110,8 @@ Euh, ça suppose qu'on ait un compte développeur.
 Si on peut s'en passer pour l'instant c'est tant mieux. Le truc ça pourrait être de committer les fichiers générés pour les virer juste après.
 
 
+== Racontars
+
+La pile Gradle-Xcode-Android Studio c'est horrible, on change une propriété quelque part et comme il n'y a rien de super-clair pour tout régénerer ça se finit avec un "Find in path" dans Textmate.
+
+Dans les cibles Gradle on voit un ``moeSDKProperties`` ou un ``moeXcodeProperties`` mais c'est la misère.
