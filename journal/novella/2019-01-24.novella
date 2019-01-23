@@ -136,6 +136,51 @@ xcrun: error: unable to find utility "xcodebuild", not a developer tool or in PA
 Par contre à partir de Xcode ça fonctionne toujours.
 
 
+== Mystère de la version de MOE qui réapparaît en `1.4.2`
+
+...Après qu'on ait mis du `1.4.4` partout à la main.
+
+<<<
+$ ./gradlew clean
+
+> Configure project :
+WARNING: Configuration 'compile' is obsolete and has been replaced with 'implementation' and 'api'.
+It will be removed at the end of 2018. For more information see: http://d.android.com/r/tools/update-dependency-configurations.html
+Using already downloaded SDK: /Users/laurent/.moe/moe-sdk-1.4.2
+>>>
+
+Si on regarde la [dernière version officielle]
+https://libgdx.badlogicgames.com/libgdx-site/service/getVersions?release=false
+:
+
+<<<
+{
+  "success":true,
+  "message":"Completed",
+  "release":true,
+  "libgdxRelease":"1.9.9",
+  "libgdxSnapshot":"1.9.10-SNAPSHOT",
+  "robovmVersion":"2.3.5",
+  "robovmPluginVersion":"2.3.5",
+  "androidBuildtoolsVersion":"28.0.3",
+  "androidSDKVersion":"27",
+  "androidGradleToolVersion":"3.2.0",
+  "gwtVersion":"2.8.0",
+  "gwtPluginVersion":"1.0.6"
+}
+>>>
+
+Cela dit c'est peut-être normal, vu que la `1.4.4` n'existe ni sur [Bintray]
+https://bintray.com/multi-os-engine/maven/moe-sdk
+ni sur [MvnRepository]
+https://mvnrepository.com/artifact/org.multi-os-engine/moe-sdk
+.
+
+C'est le [``moe-gradle`` qui existe en `1.4.4`]
+https://mvnrepository.com/artifact/org.multi-os-engine/moe-gradle?repo=multi-os-engine
+.
+
+
 
 == Racontars
 
