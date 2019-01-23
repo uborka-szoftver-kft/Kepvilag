@@ -110,6 +110,33 @@ Euh, ça suppose qu'on ait un compte développeur.
 Si on peut s'en passer pour l'instant c'est tant mieux. Le truc ça pourrait être de committer les fichiers générés pour les virer juste après.
 
 
+
+== Utilisation de ``ios-moe`` dans la Run Configuration d'Android Studio
+
+Après un ``clean``, on lance à tout hasard :
+
+<<<
+./gradlew moeUpdateXcodeSettings
+>>>
+
+Après on modifie la Run Configuration de ``ios-moe`` pour que l'appareil soit le "First available". Pas de bol :
+
+<<<
+* What went wrong:
+Execution failed for task ':ios-moe:moeMainDebugIphoneosXcodeBuild'.
+> Task failed, you can find the log file here: /Users/laurent/Projects/Kepvilag/code/hello1/ios-moe/build/moe/xcodebuild/XcodeBuild-main-debug-iphoneos.log
+>>>
+
+Contenu du log :
+
+<<<
+xcrun: error: unable to find utility "xcodebuild", not a developer tool or in PATH
+>>>
+
+Par contre à partir de Xcode ça fonctionne toujours.
+
+
+
 == Racontars
 
 La pile Gradle-Xcode-Android Studio c'est horrible, on change une propriété quelque part et comme il n'y a rien de super-clair pour tout régénerer ça se finit avec un "Find in path" dans Textmate.
