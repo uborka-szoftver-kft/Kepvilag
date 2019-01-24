@@ -160,7 +160,24 @@ https://stackoverflow.com/questions/31495010/how-to-zoom-in-and-out-on-a-stage-i
 Ça fonctionne et on peut même greffer le mouvement de caméra sur une ``Action``.
 
 
+== Prototypage
 
+Mais qu'est-ce qu'on veut comme mouvements de caméra ? Pour le prototypage libGDX bof bof.
 
+Synfig c'est beaucoup mieux. On peut étudier la séquence suivante :
+- Plan fixe sur les 2 hirondelles vues de près. (L'atterrissage ça serait mieux, voire trop ?)
+- La caméra monte avec un zoom arrière, dévoile le bâtiment.
+- Pas de parallaxe.
+- Pas de fondu.
 
     
+    
+== Hirondelles
+
+[Atterrissage au ralenti]
+https://youtu.be/FoCMiRNksQ0
+vu de face. Bien. Contrairement au moineau l'hirondelle bat très peu des ailes à l'atterrissage.
+
+[De profil]    
+https://youtu.be/nTbB6u4O6qs
+.
