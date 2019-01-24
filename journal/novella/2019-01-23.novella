@@ -49,6 +49,16 @@ We use ``Pixmap`` for handling image data on the CPU, aka "in software." We use 
 >>
 
 
+== Histoire de libGDX
+
+https://www.badlogicgames.com/wordpress/?p=3412
+
+
+== Changement d'écrans
+
+http://williammora.com/a-running-game-with-libgdx-part-1
+
+
 == RoboVM
 
 Le projet ``ios`` n'a pas été committé, ça aurait sûrement fait planter la construction d'un projet fraîchement restauré à partir de git.

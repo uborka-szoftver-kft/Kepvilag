@@ -1,1 +1,132 @@
-==
+
+== Trouvailles
+
+=== Faire comme RSA Animate
+
+"How can I record my sketches like RSA Animate?"
+https://www.quora.com/How-can-I-record-my-sketches-like-RSA-Animate
+
+
+Le commentaire "Hmm...maybe a behind the scenes video of a pro doing it might help?" fournit un lien vers la vidéo [PCG Behind the scenes]
+https://youtu.be/z4lHaxoh4QA
+qui montre de nombreux détails passionnants. Le prestataire est [Explanimate]
+https://www.explanimate.com.au
+.
+
+Intéressant, le lien vers [Academic Presenter]
+http://academicpresenter.com/web.faces?page=pap
+qui montre qu'il y a plus de gens pour écrire ce genre de logiciel que pour l'utliliser.
+
+
+On a aussi [Animatron]
+https://www.animatron.com/studio
+avec une [présentation marrante.]
+https://youtu.be/5tJw3E7qrd4
+
+
+== Imprimeurs à Budapest
+
+=== Dekortár
+
+Chez [Dekortár:]
+https://www.dekortar.hu/plakat-nyomtatas
+
+<<
+Fotóminőségű plakát nyomtatás
+A kívánt plakát lehet egyedi méretű maximális nyomtatható felbontás 1440dpi 161cm szélességben. 
+
+Fotóminőségű poszter `/` plakát nyomtatás:
+
+** B0 poszter (1000mm «times» 1400mm) 6300 Ft **
+
+A0 poszter (841mm «times» 1189mm) 4500 Ft
+>>
+
+Avec la TVA ça fait ** `8.000 Ft TTC` (27 «euro») pour un poster B0 à `1440 dpi` **.
+
+
+=== Printmax
+
+Chez [Printmax:]
+http://www.printmax.hu/hu/page/plakat-nyomtatas
+
+<<
+Gépeink az EPSON SC 7200 110cm szélességig nyomtatnak akár 10 méter hosszban.
+
+Poszter nyomtatás felbontás: maximum felbontás 2880dpi (fotópapírra nyomtatva).
+
+180 grammos fényes papírra 5900 Ft`/`m^2
+
+180 grammos matt papírra 5400 Ft`/`m^2
+>>
+
+Avec le B0 qui fait `1,4` m^2 ça nous fait ** `8.260 Ft HT` (`27,5 «euro»`) ** sans le port. 
+
+La TVA standard est de `27 %` donc on atteint les ** `10.500 Ft` (35 «euro») pour un poster B0 en 2880dpi **
+
+
+== Applications payantes
+
+=== Android 
+
+[Supported locations for distribution to Google Play users]
+https://support.google.com/googleplay/android-developer/table/3541286
+
+<<
+EUR .50 -- 350.00 -_
+
+HUF 125.00 -- 133,700.00 -_
+>>
+
+
+=== AppStore
+
+Pour Apple on découvre l'[App Store Pricing Matrix]
+https://itunespartner.apple.com/assets/downloads/AppsPricingSchedule_January2018.pdf
+
+
+<<
+Tier 87, 1000.00 CHF
+>>
+
+Donc environ 885 «euro». Une [autre source non datée]
+http://blog.presspadapp.com/how-does-the-system-of-tiers-work-in-apple/
+
+situe le Tier 87 en Hongrie à 550 «euro».
+
+
+=== Conclusion
+
+Ça nous fait une ** limite haute du prix TTC à 350 «euro» **.
+
+
+
+== Simulation économique
+
+Impression :
+
+|          | Felbontás (dpi) | B0 HT   | B0 HT          |   
+| Dekortár | 1440            | 8820 Ft | `29,5`  «euro» |
+| Printmax | 2880 (fényes)   | 5900 Ft | `23,00` «euro» |
+
+
+Pour un prix public arbitrairement fixé à `100 «euro»` :
+
+|             | Part du prix de vente |
+| TVA         | `27 %` | 
+| Éditeur     | `40 %` |
+| Imprimeur   | `23 %` |
+| Port        | `10 %` |
+
+|             | Part du revenu | Pour `40 «euro»` |
+| Éditeur     | `60 %`         | `24 «euro»`      |
+| Scénariste  | `20 %`         | `8 «euro»`       |
+| Dessinateur | `20 %`         | `8 «euro»`       |
+
+
+
+== L'exercice du jour
+
+- Affichage d'un sprite.
+- Zoom arrière.
+- Le zoom arrière intègre l'entrée dans le champ d'un autre sprite.
