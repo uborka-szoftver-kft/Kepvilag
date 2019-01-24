@@ -130,3 +130,37 @@ Pour un prix public arbitrairement fixé à `100 «euro»` :
 - Affichage d'un sprite.
 - Zoom arrière.
 - Le zoom arrière intègre l'entrée dans le champ d'un autre sprite.
+
+
+
+== LibGDX : caméra orthographique
+
+
+https://stackoverflow.com/questions/31495010/how-to-zoom-in-and-out-on-a-stage-in-libgdx-scene2d
+
+<<<
+    public Stage () {
+        this( 
+            new ScalingViewport(
+                Scaling.stretch, 
+                Gdx.graphics.getWidth(), 
+                Gdx.graphics.getHeight(), 
+                new OrthographicCamera()
+            ),
+            new SpriteBatch()
+        ) ;
+        ownsBatch = true;
+    }
+>>>
+
+<<<
+( ( OrthographicCamera)stage.getCamera() ).zoom += 0.02f ;
+>>>
+
+Ça fonctionne et on peut même greffer le mouvement de caméra sur une ``Action``.
+
+
+
+
+
+    
