@@ -29,7 +29,7 @@ Idéalement :
 L'animation des phylactères doit être programmatique donc on peut mettre la dose.
 
 Comment animer les bulles ? [Le plus simple]
-https://youtu.be/_5a9yR3gsXE
+https://youtu.be/_5a9yR3gsXE?t=930
 c'est une bulle à la fois. La bulle "sort" du locuteur en grossissant très brièvement. Elle disparaît et on ménage un intervalle sans aucune bulle affichée. Durant la phase de grossissement le texte est "yaourté" avec de vagues traits qui épargnent une tentative de lecture.
 
 Avec Synfig, on devrait s'en sortir comme suit :
