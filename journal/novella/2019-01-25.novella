@@ -45,7 +45,9 @@ Avec Synfig, on devrait s'en sortir comme suit :
 
 Le [truc] 
 https://wiki.synfig.org/Doc:Reuse_Animations
-consiste à exporter le Canvas de ``Dialog 1`` (il faut un nom différent genre ``Dialog1``). Après on le voit dans le Canvas browser.
+consiste à exporter le Canvas de ``Dialog 1`` (il faut un nom différent genre ``Dialog1``). Après on le voit dans le Canvas browser. Sauf que ça marche pas.
+
+Les bulles vectorielles ça tue le dessin au trait. En mixant avec une image bruitée ?
 
 
 
@@ -56,7 +58,7 @@ consiste à exporter le Canvas de ``Dialog 1`` (il faut un nom différent genre 
 L'ajout de la couleur doit faire l'objet d'un dévoilement progressif. Mais on peut s'en passer durant une première phase de maquettage.
 
 
-== Issue 542
+== Synfig : Issue 542
 
 "Add keyframe on a exported canvas"
 https://github.com/synfig/synfig/issues/542
@@ -84,7 +86,39 @@ Timeline doesn't show. "Add New Keyframe" button is disabled.
 >>
 
 
+== Le rendu avec Synfig
 
+Rien ne fonctionne à part le YUV, que peut ouvrir VLC directement. Seul inconvénient : des gros fichiers.
+
+Quelqu'un [suggère]
+https://forums.synfig.org/t/how-do-you-export-your-animations/1252/4
+d'utiliser ffmpeg pour recoder (en quoi ?) :
+
+<<<
+ffmpeg -i <animation-file-name>.yuv -sameq <animation-file-name>.avi
+>>>
+
+
+== Synfig : réutilisation de Canvas
+
+"Reusing animation without copying every single waypoint"
+https://forums.synfig.org/t/reusing-animation-whitout-copying-every-single-waypoint/3033/4
+
+<<
+- put all the objects to be re-used in a group.
+- at the beginning of the time line, ensure the "Time Offset" parameter for
+that group has a waypoint setting it to 0.
+- move to the point in the time line where the animation is to be repeated
+- give the "Time offset" parameter a negative value equal to the difference
+between the current time point, and the time point where the animation originally began
+- ensure the wayponit created when the "Time offset" was modified is set to "constant in".
+
+For example:
+Say the animation originally begins at 20s and lasts until 30s. Animation is to
+be repeated at the 45s mark and run until 65s. At the 45s mark set the
+"Time Offset" parameter to the negative value of the `current time (=45s)` `- original start time (=20s)` `=> -25s`. So that at the 45s mark, the group
+will think the time is `45-25 = 20s` and will start all over again.
+>>
 
 
 == Racontars
@@ -93,3 +127,6 @@ Timeline doesn't show. "Add New Keyframe" button is disabled.
 
 Synfig est également un outil de dessin vectoriel hors-pair. Il supporte l'édition de l'épaisseur du trait. C'est à dire qu'une figure fermée avec un contour et une couleur de remplissage est faite de deux figures fermées, le contour et la forme de remplissage. Des fois c'est casse-pieds parce qu'on déplace l'une et pas l'autre. Mais on a un contrôle incroyable sur tous les points, y compris ceux des tangeantes. Et on peut les interpoler. L'animation SVG est très loin de tout ça.
 
+Sinon la version macOS est crevée de dysfonctionnements qui rendent l'utilisation très périlleuse.
+
+À l'utilisation Synfig n'est pas si buggé qu'on croit, comme le sujet est très complexe on a vite fait de se planter. Donc des petits dysfonctionnements rendent l'expérience encore plus humiliante.
