@@ -1,0 +1,95 @@
+
+== Animation
+
+Il y a plein de questions à se poser sur la grammaire visuel de l'animation.
+
+Déjà, des trucs simples marchent super-bien, comme le zoom arrière qui évite : 
+- La perspective.
+- Le flou.
+- Le fondu.
+
+
+=== Phylactères
+
+- Les phylactères apparaissent dans la grande image.
+- Mais aussi en plan rapproché.
+- Ils doivent avoir à peu près la même taille à l'écran.
+- Ils disparaissent durant les transitions (zoom, rotation).
+
+Mais sur la grande image on doit étager les phylactères pour un dialogue.
+
+Donc chaque scène donne lieu à 2 familles de phylactères :
+- Ceux pour le dévoilement progressif (plan rapproché ou éloigné).
+- Ceux pour la grande image, fixe.
+
+Idéalement :
+- Les phylactères à dévoilement progressif sont groupés par dialogue.
+- Le groupe a sa propre référence de temps, exportée en tant que Library.
+
+L'animation des phylactères doit être programmatique donc on peut mettre la dose.
+
+Comment animer les bulles ? [Le plus simple]
+https://youtu.be/_5a9yR3gsXE
+c'est une bulle à la fois. La bulle "sort" du locuteur en grossissant très brièvement. Elle disparaît et on ménage un intervalle sans aucune bulle affichée. Durant la phase de grossissement le texte est "yaourté" avec de vagues traits qui épargnent une tentative de lecture.
+
+Avec Synfig, on devrait s'en sortir comme suit :
+- Dialog 1 (exporté)
+  - BubbleLeft1
+    - Some Advanced Outline 1
+    - Some Region 1
+    - Some text 1
+  - BubbleLeft2
+    - Some Advanced Outline 2
+    - Some Region 2
+    - Some text 2
+
+Le [truc] 
+https://wiki.synfig.org/Doc:Reuse_Animations
+consiste à exporter le Canvas de ``Dialog 1`` (il faut un nom différent genre ``Dialog1``). Après on le voit dans le Canvas browser.
+
+
+
+
+
+=== Couleur 
+
+L'ajout de la couleur doit faire l'objet d'un dévoilement progressif. Mais on peut s'en passer durant une première phase de maquettage.
+
+
+== Issue 542
+
+"Add keyframe on a exported canvas"
+https://github.com/synfig/synfig/issues/542
+
+
+<<
+I installed Synfig 1.2.1 in an Ubuntu 18.04.1 LTS in VirtualBox 6.0.2 in macOS 10.14.2.
+
+- Create a fresh project.
+- Create a Rectangle.
+- Create a Keyframe at 50f.
+- Create a Keyframe at 100f.
+- Animate the Rectangle from its initial position (0f) to Keyframe 100f.
+- Turn off editing mode.
+- Go to 0f.
+- Create a Star.
+- Put the Star in Group "Group 1".
+- Go to Keyframe 50f.
+- Animate Group 1 (so it "knows" about keyframes).
+- Turn off editing mode.
+- Select Group 1 and its Canvas, select "Export Canvas", name as "Group1".
+- Select Group1 Animation.
+
+Timeline doesn't show. "Add New Keyframe" button is disabled.
+>>
+
+
+
+
+
+== Racontars
+
+=== Synfig
+
+Synfig est également un outil de dessin vectoriel hors-pair. Il supporte l'édition de l'épaisseur du trait. C'est à dire qu'une figure fermée avec un contour et une couleur de remplissage est faite de deux figures fermées, le contour et la forme de remplissage. Des fois c'est casse-pieds parce qu'on déplace l'une et pas l'autre. Mais on a un contrôle incroyable sur tous les points, y compris ceux des tangeantes. Et on peut les interpoler. L'animation SVG est très loin de tout ça.
+
