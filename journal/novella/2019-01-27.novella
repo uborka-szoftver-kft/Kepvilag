@@ -1,0 +1,31 @@
+
+== Alternatives payantes à Synfig
+
+"What's better? Toon Boom vs. Moho"
+https://www.youtube.com/watch?v=Vr9Dlbh3Ktc
+Le mec conseille Toon Boom mais Moho :
+- Est moins cher.
+- Supporte mieux les cycles.
+- Est plus rapide.
+
+Le dessin à main levée dans Toon Boom est mieux (il ne vectorise pas tout on dirait). Dans les commentaires les mecs disent que Toon Boom prend surtout l'avantage pour le dessin image par image. Moho est décrit comme plus "fun".
+
+Toon Boom Harmony Premium c'est `936 €/an`. Moho Pro 12 c'est `$400$` pour une license illimitée.
+
+Nina Parley [utilise Moho.]
+https://www.awn.com/animationworld/dancing-goddesses-how-nina-paley-animated-stone-sculptures-seder-masochism
+
+
+
+== Synfig : suivi de courbe
+
+Pas besoin de couche "Rotation".
+
+Le truc du jour : pour repositionner la poignée de position "Position Handle", sélectionner le contour ("Outline"), sélectionner tous les points de contrôle sauf la position avec Ctrl-A, déplacer tous les points de contrôle d'un coup en faisant glisser l'un d'entre eux.
+
+
+== Racontars 
+
+=== Synfig 
+
+Synfig est aussi génial qu'horrible.

@@ -58,6 +58,7 @@ Les bulles vectorielles ça tue le dessin au trait. En mixant avec une image bru
 L'ajout de la couleur doit faire l'objet d'un dévoilement progressif. Mais on peut s'en passer durant une première phase de maquettage.
 
 
+
 == Synfig : Issue 542
 
 "Add keyframe on a exported canvas"
@@ -95,8 +96,11 @@ https://forums.synfig.org/t/how-do-you-export-your-animations/1252/4
 d'utiliser ffmpeg pour recoder (en quoi ?) :
 
 <<<
-ffmpeg -i <animation-file-name>.yuv -sameq <animation-file-name>.avi
+ffmpeg -i SynfigAnimationXxx.yuv -qscale 0 SynfigAnimationXxx.avi
 >>>
+
+Ça fonctionne, [YouTube en veut bien.]
+https://youtu.be/RKmcqt-7Tv4
 
 
 == Synfig : réutilisation de Canvas
@@ -119,6 +123,15 @@ be repeated at the 45s mark and run until 65s. At the 45s mark set the
 "Time Offset" parameter to the negative value of the `current time (=45s)` `- original start time (=20s)` `=> -25s`. So that at the 45s mark, the group
 will think the time is `45-25 = 20s` and will start all over again.
 >>
+
+Il y a en effet moyen de faire apparaître un Canvas plusieurs fois grâce à une référence, mais pas moyen de décaler son apparition dans le temps. Donc ça ne fonctionne pas. 
+
+
+== Első fecske párbeszéd
+
+--- Azt is mondják, hogy a fecske nem tavasz!
+
+--- Ki tudja? Lehet, hogy kettő elég lesz hozzá! Általában a mondás nem bizonyíthatják.
 
 
 == Racontars

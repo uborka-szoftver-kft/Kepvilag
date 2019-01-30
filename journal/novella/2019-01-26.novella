@@ -1,0 +1,165 @@
+
+== Animation
+
+=== Lettrage
+
+La solution c'est la police [Gloria Hallelujah]
+https://www.fontsquirrel.com/fonts/gloria-hallelujah
+(license SIL) avec :
+- Une légère rotation.
+- Un effet "loupe".
+
+Le résultat ne dépare pas du dessin au trait.
+
+Après il faut reproduire l'effet loupe dans libGDX. Ça [semble] 
+https://www.geeks3d.com/20110316/shader-library-simple-2d-effects-sphere-and-ripple-in-glsl/
+[faisable]
+https://www.geeks3d.com/20130705/shader-library-circle-disc-fake-sphere-in-glsl-opengl-glslhacker/4/
+.
+
+
+=== Vol des hirondelles
+
+Si on a des hirondelles et qu'on veut donner une impression d'espace, on se retrouve à les faire voler. Leur vol acrobatique est très esthétique et se prête bien à un suivi de courbe. Une figure statique doit suffire si on se concentre sur les accélérations-décélarations.
+
+Le problème c'est la phase décollage-atterrissage. 
+
+En plan éloigné 2-3 images doivent suffire pour montrer l'atterrissage : 
+# Écartement des ailes pour freinage.
+# Repli des ailes, sortie des pattes.
+# Avancée du buste pour prise de position sur le fil.
+
+En plan rapproché c'est pareil. On peut faire sortir les hirondelles du champ.
+
+Pour le vol on peut envisager des "traits de vitesse"
+https://fr.wikipedia.org/wiki/Trait_de_mouvement
+("motion lines") qui raccourcissent en fonction de la vitesse.
+
+
+On a des exemples en ligne.
+
+Source : "Flawless flying machines: birds"
+https://www.designanduniverse.com/articles/flawless%20_flying_machines.php
+
+./2019-01-26/swallow-sequence-1.jpg
+
+
+./2019-01-26/swallow-sequence-2.jpg
+
+
+Source : [Swallow in flight serie]
+https://www.warrenphotographic.co.uk/28019-swallow-in-flight-series
+
+./2019-01-26/28019-Swallow-in-flight-series-white-background-small.jpg
+
+La question c'est : faut-il la dessiner de près ou de loin ? Là se pose le problème de l'épaisseur du trait.
+
+
+=== Épaisseur du trait
+
+Lors d'une transition l'épaisseur du trait doit rester la même, alors que les détails visibles disparaissent.
+
+Pour une transition la perception des détails diminue. On doit s'en tirer avec une réduction progressive rapide de l'image détaillée, remplacée ensuite par l'image simplifiée qui décalque la dernière image détaillée de la séquence d'animation.
+
+
+
+
+== Közondások a verebről
+
+[Kézikönyvtár]
+https://www.arcanum.hu/hu/online-kiadvanyok/Szolasok-regi-magyar-szolasok-es-kozmondasok-1/dr-margalits-ede-magyar-kozmondasok-es-kozmondasszeru-szolasok-5222/vereb-6B39/
+: Régi magyar szólások és közmondások -- Dr. Margalits Ede: MAGYAR KÖZMONDÁSOK ÉS KÖZMONDÁSSZERÜ SZÓLÁSOK -- Veréb
+
+<<
+Akkor már elülnek a verebek. E.
+
+Akkora mint a veréblépés. D.
+
+Anyja után csiripel a veréb. D.
+
+Annyit iszik, mint a veréb. E.
+
+Bagoly mondja a verébnek: nagyfejü. B.
+
+Baglyokkal huhogass, verebekkel csiripelj. E.
+
+Buja mint a veréb. E.
+
+Csiri-biri kan veréb, a bolondot küld odébb. S.
+
+Csiripel, mint a nádi veréb. S.
+
+Csuklik, emlegetik a verebek. E.
+
+Dobbal nem fogsz verebet. Ny. 8.
+
+Elvitte a vígságot a két szárnyu veréb. E.
+
+Hadd jusosn vagy egy szemecske a szegény verébnek is. Sz.
+
+Házi (L. ezt) és nádi veréb. E.
+
+Jobb ma egy veréb, mint holnap egy túzok. M.
+
+Lámpással ámítják a verebet. D.
+
+Már a verebek is csiripelik. ME.
+
+Más köleséről veri a verebet. B.
+
+Nem fél a veréb kőből faragott botos embertől. E.
+
+Okos mint a nádi (L. ezt) veréb. Ny. 9.
+
+Sok veréb sok köböl buzát elhord. D.
+
+Száz esztendős kanverébnek hátul van a farka. D.
+
+Többet ugrik mint a veréb. E.
+
+Vak veréb tétova uszik a vizben. D.
+
+Verebek is róla csiripolnak. E.
+
+Verebekkel csiripolj. E.
+
+Veréb is megszokja az ijesztő vázt. D.
+
+Veréb van a süvege alatt. (Nem köszön.) D.
+
+Verébnek veréb a fia, galambnak galamb. D.
+
+Vén rókát, vén verebet, vén parasztot nehéz megcsalni. D.
+>>
+
+
+== Dessinages
+
+D'après un modèle sur le Net :
+
+./2019-01-26/Swallow-4.png
+
+Décollage, première tentative :
+
+./2019-01-26/Swallow-takeoff-1.png
+
+Mieux : 
+
+./2019-01-26/Swallow-takeoff-2.jpg
+
+Pas vraiment mieux : 
+
+./2019-01-26/Swallow-takeoff-3.jpg
+
+Vu de dos : 
+
+./2019-01-26/Swallow-takeoff-4.jpg
+
+L'atterrissage :
+
+./2019-01-26/Swallow-landing-1.jpg
+
+Et puis  quelques idées, dont l'hirondelle qui se renifle le dessous de bras :
+
+./2019-01-26/Swallow-collage.jpg
+
