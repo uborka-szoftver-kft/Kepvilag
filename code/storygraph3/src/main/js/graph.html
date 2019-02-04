@@ -1,0 +1,29 @@
+<html>
+    <!--
+        To run a local webserver, open a command shell in this file's directory and run:
+        python -m SimpleHTTPServer 8000
+        But we don't need it since we can load a (modified) .dot file as a script.
+    -->
+    <head>
+        <meta charset="utf-8" />
+        <title>Graph</title>
+        <script type="text/javascript" src="./viz.js" ></script>
+        <script type="text/javascript" src="./render.js"></script>
+        <script type="text/javascript" src="./samplegraph.js"></script>
+    </head>
+
+    <body>
+
+        <svg id="dot-rendered" width="400" height="100">
+            <rect width="400" height="100" style="fill:rgb(0,0,255);stroke-width:10;stroke:rgb(0,0,0)" />
+        </svg>
+
+        <pre id="dot-source">
+            Some .dot file could appear here after loading.
+        </pre>
+
+        <script type="text/javascript" >
+            render()
+        </script>
+    </body>
+</html>

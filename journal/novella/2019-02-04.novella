@@ -18,3 +18,29 @@ Le thème du jeu est de mettre d'accord toutes les hirondelles sur la prochaine 
 Un graphe de graphe.
 
 
+== Jouabilité
+
+Comment justifier le choix restreint des destinations ? 
+- On ne justifie rien.
+- L'interlocuteur indique d'autres contacts.
+
+
+== Code 
+
+Comment coder le graphe d'une façon sympathique ?
+
+<<<
+
+enum class DialogStrophesXxx : Label { K, JO, NEM }
+
+val dialog1 : Dialog< DialogStrophesXxx > = Dialog( 
+    K to Dialog.Strophe( 
+        "Hogy vagy?", 
+        "Jól és te?" to JO,
+        "Nem túl jól" to NEM      
+    ),
+    JO to Dialog.UniqueDestination( "Ez jó! Hát, ezenkívül...", K ),
+    NEM to Dialog.Destination( "Akkor menj a fürdőbe!", GELLERT ) 
+)
+
+>>>
