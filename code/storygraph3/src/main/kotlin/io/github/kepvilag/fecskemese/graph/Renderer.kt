@@ -6,36 +6,30 @@ import java.time.format.DateTimeFormatter
 /**
  * Not thread-safe, not reentrant.
  */
-abstract class Renderer( private val setup : Setup ) : LineAccumulator {
+abstract class Renderer( private val setup : Setup = Setup() ) : LineAccumulator {
 
     private val builder = StringBuilder()
-    private var depth = 0
+    private var depth = -1
 
     private fun indent() { depth ++ }
 
-    private fun outdent() { depth -- ; check( depth >= 0 ) }
+    private fun outdent() { check( depth >= 0 ) ; depth -- }
 
     private fun printIndent() { for( i in 0..( depth - 1 ) ) builder.append( setup.indent ) }
 
     private fun printLineBreak() { builder.append( setup.lineBreak ) }
 
-    override fun plusAssign( line: String ) {
+    override fun addLine( line: String ) {
         printIndent()
         builder.append( line )
         printLineBreak()
     }
 
-    fun indented(lineBlock : (lineAccumulator : LineAccumulator ) -> Unit ) {
+    protected fun block( lineBlock : ( lineAccumulator : LineAccumulator ) -> Unit ) {
         indent()
         lineBlock( this )
         outdent()
     }
-
-    fun block( lineBlock : ( lineAccumulator : LineAccumulator ) -> Unit ) {
-        lineBlock( this )
-    }
-
-    constructor() : this( Setup() )
 
     data class Setup(
         val indent : String = "  ",
@@ -63,7 +57,12 @@ abstract class Renderer( private val setup : Setup ) : LineAccumulator {
 }
 
 interface LineAccumulator {
-    operator fun plusAssign( line : String )
+
+    fun addLine(line : String )
+
+    operator fun String.unaryPlus() {
+        addLine( this )
+    }
 }
 
 class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() ) :
@@ -84,50 +83,50 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
         }
 
         fun proceedingIdentifier( i : Int ) : String {
-            return "p$i"
+            return "node_$i"
         }
 
         block {
-            it += "dot = `"
-            it += "# " + setup.textSetup.identifier()
-            it += "digraph G {"
-            indented {
-                it += "fontsize=10"
-                it += "labeljust=left"
-                it += "style=rounded"
-                it += "node[shape=box]"
-                it += "edge[arrowhead=vee]"
+            + "dot = `"  // Importing the .dot file as JavaScript requires this (and the closing one).
+            + "# ${setup.textSetup.identifier()}"
+            + "digraph G {"
+            block {
+                + "fontsize=${setup.fontSize}"
+                + "labeljust=left"
+                + "style=rounded"
+                + "node[shape=box]"
+                + "edge[arrowhead=vee]"
 
                 var proceedingIdentifierGenerator = 0
                 for( dialogEntry in story.dialogs.withIndex() ) {
-                    it += "subgraph cluster_${dialogEntry.index} {"
-                    indented {
-                        it += "label=\"${dialogEntry.value.place.prettyName}\""
-                        it += "node [ style=filled,color=white ]"
-                        it += "style=filled"
-                        it += "color=lightgrey"
+                    + "subgraph cluster_${dialogEntry.index} {"
+                    block {
+                        + "label=\"${dialogEntry.value.place.prettyName}\""
+                        + "node [ style=filled,color=white ]"
+                        + "style=filled"
+                        + "color=lightgrey"
                         for( proceeding in dialogEntry.value.proceedings.values ) {
                             proceedingMap[ ( proceedingIdentifierGenerator ) ] = proceeding
-                            it += proceedingIdentifier( proceedingIdentifierGenerator ) + " ["
-                            indented {
-                                it += "label = <"
-                                indented {
-                                    it += "<table border='0' cellborder='0' cellspacing='1' style='rounded'>"
-                                    indented {
-                                        it += "<tr><td align='center'><b>${proceeding.label}</b></td></tr>"
-                                        it += "<tr><td align='left'>${proceeding.text}</td></tr>"
+                            + "${proceedingIdentifier( proceedingIdentifierGenerator ) } ["
+                            block {
+                                + "label = <"
+                                block {
+                                    + "<table border='0' cellborder='0' cellspacing='1' style='rounded'>"
+                                    block {
+                                        + "<tr><td align='center'><b>${proceeding.label}</b></td></tr>"
+                                        + "<tr><td align='left'>${proceeding.text}</td></tr>"
                                     }
-                                    it += "</table> >"
+                                    + "</table> >"
 
                                 }
                             }
-                            it += "]"
+                            + "]"
                             proceedingIdentifierGenerator ++
                         }
                     }
-                    it += "}"
+                    + "}"
                 }
-                it += "start -> " + proceedingIdentifier( 0 )
+                + "start -> ${proceedingIdentifier(0)}"
 
                 for( dialogEntry in story.dialogs.withIndex() ) {
                     for( proceeding in dialogEntry.value.proceedings.values ) {
@@ -142,7 +141,7 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
                                             throw NoSuchElementException( "Unknown: '${choiceEntry.value}'" )
                                     val target = proceedingIdentifier( resolveIdentifier( targetProceeding ) )
                                     val choice = choiceEntry.key
-                                    it += "$origin -> $target [ headlabel=\"$choice\" ]"
+                                    + "$origin -> $target [ headlabel=\"$choice\" ]"
                                 }
                             }
 
@@ -151,7 +150,7 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
                                     val targetDialog = story.dialogFor( destination )
                                     val targetProceeding = targetDialog.proceedings.values.first()
                                     val target = proceedingIdentifier( resolveIdentifier( targetProceeding ) )
-                                    it += "$origin -> $target [ arrowhead=\"empty\" ]"
+                                    + "$origin -> $target [ arrowhead=\"empty\" ]"
                                 }
                             }
 
@@ -159,15 +158,15 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
                                 val targetProceeding = dialogEntry.value.proceedings[ proceeding.destination ] ?:
                                         throw NoSuchElementException( "Unknown: $proceeding.destination")
                                 val target = proceedingIdentifier( resolveIdentifier( targetProceeding ) )
-                                it += "$origin -> $target"
+                                + "$origin -> $target"
 
                             }
                         }
                     }
                 }
             }
-            it += "}"
-            it += "`"
+            + "}"
+            + "`"
 
         }
     }

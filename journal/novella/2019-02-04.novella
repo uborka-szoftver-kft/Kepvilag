@@ -25,22 +25,10 @@ Comment justifier le choix restreint des destinations ?
 - L'interlocuteur indique d'autres contacts.
 
 
-== Code 
+== Code : premières impressions avec ``storygraph3``
 
-Comment coder le graphe d'une façon sympathique ?
+Pour la même ``Place`` il faut (probablement) plusieurs ``Dialog``. Peut-être qu'il faut dissocier. Bref on verra en fonction du scénario.
 
-<<<
+Un thème "sombre" ne sera pas de refus.
 
-enum class DialogStrophesXxx : Label { K, JO, NEM }
 
-val dialog1 : Dialog< DialogStrophesXxx > = Dialog( 
-    K to Dialog.Strophe( 
-        "Hogy vagy?", 
-        "Jól és te?" to JO,
-        "Nem túl jól" to NEM      
-    ),
-    JO to Dialog.UniqueDestination( "Ez jó! Hát, ezenkívül...", K ),
-    NEM to Dialog.Destination( "Akkor menj a fürdőbe!", GELLERT ) 
-)
-
->>>
