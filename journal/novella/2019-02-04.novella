@@ -1,0 +1,20 @@
+
+== Graphe
+
+Le jeu est un automate à états. Le principe est le suivant : le héros se rend dans différents lieux, il parcourt un arbre de dialogue, la position finale dans l'arbre ouvre l'accès à d'autres lieux.
+
+Certains choix peuvent déclencher des actions annexes. 
+
+Si le joueur est bloqué une aide apparaît. (Un blocage est probable si le joueur visite 3 lieux plus d'1 fois chacune.)
+
+
+== Thème
+
+Le thème du jeu est de mettre d'accord toutes les hirondelles sur la prochaine migration. Car désaccord il y a : rien ne va plus dans le pays, sous l'égide du Fickó. Le Fickó : dictateur éclairé, homme de paille du Système, ou dictateur tout court ? Simple voleur ? Agent d'Israël ou de Moscou ? 
+
+
+== Modélisation
+
+Un graphe de graphe.
+
+

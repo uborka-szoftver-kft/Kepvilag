@@ -1,0 +1,30 @@
+
+== Kotlin et JavaScript
+
+On s'en tire en générant un projet Gradle avec juste Kotlin-JavaScript activé. Après il faut bricoler un peu. La doc de Kotlin ne décrit pas le processus dans sa totalité.
+
+Pour voir les fichiers JavaScript apparaître il faut faire un ``./gradlew assemble``.
+
+La [doc]
+https://kotlinlang.org/docs/tutorials/javascript/working-with-modules/working-with-modules.html
+décrit une hiérarchie de répertoires avec la cible de compilation ``out`` en-dessous du répertoire ``scripts`` qui contient le HTML "coquille". C'est logique. Mais comment dire à Gradle qu'il faut placer le résultat de la compilation dans ``scripts/out`` ?
+
+Le plus gros souci cependant apparaît avec l'utilisation obligatoire de `require.js` car celui-ci apparaît dans le code généré.
+
+Le problème c'est que `require.js` utilise un serveur HTTP. //Peut-être// existe-t-il moyen de générer les fichiers localement mais rien ne garantit que ça fonctionne dans cet état. 
+
+Le plus simple c'est de faire un ``brew install node`` et laisser les comportements par défaut. De toutes façons utiliser des ressources ``file://`` n'aurait de sens que si on distribuait l'application comme un tas de fichiers ; là tout ce qu'on veut c'est une maquette. Et même si l'option définitive restait ``file://`` on passerait probablement par une phase de génération pilotée par NodeJS.
+
+La solution est peut-être dans [kotlin-frontend-plugin]
+https://github.com/Kotlin/kotlin-frontend-plugin/blob/master/examples/frontend-only/build.gradle
+. Là il s'agit d'utiliser [Webpack]
+https://webpack.github.io/
+et [Karma]
+http://karma-runner.github.io/1.0/index.html
+
+Concernant RequireJS il y a un [exemple]
+https://github.com/volojs/create-template
+avec des fichiers statiques. C'est sympa de committer le ``require.js`` !
+
+Peut-être que la solution c'est de s'en passer.
+
