@@ -17,9 +17,9 @@ digraph G {
 		color=lightgrey
 		a [
             label = <
-                <table border="0" cellborder="0" cellspacing="1" style="rounded">
-                <tr><td align="center"><b>K</b></td></tr>
-                <tr><td align="left">Hogy vagy?</td></tr>
+                <table border='0' cellborder='0' cellspacing='1' style='rounded'>
+                <tr><td align='center'><b>K</b></td></tr>
+                <tr><td align='left'>Hogy vagy?</td></tr>
             </table> >
         ]
 		b [

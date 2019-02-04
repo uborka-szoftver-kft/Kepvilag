@@ -1,17 +1,20 @@
 package io.github.kepvilag.fecskemese.graph
 
+import java.io.File
+import kotlin.io.writeText
+
 
 /**
  * Where a [Dialog] can send to.
  */
-enum class Place {
-    PARLEMENT,
-    NYUGATI_PALYAUDVAR,
-    GELLERT,
-    KERTESZ_UTCA,
-    VAR,
-    SZABADSAG_HID,
-    ;
+enum class Place( val prettyName : String ) {
+    PARLEMENT( "Parlement" ),
+    NYUGATI_PALYAUDVAR( "Nyugati Palyaudvar"),
+    GELLERT( "Gellért" ),
+    KERTESZ_UTCA( "Kertész utca" ),
+    VAR( "A Vár" ),
+    SZABADSAG_HID( "Szabadság híd" ),
+
 }
 
 /**
@@ -38,55 +41,77 @@ class Dialog< LABEL : Label >(
     val place : Place,
     configurator : ( dialog : Dialog< LABEL > ) -> Unit
 ) {
-    private val proceedings : MutableMap< LABEL, Proceeding > = mutableMapOf()
+    private val _proceedings : MutableMap< LABEL, Proceeding > = LinkedHashMap()
+
+    public val proceedings : Map< LABEL, Proceeding > get() { return _proceedings }
 
     init {
         configurator( this )
     }
 
     private fun add( proceeding : Proceeding ) {
-        proceedings[ proceeding.label ] = proceeding
+        check( ! _proceedings.containsValue( proceeding ) ) { "Already present: $proceeding" }
+        _proceedings[ proceeding.label ] = proceeding
     }
 
-    abstract inner class Proceeding( val label : LABEL )
+    abstract inner class Proceeding( val label : LABEL, val text : String )
 
     inner class Strophe(
         label : LABEL,
-        val text : String,
+        text : String,
         val choices : Map< Choice, LABEL >
-    ) : Proceeding( label ){
+    ) : Proceeding( label, text ){
         init {
             add( this )  // Just to show that we can reference outer class private members.
         }
     }
     inner class Jump(
         label : LABEL,
-        val text : String,
+        text : String,
         val destination : LABEL
-    ) : Proceeding( label ) {
+    ) : Proceeding( label, text ) {
         init {
             add( this )
         }
-
     }
 
     inner class DestinationChoice(
         label : LABEL,
-        val text : String,
-        vararg destination : Place
-    ) : Proceeding( label ){
+        text : String,
+        val destinations : Set< Place >
+    ) : Proceeding( label, text ) {
+
+        constructor(
+            label : LABEL,
+            text : String,
+            vararg destinations : Place
+        ) : this( label, text, setOf( *destinations ) )
         init {
-            destination.forEach { check( it != place ) { "Destination $destination same as $it" } }
+            destinations.forEach { check( it != place ) { "Destination $it same as $place" } }
             add( this )
         }
     }
 }
 
 /**
+ * Contains the whole graph.
+ * For now there can be only one [Dialog] per [Place] because the latter is given in
+ * [Dialog.DestinationChoice] but we'll probably something more sophisticated.
+ *
  * @param dialogs must be an ordered, non-empty [Set] with first element giving the initial [Place].
  */
-class Story( val dialogs : Set< Dialog< * > > ) {
-    constructor( vararg dialogs : Dialog< * > ) : this( setOf( *dialogs ) )
+class Story( val dialogs : Set< Dialog< out Label > > ) {
+    constructor( vararg dialogs : Dialog< out Label > ) : this( setOf( *dialogs ) )
+
+    init {
+        check( dialogs.distinct().count() == dialogs.size ) {
+            "Same " + Place::class.simpleName + " appears more than once in $dialogs" }
+    }
+
+    fun dialogFor( place : Place ) : Dialog< out Label > {
+        return dialogs.firstOrNull { it.place == place } ?:
+            throw NoSuchElementException( "Unknown: '$place'" )
+    }
 }
 
 interface StropheLabel {
@@ -97,7 +122,7 @@ interface StropheLabel {
 
 fun demo1() {
 
-    val kerteszUtca1 : Dialog<StropheLabel.KerteszUtca1> = Dialog( Place.KERTESZ_UTCA ) {
+    val kerteszUtca1 : Dialog< StropheLabel.KerteszUtca1 > = Dialog( Place.KERTESZ_UTCA ) {
         it.Strophe(
             StropheLabel.KerteszUtca1.K,
             "Hogy vagy?",
@@ -126,12 +151,18 @@ fun demo1() {
         )
         it.DestinationChoice(
             StropheLabel.Gellert1.VEGE,
-            "További szép napot! Jó pihenés otthon!",
+            "További szép napot! Jó pihenést otthonában!",
             Place.KERTESZ_UTCA
         )
     }
 
     val story = Story( kerteszUtca1, gellert1 )
+
+    println( "Current directory is '${System.getProperty( "user.dir" )}'." )
+    val dot = DotRenderer().render( story )
+    println( dot )
+
+    File( "src/main/js/generated.js" ).writeText( dot )
 
 }
 
