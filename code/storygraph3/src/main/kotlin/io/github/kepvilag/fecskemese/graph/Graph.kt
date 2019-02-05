@@ -119,11 +119,21 @@ interface StropheLabel {
     enum class Gellert1 : Label { UDV, VEGE }
 }
 
+/**
+ * Not thread-safe.
+ */
+class Holder< OBJECT > {
+    var current : OBJECT? = null
+    var value : OBJECT
+        get() { check( current != null ) ; return current !! }
+        set( value ) { check( current == null ) ; current = value }
+}
 
 fun demo1() {
 
     val kerteszUtca1 : Dialog< StropheLabel.KerteszUtca1 > = Dialog( Place.KERTESZ_UTCA ) {
-        it.Strophe(
+        val p = Holder< Dialog< StropheLabel.KerteszUtca1 >.Proceeding >()
+        p.value = it.Strophe(
             StropheLabel.KerteszUtca1.K,
             "Hogy vagy?",
             mapOf(
@@ -134,7 +144,8 @@ fun demo1() {
         it.Jump(
             StropheLabel.KerteszUtca1.JO,
             "Akkor nagyon örülök Neked! Hát ezenkívül…",
-            StropheLabel.KerteszUtca1.K
+            p.value.label
+            // StropheLabel.KerteszUtca1.K
         )
         it.DestinationChoice(
             StropheLabel.KerteszUtca1.NEM,

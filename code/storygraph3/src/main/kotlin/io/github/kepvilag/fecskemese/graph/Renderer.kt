@@ -1,10 +1,13 @@
 package io.github.kepvilag.fecskemese.graph
 
+import java.awt.Color
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 /**
  * Not thread-safe, not reentrant.
+ *
+ * TODO: <a href="https://stackoverflow.com/questions/2012036/graphviz-how-to-connect-subgraphs">connect subgraphs</a>
  */
 abstract class Renderer( private val setup : Setup = Setup() ) : LineAccumulator {
 
@@ -70,7 +73,12 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
 {
     data class Setup(
         val textSetup : Renderer.Setup = Renderer.Setup(),
-        val fontSize : Int = 10
+        val fontSize : Int = 10,
+        val backgroundColor : Color = Color.DARK_GRAY,
+        val clusterBackgroundColor : Color = Color.GRAY,
+        val clusterStrokeColor : Color = clusterBackgroundColor,
+        val nodeBackgroundColor : Color = Color.LIGHT_GRAY,
+        val nodeStrokeColor : Color = nodeBackgroundColor
     )
 
     override fun doRender( story: Story ) {
@@ -86,15 +94,30 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
             return "node_$i"
         }
 
+        fun Color.toDot() : String {
+            fun format( i : Int ) : String = String.format( "%02x", i )
+            return "\"#" + format( this.red ) + format( this.green ) + format( this.blue ) + "\""
+        }
+
         block {
             + "dot = `"  // Importing the .dot file as JavaScript requires this (and the closing one).
             + "# ${setup.textSetup.identifier()}"
             + "digraph G {"
             block {
+                + "compound=true"  // Enables edges from/to subgraphs.
+                + "overlap=scale"
                 + "fontsize=${setup.fontSize}"
+                + "bgcolor=${setup.backgroundColor.toDot()}"
                 + "labeljust=left"
                 + "style=rounded"
-                + "node[shape=box]"
+                + "node["
+                block {
+                    + "shape=box,"
+                    + "style=\"filled,solid\","  // 'rounded' disables fill.
+                    + "color=${setup.nodeStrokeColor.toDot()},"
+                    + "fillcolor=${setup.nodeBackgroundColor.toDot()}"
+                }
+                + "]"
                 + "edge[arrowhead=vee]"
 
                 var proceedingIdentifierGenerator = 0
@@ -102,9 +125,9 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
                     + "subgraph cluster_${dialogEntry.index} {"
                     block {
                         + "label=\"${dialogEntry.value.place.prettyName}\""
-                        + "node [ style=filled,color=white ]"
-                        + "style=filled"
-                        + "color=lightgrey"
+                        + "style=filled"  // 'rounded' disables fill.
+                        + "color=${setup.clusterStrokeColor.toDot()}"
+                        + "fillcolor=${setup.clusterBackgroundColor.toDot()}"
                         for( proceeding in dialogEntry.value.proceedings.values ) {
                             proceedingMap[ ( proceedingIdentifierGenerator ) ] = proceeding
                             + "${proceedingIdentifier( proceedingIdentifierGenerator ) } ["
