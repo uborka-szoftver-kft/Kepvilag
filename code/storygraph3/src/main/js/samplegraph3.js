@@ -9,7 +9,7 @@ digraph G {
     edge[arrowhead=vee]
 
     node[
-        shape=box,
+        shape=Mrecord,
         style="filled,solid",
         color="#ff1111",      # Works
         fillcolor="#c0ffc0"   # Works
@@ -33,6 +33,8 @@ digraph G {
                 <tr><td align="center"><b>J</b></td></tr>
                 <tr><td align="left">Akkor nagyon örülök Neked! <br/>Hát ezenkívül…</td></tr>
             </table> >
+#            ,style="filled",
+#            shape=Mrecord
         ]
 		c [
             label = <

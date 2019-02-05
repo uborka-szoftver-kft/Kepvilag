@@ -112,7 +112,7 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
                 + "style=rounded"
                 + "node["
                 block {
-                    + "shape=box,"
+                    + "shape=Mrecord,"
                     + "style=\"filled,solid\","  // 'rounded' disables fill.
                     + "color=${setup.nodeStrokeColor.toDot()},"
                     + "fillcolor=${setup.nodeBackgroundColor.toDot()}"
