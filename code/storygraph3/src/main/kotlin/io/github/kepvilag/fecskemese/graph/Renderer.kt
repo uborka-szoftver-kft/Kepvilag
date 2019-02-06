@@ -7,9 +7,8 @@ import java.time.format.DateTimeFormatter
 /**
  * Not thread-safe, not reentrant.
  *
- * TODO: <a href="https://stackoverflow.com/questions/2012036/graphviz-how-to-connect-subgraphs">connect subgraphs</a>
  */
-abstract class Renderer( private val setup : Setup = Setup() ) : LineAccumulator {
+abstract class Renderer< OBJECT >( private val setup : Setup = Setup() ) : LineAccumulator {
 
     private val builder = StringBuilder()
     private var depth = -1
@@ -48,13 +47,13 @@ abstract class Renderer( private val setup : Setup = Setup() ) : LineAccumulator
         }
     }
 
-    fun render( story: Story ) : String {
+    fun render( subject : OBJECT ) : String {
         builder.clear()
-        doRender( story )
+        doRender( subject )
         return builder.toString()
     }
 
-    abstract fun doRender( story: Story )
+    abstract fun doRender( subject : OBJECT )
 
 
 }
@@ -68,8 +67,11 @@ interface LineAccumulator {
     }
 }
 
+/**
+ * TODO: <a href="https://stackoverflow.com/questions/2012036/graphviz-how-to-connect-subgraphs">connect subgraphs</a>
+ */
 class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() ) :
-    Renderer( setup = setup.textSetup )
+    Renderer< Story >( setup = setup.textSetup )
 {
     data class Setup(
         val textSetup : Renderer.Setup = Renderer.Setup(),
@@ -81,18 +83,7 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
         val nodeStrokeColor : Color = nodeBackgroundColor
     )
 
-    override fun doRender( story: Story ) {
-
-        val proceedingMap : MutableMap< Int, Dialog< out Label >.Proceeding > = mutableMapOf()
-
-        fun resolveIdentifier( proceeding : Dialog< out Label >.Proceeding ) : Int {
-            val firstOrNull = proceedingMap.entries.firstOrNull { it.value == proceeding }
-            return firstOrNull?.key ?: throw NoSuchElementException( "Unknown: '$proceeding'" )
-        }
-
-        fun proceedingIdentifier( i : Int ) : String {
-            return "node_$i"
-        }
+    override fun doRender( story : Story ) {
 
         fun Color.toDot() : String {
             fun format( i : Int ) : String = String.format( "%02x", i )
@@ -120,68 +111,56 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
                 + "]"
                 + "edge[arrowhead=vee]"
 
-                var proceedingIdentifierGenerator = 0
-                for( dialogEntry in story.dialogs.withIndex() ) {
-                    + "subgraph cluster_${dialogEntry.index} {"
+                for( act in story.acts ) {
+                    + "subgraph cluster_${act.key.index} {"
                     block {
-                        + "label=\"${dialogEntry.value.place.prettyName}\""
+                        + "label=\"${act.place.prettyName}\""
                         + "style=filled"  // 'rounded' disables fill.
                         + "color=${setup.clusterStrokeColor.toDot()}"
                         + "fillcolor=${setup.clusterBackgroundColor.toDot()}"
-                        for( proceeding in dialogEntry.value.proceedings.values ) {
-                            proceedingMap[ ( proceedingIdentifierGenerator ) ] = proceeding
-                            + "${proceedingIdentifier( proceedingIdentifierGenerator ) } ["
+                        for( stopover in act.stopovers.values ) {
+                            + "${stopover.key.identifier} ["
                             block {
                                 + "label = <"
                                 block {
                                     + "<table border='0' cellborder='0' cellspacing='1' style='rounded'>"
                                     block {
-                                        + "<tr><td align='center'><b>${proceeding.label}</b></td></tr>"
-                                        + "<tr><td align='left'>${proceeding.text}</td></tr>"
+                                        + "<tr><td align='center'><b>${stopover.key.identifier}</b></td></tr>"
+                                        + "<tr><td align='left'>${stopover.text}</td></tr>"
                                     }
                                     + "</table> >"
 
                                 }
                             }
                             + "]"
-                            proceedingIdentifierGenerator ++
                         }
                     }
                     + "}"
                 }
-                + "start -> ${proceedingIdentifier(0)}"
+                + "start -> ${story.acts.first().stopovers.values.first().key.identifier}"
 
-                for( dialogEntry in story.dialogs.withIndex() ) {
-                    for( proceeding in dialogEntry.value.proceedings.values ) {
-                        val originProceedingIdentifier = resolveIdentifier( proceeding )
-                        val origin = proceedingIdentifier( originProceedingIdentifier )
-                        when( proceeding ) {
+                for( act in story.acts ) {
+                    for( stopover in act.stopovers.values ) {
+                        when( stopover ) {
 
-                            is Dialog< out Label >.Strophe -> {
-                                for( choiceEntry in proceeding.choices ) {
-                                    val targetProceeding: Dialog< out Label >.Proceeding =
-                                        dialogEntry.value.proceedings[ choiceEntry.value ] ?:
-                                            throw NoSuchElementException( "Unknown: '${choiceEntry.value}'" )
-                                    val target = proceedingIdentifier( resolveIdentifier( targetProceeding ) )
+                            is Story.Act.Strophe -> {
+                                for( choiceEntry in stopover.choices ) {
+                                    val target = choiceEntry.value.value
                                     val choice = choiceEntry.key
-                                    + "$origin -> $target [ headlabel=\"$choice\" ]"
+                                    + "${stopover.key.identifier} -> ${target.key.identifier} [ headlabel=\"$choice\" ]"
                                 }
                             }
 
-                            is Dialog< out Label >.DestinationChoice -> {
-                                for( destination in proceeding.destinations ) {
-                                    val targetDialog = story.dialogFor( destination )
-                                    val targetProceeding = targetDialog.proceedings.values.first()
-                                    val target = proceedingIdentifier( resolveIdentifier( targetProceeding ) )
-                                    + "$origin -> $target [ arrowhead=\"empty\" ]"
+                            is Story.Act.Trip -> {
+                                for( destination in stopover.destinations ) {
+                                    val target = story.firstStopoverFor( destination )
+                                    + "${stopover.key.identifier} -> ${target.key.identifier} [ arrowhead=\"empty\" ]"
                                 }
                             }
 
-                            is Dialog< out Label >.Jump -> {
-                                val targetProceeding = dialogEntry.value.proceedings[ proceeding.destination ] ?:
-                                        throw NoSuchElementException( "Unknown: $proceeding.destination")
-                                val target = proceedingIdentifier( resolveIdentifier( targetProceeding ) )
-                                + "$origin -> $target"
+                            is Story.Act.Jump -> {
+                                val target = stopover.destination.value
+                                + "${stopover.key.identifier} -> ${target.key.identifier}"
 
                             }
                         }
@@ -189,7 +168,7 @@ class DotRenderer( private val setup : DotRenderer.Setup = DotRenderer.Setup() )
                 }
             }
             + "}"
-            + "`"
+            + "`"  // Closing multiline string for JavaScript import.
 
         }
     }

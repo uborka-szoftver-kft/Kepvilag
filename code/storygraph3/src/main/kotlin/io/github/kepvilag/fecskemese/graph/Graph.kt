@@ -1,11 +1,10 @@
 package io.github.kepvilag.fecskemese.graph
 
 import java.io.File
-import kotlin.io.writeText
 
 
 /**
- * Where a [Dialog] can send to.
+ * Where a [Story.Act.Stopover] can send to.
  */
 enum class Place( val prettyName : String ) {
     PARLEMENT( "Parlement" ),
@@ -27,136 +26,139 @@ enum class PrebuiltFicko {
     ZAZIE
 }
 
-/**
- * Tagging interface for some kind of enums.
- */
-interface Label
 
-/**
- * There may be some localization to add, not even talking about some associated icon or whatever.
- */
+class Story {
+
+    constructor( configurator : (Story ) -> Unit ) {
+        configurator( this )
+        /** TODO check consistency and [Holder.value]. */
+    }
+
+    private val _acts = mutableListOf< Act >()
+
+    /**
+     * TODO become a lazy property based on filtering of [_entities].
+     */
+    public val acts : List< Act > get() = _acts
+
+    private val _entities = mutableMapOf< Key, Keyed >()
+    public val entities : Map< Key, Keyed > get() = _entities
+
+    @Suppress("LeakingThis")
+    abstract inner class Keyed( mnemonic : Char ) {
+        val key : Key = newKey( mnemonic )
+        init { _entities[ key ] = this }
+    }
+
+    fun firstStopoverFor( place: Place ) : Act.Stopover {
+        return acts.first { it.place == place }.stopovers.values.first()
+    }
+
+    inner class Act( val place : Place ) : Keyed( 'A' ) {
+
+        constructor( place : Place, configurator : ( Act ) -> Unit ) : this( place ) {
+            configurator( this )
+        }
+
+        init { this@Story._acts.add( this ) }
+
+        private val _stopovers = LinkedHashMap< Key, Stopover > ()
+        public val stopovers : Map< Key, Stopover > get() = _stopovers
+
+        @Suppress("LeakingThis")
+        abstract inner class Stopover( mnemonic: Char, val text : String ) : Keyed( mnemonic ){
+            init { this@Act._stopovers[ key ] = this }
+        }
+
+        inner class Strophe(
+            text : String,
+            val choices : Map< Choice, Holder< Stopover > >
+        ) : Stopover( 'S', text )
+
+        inner class Trip(
+            text : String,
+            val destinations : Set< Place >
+        ) : Stopover( 'T', text )
+
+        inner class Jump(
+            text : String,
+            val destination : Holder< Act.Stopover >
+        ) : Stopover( 'J', text )
+
+    }
+
+    private var keyGenerator = 0
+
+    fun newKey( mnemonic : Char ) : Key {
+        return Key( mnemonic, keyGenerator ++ )
+    }
+
+}
+
 typealias Choice = String
 
-class Dialog< LABEL : Label >(
-    val place : Place,
-    configurator : ( dialog : Dialog< LABEL > ) -> Unit
-) {
-    private val _proceedings : MutableMap< LABEL, Proceeding > = LinkedHashMap()
-
-    public val proceedings : Map< LABEL, Proceeding > get() { return _proceedings }
-
-    init {
-        configurator( this )
-    }
-
-    private fun add( proceeding : Proceeding ) {
-        check( ! _proceedings.containsValue( proceeding ) ) { "Already present: $proceeding" }
-        _proceedings[ proceeding.label ] = proceeding
-    }
-
-    abstract inner class Proceeding( val label : LABEL, val text : String )
-
-    inner class Strophe(
-        label : LABEL,
-        text : String,
-        val choices : Map< Choice, LABEL >
-    ) : Proceeding( label, text ){
-        init {
-            add( this )  // Just to show that we can reference outer class private members.
-        }
-    }
-    inner class Jump(
-        label : LABEL,
-        text : String,
-        val destination : LABEL
-    ) : Proceeding( label, text ) {
-        init {
-            add( this )
-        }
-    }
-
-    inner class DestinationChoice(
-        label : LABEL,
-        text : String,
-        val destinations : Set< Place >
-    ) : Proceeding( label, text ) {
-
-        constructor(
-            label : LABEL,
-            text : String,
-            vararg destinations : Place
-        ) : this( label, text, setOf( *destinations ) )
-        init {
-            destinations.forEach { check( it != place ) { "Destination $it same as $place" } }
-            add( this )
-        }
-    }
+/**
+ * Not thread-safe.
+ */
+class Holder< OBJECT > {
+    var current : OBJECT? = null
+    var value : OBJECT
+        get() { check( current != null ) ; return current !! }
+        set( value ) { check( current == null ) ; current = value }
 }
+
+typealias StopoverHolder = Holder< Story.Act.Stopover >
 
 /**
- * Contains the whole graph.
- * For now there can be only one [Dialog] per [Place] because the latter is given in
- * [Dialog.DestinationChoice] but we'll probably something more sophisticated.
- *
- * @param dialogs must be an ordered, non-empty [Set] with first element giving the initial [Place].
+ * @param mnemonic TODO make it an enum.
  */
-class Story( val dialogs : Set< Dialog< out Label > > ) {
-    constructor( vararg dialogs : Dialog< out Label > ) : this( setOf( *dialogs ) )
-
-    init {
-        check( dialogs.distinct().count() == dialogs.size ) {
-            "Same " + Place::class.simpleName + " appears more than once in $dialogs" }
+data class Key( val mnemonic : Char, val index : Int ) : Comparable< Key > {
+    override fun compareTo( other: Key ): Int {
+        return compareValuesBy(
+            this,
+            other,
+            { it.mnemonic },
+            { it.index }
+        )
     }
 
-    fun dialogFor( place : Place ) : Dialog< out Label > {
-        return dialogs.firstOrNull { it.place == place } ?:
-            throw NoSuchElementException( "Unknown: '$place'" )
-    }
+    val identifier : String get() = "$mnemonic$index"
 }
 
-interface StropheLabel {
-    enum class KerteszUtca1 : Label { K, JO, NEM }
-    enum class Gellert1 : Label { UDV, VEGE }
-}
 
-fun demo1() {
-
-    val kerteszUtca1 : Dialog< StropheLabel.KerteszUtca1 > = Dialog( Place.KERTESZ_UTCA ) {
-        it.Strophe(
-            StropheLabel.KerteszUtca1.K,
-            "Hogy vagy?",
-            mapOf(
-                "Jól, és te?" to StropheLabel.KerteszUtca1.JO,
-                "Nem túl jól" to StropheLabel.KerteszUtca1.NEM
+fun demo1(): Story {
+    return Story { story ->
+        val szia = StopoverHolder()
+        story.Act( Place.KERTESZ_UTCA ) {
+            val jol = StopoverHolder()
+            val nemJol = StopoverHolder()
+            szia.value = it.Strophe(
+                "Szia, jól vagy? ",
+                mapOf(
+                    "Jól, és te?" to jol,
+                    "Nem túl jól." to nemJol
+                )
             )
-        )
-        it.Jump(
-            StropheLabel.KerteszUtca1.JO,
-            "Akkor nagyon örülök Neked! Hát ezenkívül…",
-             StropheLabel.KerteszUtca1.K
-        )
-        it.DestinationChoice(
-            StropheLabel.KerteszUtca1.NEM,
-            "Akkor menj a fürdőbe!",
-            Place.GELLERT
-        )
+            jol.value = it.Jump(
+                "Akkor nagyon örülök Neked! Hát ezenkívül…",
+                szia
+            )
+            nemJol.value = it.Trip(
+                "Akkor menj a fürdőbe!",
+                setOf( Place.GELLERT )
+            )
+        }
+        story.Act( Place.GELLERT ) {
+            val viszlat = StopoverHolder()
+            it.Jump( "Élvezze a fürdőt úram!", viszlat )
+            viszlat.value = it.Jump( "További szép napot! Jó pihenést otthonában!", szia )
+        }
     }
 
-    val gellert1 : Dialog< StropheLabel.Gellert1 > = Dialog( Place.GELLERT ) {
-        it.Jump(
-            StropheLabel.Gellert1.UDV,
-            "Élvezze a fürdőt úram!",
-            StropheLabel.Gellert1.VEGE
-        )
-        it.DestinationChoice(
-            StropheLabel.Gellert1.VEGE,
-            "További szép napot! Jó pihenést otthonában!",
-            Place.KERTESZ_UTCA
-        )
-    }
+}
 
-    val story = Story( kerteszUtca1, gellert1 )
-
+fun main() {
+    val story = demo1()
     println( "Current directory is '${System.getProperty( "user.dir" )}'." )
     val dot = DotRenderer().render( story )
     println( dot )
@@ -164,9 +166,4 @@ fun demo1() {
     File( "src/main/js/generated.js" ).writeText( dot )
 
 }
-
-fun main() {
-    demo1()
-}
-
 

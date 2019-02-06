@@ -1,0 +1,5 @@
+
+== Graphe
+
+On a envie de se perdre dans des raffinements sans fin alors que ça va bouger sérieusement. Le plus simple : garder toutes les ``entities`` dans la ``Story`` et ajouter des propriétés ``lazy`` selon les besoins.
+
