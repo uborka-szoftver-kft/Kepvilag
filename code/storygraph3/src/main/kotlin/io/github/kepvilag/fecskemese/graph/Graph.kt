@@ -29,24 +29,40 @@ enum class PrebuiltFicko {
 
 class Story {
 
-    constructor( configurator : (Story ) -> Unit ) {
+    constructor( configurator : ( Story ) -> Unit ) {
         configurator( this )
-        /** TODO check consistency and [Holder.value]. */
+        /** Ensure [Holder]s sanity. */
+        for( entity in entities.values ) {
+            when( entity ) {
+                is Act.Strophe -> {
+                    entity.choices.entries.forEach {
+                        check( it.value.hasValue()) { "Unset value in $it" }
+                    }
+                }
+                is Act.Jump -> { check( entity.destination.hasValue()) { "Unset value in $entity" } }
+            }
+        }
     }
 
-    private val _acts = mutableListOf< Act >()
+    enum class EntityKind( val mnemonic : Char ) {
+        ACT( 'A' ),
+        STROPHE( 'S' ),
+        JUMP( 'J' ),
+        TRIP( 'T' ),
+    }
 
-    /**
-     * TODO become a lazy property based on filtering of [_entities].
-     */
-    public val acts : List< Act > get() = _acts
+    public val acts : List< Act > get() =
+        _entities.values.filter { it.key.entityKind == EntityKind.ACT } as List< Act >
 
     private val _entities = mutableMapOf< Key, Keyed >()
+
     public val entities : Map< Key, Keyed > get() = _entities
 
+
+
     @Suppress("LeakingThis")
-    abstract inner class Keyed( mnemonic : Char ) {
-        val key : Key = newKey( mnemonic )
+    abstract inner class Keyed( entityKind: EntityKind ) {
+        val key : Key = newKey( entityKind )
         init { _entities[ key ] = this }
     }
 
@@ -54,43 +70,41 @@ class Story {
         return acts.first { it.place == place }.stopovers.values.first()
     }
 
-    inner class Act( val place : Place ) : Keyed( 'A' ) {
+    inner class Act( val place : Place ) : Keyed( EntityKind.ACT ) {
 
         constructor( place : Place, configurator : ( Act ) -> Unit ) : this( place ) {
             configurator( this )
         }
 
-        init { this@Story._acts.add( this ) }
-
         private val _stopovers = LinkedHashMap< Key, Stopover > ()
         public val stopovers : Map< Key, Stopover > get() = _stopovers
 
         @Suppress("LeakingThis")
-        abstract inner class Stopover( mnemonic: Char, val text : String ) : Keyed( mnemonic ){
+        abstract inner class Stopover( entityKind: EntityKind, val text : String ) : Keyed( entityKind ){
             init { this@Act._stopovers[ key ] = this }
         }
 
         inner class Strophe(
             text : String,
             val choices : Map< Choice, Holder< Stopover > >
-        ) : Stopover( 'S', text )
+        ) : Stopover( EntityKind.STROPHE, text )
 
         inner class Trip(
             text : String,
             val destinations : Set< Place >
-        ) : Stopover( 'T', text )
+        ) : Stopover( EntityKind.TRIP, text )
 
         inner class Jump(
             text : String,
             val destination : Holder< Act.Stopover >
-        ) : Stopover( 'J', text )
+        ) : Stopover( EntityKind.JUMP, text )
 
     }
 
     private var keyGenerator = 0
 
-    fun newKey( mnemonic : Char ) : Key {
-        return Key( mnemonic, keyGenerator ++ )
+    fun newKey( entityKind: EntityKind ) : Key {
+        return Key( entityKind, keyGenerator ++ )
     }
 
 }
@@ -105,24 +119,22 @@ class Holder< OBJECT > {
     var value : OBJECT
         get() { check( current != null ) ; return current !! }
         set( value ) { check( current == null ) ; current = value }
+    fun hasValue() : Boolean = current != null
 }
 
 typealias StopoverHolder = Holder< Story.Act.Stopover >
 
-/**
- * @param mnemonic TODO make it an enum.
- */
-data class Key( val mnemonic : Char, val index : Int ) : Comparable< Key > {
+data class Key( val entityKind: Story.EntityKind, val index : Int ) : Comparable< Key > {
     override fun compareTo( other: Key ): Int {
         return compareValuesBy(
             this,
             other,
-            { it.mnemonic },
+            { it.entityKind },
             { it.index }
         )
     }
 
-    val identifier : String get() = "$mnemonic$index"
+    val identifier : String get() = "${entityKind.mnemonic}$index"
 }
 
 
@@ -160,6 +172,7 @@ fun demo1(): Story {
 fun main() {
     val story = demo1()
     println( "Current directory is '${System.getProperty( "user.dir" )}'." )
+    println( "Created $story." )
     val dot = DotRenderer().render( story )
     println( dot )
 
