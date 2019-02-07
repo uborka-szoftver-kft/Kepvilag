@@ -1,0 +1,364 @@
+
+== Navigation
+
+Il faut un petit nombre de boutons toujours à la même place.
+
+Les fonctionnalités de base :
+- "Sélection" : dérouler un dialogue, choisir l'option courante.
+- "Avant-arrière" : naviguer dans les options.
+- "Menu" : options du jeu.
+
+<<<
++----------------------------+
+|                     [Menu] |
+|                            |
+|                            |
+|                            |
+|[ Prev ] [ Select ] [ Next ]|
++----------------------------+
+>>>
+
+Le bouton "Menu" s'affiche en transparence. Il est dans le coin supérieur droit pour ne pas occuper le coin supérieur gauche qui correspond au début de la lecture.
+
+Les boutons sont ronds, donc ils rentrent dans un mode portrait.
+
+On a aussi la tentation d'une sélection directe sur les options. Se pose alors la question de la taille du texte à afficher. Ça semble risqué de ne pas supporter le cas où tout ne tient pas dans une bulle. 
+
+La solution : un défilement panoramique ("pan") horizontal pour les options, avec un déplacement vertical si le texte déborde de la bulle, et des indicateurs de débordement. Si on se limite à l'utilisation des boutons la navigation "Précédent-Suivant" fait défiler l'intégralité d'un texte vers le haut (respectivement vers le bas) s'il est trop long pour tenir dans la bulle. Il faut également un indicateur (une surbrillance) du choix pour lequel le bouton "Sélection" prendra effet.
+
+<<<
++----------------------------+
+|       ________________     |
+|      /                \    |
+|     |   Lorem ipsum    |   |
+|     |   sid dolor     >|   |
+|     |   amet,         >|   |
+|     |   consectetur   >|   |
+|     |   adipiscing     |   |
+|      \______vvv____ __/    |
+|                   //       |
+|                  /         |
+|            °>  <°          |
+|           ( )  ( )         | 
+|      ======"===="========= |
+|           //    \\         |
+|                            |
+|[ Prev ] [*Select*] [*Next*]|
++----------------------------+
+>>>
+
+Incidemment cela implique un pré-rendu de tout le texte à afficher (toutes les options). Mais ça c'est la vie. L'indicateur de sélection peut s'avérer bon marché si on dessine 2 fois le texte avec 1 pixel de décalage (faux gras). Un test rapide avec Gimp et 
+
+Accessoirement ça donne envie de faire Budapest en asciiart.
+
+Dans les options il y aura la possibilité de masquer les boutons pour une expérience visuelle plus totale.
+
+
+=== Conclusion 
+
+Si on veut un jeu d'aventure textuel il faut un moteur d'affichage et de menus.
+
+# Affichage en fonction des capacités de l'écran.
+# Défilement par effleurement.
+# Boutons.
+# Bulles.
+
+
+
+== Taille minimum de l'affichage
+
+=== Android
+
+"Minimum screen resolution for Android devices"
+https://stackoverflow.com/questions/4519605/minimum-screen-resolution-for-android-devices
+des gens s'accordent sur `320 «times» 240`.
+
+
+=== Gloria Hallelujah
+
+Un test avec Gimp révèle qu'on reste lisible avec :
+- Gloria Hallelujah
+- Hauteur : 12 px
+- Interlignage : `-10`
+
+On obtient une hauteur pratique de 17 pixels par ligne (pour laisser la place aux `fpGÎÔÛçÇ`).
+
+Avec le lissage on obtient une écriture "renforcée" (demi-gras) en superposant 2 rendus. La transparence donne l'effet d'accentuation.
+
+./2019-02-06/320x240-tryout.png
+
+Après il n'est pas certain que le rendu FreeFont-libGDX donne les mêmes résultats.
+
+
+== libGDX : le //touch//
+
+"Tutorial: Handling Input Touch and Gestures"
+https://www.gamefromscratch.com/post/2013/10/24/LibGDX-Tutorial-5-Handling-Input-Touch-and-gestures.aspx
+
+<<
+Supported gestures include tap, fling(flick), pinch (two fingers moving closer together), zoom (two fingers moving apart), pan (one finger hold and slide) and long press (tap and hold) as well as good ole fashion touch.
+>>
+
+
+== Tutoriels : Games From Scratch est une mine d'or
+
+"libGDX, texte"
+https://www.gamefromscratch.com/page/LibGDX-Tutorial-series.aspx
+
+"libGDX, vidéo"
+https://www.gamefromscratch.com/page/LibGDX-Video-Tutorial-Series.aspx
+
+"Blender"
+https://www.gamefromscratch.com/page/www.gamefromscratch.com/page/Blender-an-Hour-at-a-Time-A-Blender-Video-Tutorial-Series.aspx
+
+
+
+== Autres outils de création d'aventures textuelles
+
+"3 Tools to Create Your Own Text Adventure Games"
+https://www.makeuseof.com/tag/3-tools-to-create-your-own-text-adventure-games/
+
+=== Twine
+
+[Twine]
+http://twinery.org/
+fonctionne (aussi) sur macOS et Linux. Il y a une [introduction]
+http://twinery.org/2/#!/welcome
+et un [éditeur en ligne]
+http://twinery.org/2/#!/stories
+avec un thème sombre. L'éditeur est chargé à partir du site mais on n'envoie pas le contenu sur le site central.
+
+On apprécie le mode "épreuve". La publication dans une page HTML embarque tous les textes et comportements (pas les images). Mais il n'y a pas d'option pour restaurer une histoire alors que celle-ci est sauvegardée dans le navigateur. Heureusement il y a une options "Archive" (cliquer sur l'icône "maison").
+
+=== Inform
+
+[Inform]
+http://inform7.com/
+fournit plus d'options d'interactivité. Voir la [doc]
+http://inform7.com/learn/man/WI_1_1.html
+. En gros on programme avec ce qui veut ressembler à du langage naturel.
+
+=== Ink
+
+[Ink]
+https://www.inklestudios.com/ink/
+avec [Inky]
+https://github.com/inkle/inky
+propose un éditeur interactif pour un format purement textuel (sources et jeu). Il bénéficie d'une intégration avec Unity. Le runtime est en `C#` et continue d'évoluer.
+
+On peut voir les sources de la [démo]
+https://github.com/inkle/the-intercept/blob/master/Assets/Ink/TheIntercept.ink
+et ça ne fait pas forcément envie.
+
+Mais il y a plein de trouvailles concernant la syntaxe et les dialogues. Genre :
+
+<<
+
+<<<
+"What's that?" my master asked.
+* "I am somewhat tired[."]," I repeated.
+  "Really," he responded. "How deleterious."
+>>>
+
+produces:
+
+<<<
+"What's that?" my master asked.
+1. "I am somewhat tired."
+> 1
+"I am somewhat tired," I repeated.
+"Really," he responded. "How deleterious."
+>>>
+>>
+
+Ou encore :
+
+<<
+You can also turn choices on and off by hand. ink has quite a lot of logic available, but the simplest tests is "has the player seen a particular piece of content".
+
+<<<
+* { not visit_paris }  [Go to Paris] -> visit_paris
++ { visit_paris     }  [Return to Paris] -> visit_paris 
+* { visit_paris.met_estelle } [ Telephone Mme Estelle ] -> phone_estelle 
+>>>
+>>
+
+
+Références commerciales :
+[`Sorcery!`]
+https://itunes.apple.com/us/app/sorcery/id627879091?mt=8
+, [80 Days]
+https://itunes.apple.com/hu/app/80-days/id892812659?mt=8
+y compris [sur macOS]
+https://itunes.apple.com/us/app/80-days/id1044982958?mt=12
+, prix de vente environ `5 €` sur mobile, `10 €` sur le MAS.
+
+À ce point les produits d'Inkle méritent une revue spécifique.
+
+== Inkle
+
+=== Sorcery 1
+
+
+[Sorcery 1]
+https://itunes.apple.com/us/app/sorcery/id627879091
+`$4,99`
+
+./2019-02-06/Sorcery1-230x0w.jpg
+
+./2019-02-06/Sorcey1-230x0w.jpg
+
+./2019-02-06/Sorcery1-2-230x0w.jpg
+
+<<
+I did not die my first time through, and if u did the game in an hour something is wrong, there are 41 spells it took me that long to look over all the spells I would need to use during the journey, you need to carefully read the text to figure out the most appropriate spell, the name of the game is sorcery so it is best to use ur magic not just fight, even when u do use ur sword u need to read the text to help figure out the best stance to take. Overall I really loved the game and I am moving onto part 2. This is like a tabletop rpg, d and d type game, decision based, forcing u to think and take your time. Highly recommend this game.
+>>
+
+<<
+Sorcery is a pretty fun game. I got about 2-3 hours out of it just from doing one blind playthrough before doing a few more to explore the other choices. This game gives a nice bit of freedom in how you play, you can be a goodie two-shoes, a total jerk, or somewhere in between, so you're not stuck playing the same, static MC every playthrough. The way magic is used in this game is also an interesting twist, and being able to reverse mistakes without having to completely restart is a welcomed feature, especially when you're just trying to explore alternatives.
+>>
+
+<<
+I "bumped" this app on Apps Gone Free years ago, and I guess someone finally listened `;)` I had been hoping to try this game out, as I am unfamiliar with the books `&` didn't really know what to expect. Especially now that Inkle has released a 4th app in the Sorcery series, I think it is wise to have freed up the 1st one! I have yet to start it (downloading now), but if it is as good as I think it might be... **then** I'll be willing to fork over for the rest of the series (`&` I will update my review)!! It's always a good idea to give patrons a taste of your wares. If the product is great, people will return... again `&` again. 
+Thank you, inkle!!
+>>
+
+== Sorcery 2
+
+[Sorcery 2]
+https://itunes.apple.com/us/app/sorcery-2/id627880433
+`$4,99`
+
+<<
+I went over the four apps in my review of the first book, I'll just add a few things. Again Inkle has enhanced an old, classic gamebook and created a fantastic game. This second volume is far superior to the first one-it takes a long time to understand what's going on, to gather all the clues that you need to succeed, although it is also the continuation of the previous volume. It can seem sometimes it will be difficult to finish it but it is never impossible, and the rich universe that lies behind the story is full of mysteries and twists and keeps you involved. A must-have.
+>>
+
+<<
+Major step backwards from the first installment
+In the first installment, I felt as though I was really choosing my own adventure -- there were so many things I knew I was missing as I blundered my way through which really made the game feel magical and unique, and made me want to replay it to see what I'd missed-_. In this one, you have to wander aimlessly through a city, covering every inching and getting thrown backwards or killed at any "wrong" step. You're forced to collect 4 spell lines, ensuring that you experience the exact same things every time. I felt as though I was being railroaded by a storyteller who insisted on me playing through one particular story. What's the point of a "choose your adventure" that forces you to choose the one right path?
+>>
+
+<<
+Illogical, awkward, and too linear
+Based on the great reviews I read, I was really excited to play this game. However, after about 5 hours of playing, I'm perplexed why people rate this game so highly. There doesn't seem to be any rhyme or reason to the consequences of your actions (sometimes you make a seemingly logical choice and you die; others times you pick something whimsical and get rewarded with treasure). The spell book mechanics are awkward, forcing you to flip back and forth between menus to try to figure out which spell might help in a given situation. And the storyline is a bit too linear for my taste, not allowing you to go back and explore areas you have previously been too. Thank god I bought this game a couple years after it's release, so I only wasted `$5` on it. Avoid at all costs.
+>>
+
+
+== Sorcery 3
+
+[Sorcery 3]
+https://itunes.apple.com/us/app/sorcery-3/id978352903
+
+== Sorcery 4
+
+[Sorcery 4]
+https://itunes.apple.com/us/app/sorcery-4/id1126935885
+
+
+./2019-02-06/Sorcery4-1-230x0w.jpg
+
+./2019-02-06/Sorcery-4-2-230x0w.jpg
+
+./2019-02-06/Sorcery-4-3-230x0w.jpg
+
+./2019-02-06/Sorcery-4-4-230x0w.jpg
+
+./2019-02-06/Sorcery-4-5-230x0w.jpg
+
+La série existe également sur Android (merci Unity).
+
+
+
+== Future Voices
+
+[Future Voices]
+https://itunes.apple.com/us/app/future-voices/id594781813
+gratuit.
+
+Commentaire de 2018 :
+
+<<
+Great!
+I love how you can make a story! The only thing I would fix is that you can make stories on the app and not an the website, but it is still really fun! I love to make stories and send them to my friends!
+>>
+
+
+
+== Down Among the Dead Men
+
+[Down Among the Dead Men]
+https://itunes.apple.com/us/app/down-among-the-dead-men/id903402226
+`$1.99`, un commentaire mentionne un prix inférieur de `1 $`.
+
+
+./2019-02-06/DADM-1-230x0w.jpg
+
+./2019-02-06/DADM-2-230x0w.jpg
+
+./2019-02-06/DADM-3-230x0w.jpg
+
+<<
+Not a Game
+My only real complaint is that this has been completely miscategorized: it is **not** a game. This is a choose your own adventure book and should be listed in the books category. There is no discernible game element at work here. Unlike other Inkle creations your choices are also very limited, the vast majority of choices are between A or B. It lacks the fun, creativity, and depth of other Inkle titles, but that's also setting the bar very, very high. The graphics (few though there are) are gorgeous but for being an entirely text based offering the ~story`/`~writing just isn't very engaging. It's not bad, but I'm very disappointed with it largely because it was so misrepresented. If I had known in advance that it would lack the elements that made other games so successful and fun and was solely a book I think I would be more receptive to it and might even enjoy it more.
+>>
+
+<<
+Great story but could use more...
+It is hard not to compare this to other efforts by Inkle, but it is very different than Sorcery! or 80 Days. This is much more of a traditional choose-your-own-adventure; it is very light on graphics and is entirely limited to story choices.
+
+On it's own it is a well written story and a fun read. For `$.99` it is worth the purchase and time to go through. My criticism is mainly that there are too few choices to make. What I've enjoyed about the Inkle games is that you are given a lot of prompts to make decisions, making their interactive fiction much more interactive. It helps you feel more in control of the story. That is missing to a degree with this. I give it a four for the bargain price and good writhing.
+>>
+
+== 80 Days
+
+Sur [iOS]
+https://itunes.apple.com/us/app/80-days/id892812659
+(`$4.99`), et [macOS]
+https://itunes.apple.com/us/app/80-days/id1044982958
+(`$9.99`).
+
+
+./2019-02-06/80d-ios-1-230x0w.jpg
+
+./2019-02-06/80d-ios-2-230x0w.jpg
+
+./2019-02-06/80d-ios-3-230x0w.jpg
+
+./2019-02-06/80d-ios-4-230x0w.jpg
+
+./2019-02-06/80d-ios-5-230x0w.jpg
+
+
+./2019-02-06/80d-mos-1-626x0w.jpg
+
+./2019-02-06/80d-mos-2-626x0w.jpg
+
+./2019-02-06/80d-mos-4-626x0w.jpg
+
+
+=== Inkle Store
+
+Des articles (tasses, posters) avec pour thèmes [80 Days]
+https://www.cafepress.co.uk/inklestudios/12061350
+et [Sorcery]
+https://www.cafepress.co.uk/inklestudios/12061329
+.
+
+
+===Inky 
+
+L'éditeur d'Inkle est [Inky] 
+https://github.com/inkle/inky
+. OSS, fonctionne sur Linux, macOS et Windows. Compile la source (simili markdown) en JSON et supporte l'exécution interactive. 
+
+inklecate, le compilateur en ligne de commande, est [téléchargeable séparément]
+https://github.com/inkle/ink/releases
+.
+
+
+
+=== Blade-ink
+
+Un [port en Java]
+https://github.com/bladecoder/blade-ink
+

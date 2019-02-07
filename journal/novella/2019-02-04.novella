@@ -20,7 +20,7 @@ Un graphe de graphe.
 
 == Jouabilité
 
-Comment justifier le choix restreint des destinations ? 
+Comment justifier le choix restreint des destinations ?
 - On ne justifie rien.
 - L'interlocuteur indique d'autres contacts.
 
@@ -33,20 +33,95 @@ Un thème "sombre" ne sera pas de refus.
 
 Il faut trouver quelque chose de mieux qu'une enum comme alias d'une Strophe (ou autre ``Proceeding``). On peut reprendre le principe du ``Holder`` qui est une référence qu'on peut affecter une seule fois.
 
-On peut donner un nom à un Holder (pour le montrer dans le graphe). Mais on sent que ça ne va pas servir à grand-chose, il y aura toujours un bout de dialogue en langage naturel assez caractéristique pour s'y retrouver. 
+On peut donner un nom à un Holder (pour le montrer dans le graphe). Mais on sent que ça ne va pas servir à grand-chose, il y aura toujours un bout de dialogue en langage naturel assez caractéristique pour s'y retrouver.
 
 Ça se comporte bien avec le code existant, et on voit l'opportunité de virer le paramètre de type qui fait chier :
 
 <<<
   val kerteszUtca1 : Dialog< StropheLabel.Ku > = Dialog( Place.KERTESZ_UTCA ) {
       val p = Holder< Dialog< StropheLabel.Ku >.Proceeding >()
-  
+
       p.value = it.Strophe(
           StropheLabel.Ku.K,
           "Hogy vagy?",
           ...
       )
-  
+
+      it.Jump(
+          StropheLabel.Ku.JO,
+          ...
+          p.value.label
+          // Was: StropheLabel.Ku.K
+      )
+      ...
+  }
+>>>
+
+Ça serait bien pendant qu'on y est d'appliquer la collaboration ``ProceedingDialog`` (ajout automatique) au couple ``Dialog-Story``. Comme ça on résoud la question de l'identité avec un identifiant dont l'unicité est garantie au niveau du conteneur, et pas d'instances qui se promènent dans la nature.
+
+Pour résumer :
+- L'entité se distingue par sa seule existence.
+- L'entité possède un identifiant unique assigné à la création par son possesseur.
+- Le possesseur conserve un dictionnaire des entités par identifiant.
+- Le ``Holder`` règle localement un problème local.
+- Une entité ne peut référencer une autre entité qu'à travers un ``Holder``.
+
+On imagine bien des clés genre ``S10983`` ou ``J9083`` avec un indicateur de type, mais une séquence unique partagée au niveau de la ``Story``.
+
+Après il y aura des changements dans les cardinalités notamment ``Dialog-Place`` mais c'est une autre histoire. Le fait d'avoir des identifiants bien clairs aide à limiter la confusion.
+
+Peut-être faudra-t-il aussi envisager des modificateurs d'état, genre qui aiguillent vers un dialogue ou l'autre.
+
+Si ça se trouve c'est un modificateur qui résoud le ``Dialog`` associé à une ``Place``. Pour la représentation il manque la capacité de flécher directement sur le subgraph.
+
+
+
+
+== Narration
+
+Il faut une histoire d'amour. Genre : super-bonus si on séduit une femelle aux longs cils, avec animation d'un cœur rose.
+
+
+== Blender : tutoriels
+
+"2D In `Blender 2.8` Is Amazing!"
+https://youtu.be/cy_thd8Idsw
+
+Bien, on apprend des trucs pas évidents : "How to draw on 3d surfaces `&` convert 2D shapes to 3D"
+https://youtu.be/eDorym2Jqrw
+
+Gréement : "Grease Pencil Character `2.5D` simple rig Intro in `Blender 2.8`"
+https://youtu.be/V9hEgR-vKb0
+
+== Jouabilité
+
+Comment justifier le choix restreint des destinations ?
+- On ne justifie rien.
+- L'interlocuteur indique d'autres contacts.
+
+
+== Code : premières impressions avec ``storygraph3``
+
+Pour la même ``Place`` il faut (probablement) plusieurs ``Dialog``. Peut-être qu'il faut dissocier. Bref on verra en fonction du scénario.
+
+Un thème "sombre" ne sera pas de refus.
+
+Il faut trouver quelque chose de mieux qu'une enum comme alias d'une Strophe (ou autre ``Proceeding``). On peut reprendre le principe du ``Holder`` qui est une référence qu'on peut affecter une seule fois.
+
+On peut donner un nom à un Holder (pour le montrer dans le graphe). Mais on sent que ça ne va pas servir à grand-chose, il y aura toujours un bout de dialogue en langage naturel assez caractéristique pour s'y retrouver.
+
+Ça se comporte bien avec le code existant, et on voit l'opportunité de virer le paramètre de type qui fait chier :
+
+<<<
+  val kerteszUtca1 : Dialog< StropheLabel.Ku > = Dialog( Place.KERTESZ_UTCA ) {
+      val p = Holder< Dialog< StropheLabel.Ku >.Proceeding >()
+
+      p.value = it.Strophe(
+          StropheLabel.Ku.K,
+          "Hogy vagy?",
+          ...
+      )
+
       it.Jump(
           StropheLabel.Ku.JO,
           ...
