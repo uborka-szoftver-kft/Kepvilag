@@ -1,0 +1,36 @@
+<html>
+    <!--
+        To run a local webserver, open a command shell in this file's directory and run:
+        python -m SimpleHTTPServer 8000
+        But we don't need it since we can load a (modified) .dot file as a script.
+
+        To experiment on line (automatic refresh):
+        http://viz-js.com/
+    -->
+    <head>
+        <meta charset="utf-8" />
+        <title>Graph</title>
+        <style>
+            body {
+              background-color: #111111;
+            }
+   </style>
+        <script type="text/javascript" src="./viz.js" ></script>
+        <script type="text/javascript" src="./render.js"></script>
+        <!--<script type="text/javascript" src="./samplegraph3.js"></script>-->
+        <script type="text/javascript" src="./generated.js"></script>
+    </head>
+
+    <body>
+
+        <div id="dot-rendered" />
+
+        <pre id="dot-source">
+            Some .dot file could appear here after loading.
+        </pre>
+
+        <script type="text/javascript" >
+            render()
+        </script>
+    </body>
+</html>
