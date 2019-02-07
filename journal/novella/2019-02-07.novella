@@ -1,0 +1,63 @@
+== 3D isométrique
+
+Tout fait : [Icograms 3D Map Designer]
+https://icograms.com
+(commercial, gratuit avec des limitations).
+
+
+./2019-02-07/town.png
+
+C'est clair il y a déjà du [boulot de fait]
+https://www.flickr.com/photos/rodhunt/2989853954
+:
+
+./2019-02-07/2989853954_c0b1c1cee5_z.jpg
+
+(Il y a [encore plus fort]
+http://hello.eboy.com/eboy/wp-content/uploads/2006/02/MSH_koelnposter_29t-882x623.png
+mais ça devient trop grand.)
+
+On a des [villes en 3D]
+https://www.reddit.com/r/MapPorn/comments/56r9nc/the_city_of_london_modelled_in_blender_using_the/
+. Comme on regarde en priorité les détails de la ville, on n'est pas choqué par l'absence de point de fuite.
+
+./2019-02-07/London.png
+
+Il y a des gens qui suggèrent l'export d'OpenStreetMap : "How to extract 3D models from Google Earth to get dimensions`/`proportions of building"
+https://www.reddit.com/r/CitiesSkylinesModding/comments/46qw3m/tutorial_on_how_to_extract_3d_models_from_google/
+. Ça utilise [OSM2World]
+http://osm2world.org/
+et le résultat est impressionnant :
+
+./2019-02-07/Osm2world.png
+
+Mais ça implique un travail de repérage qui n'a été fait que dans certaines régions (Autriche notamment).
+
+Avec juste le plan au sol on peut faire des [trucs sympas]
+https://osmbuildings.org/?lat=47.50615&lon=19.06790&zoom=18.8&tilt=20
+.
+
+En googlant on tombe sur des visuels [sympas]
+https://hdoesheritage.wordpress.com/tag/blender/
+notamment pour le choix des couleurs :
+
+./2019-02-07/buildingsortho.jpg
+
+
+Mais on n'a pas besoin d'un plan exact, il suffit de créer quelques solides dans Blender et de recopier ce que montre Google Maps, notamment les [toits]
+https://www.google.com/maps/@47.5005567,19.0676091,35a,35y,48.5h,67.44t/data=!3m1!1e3
+.
+
+L'isométrique ça fout la [trique]
+https://hu.pinterest.com/verairiscreative/isometric/?lp=true
+. Est cité "Isometric Cityscape"
+https://abduzeedo.com/city-life-isometric-cityscape
+, sympa. Exemple :
+
+./2019-02-07/78504e.jpg
+
+Et [aussi]
+https://hu.pinterest.com/pin/83035186866103149/
+
+./2019-02-07/947daab.jpg
+
