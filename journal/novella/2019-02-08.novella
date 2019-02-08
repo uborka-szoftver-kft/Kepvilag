@@ -1,0 +1,72 @@
+== Projection
+
+Wikipedia fournit la [clarification terminologique]
+https://en.wikipedia.org/wiki/3D_projection
+. 
+
+Taxonomie des projections :
+- Parallèle ("zéro point de fuite"):
+  - Orthogonale ("multiview").
+  - Axonométrique (synonymes : isométrique, orthographique).
+  - Oblique militaire. 
+  - Oblique cavalière.
+- Oblique :
+  - 1 point de fuite.
+  - 2 points de fuite.
+  - 3 points de fuite.
+- Curvilinéaire.   
+  - 4 points de fuite.
+  - 5 points de fuite.
+
+./2019-02-08/Graphical_projection_comparison.png
+
+Annexe : quelques explications sur la [perspective orthogonale]
+http://mdevmd.accesmad.org/mediatek/mod/page/view.php?id=1506
+(réservée au dessin technique).
+
+
+Le travail de Rod Hunt montre les possibilités et les libertés de la projection orthographique. Certaines œuvres montrent comment récupérer des morceaux de la grande image à des fins d'illustration. Son travail sur Jodhpur montre que l'épaisseur du trait et l'isométrie des personnages peut ne pas être constante.
+
+
+=== Utilisation
+
+Dans notre cas la difficulté consiste à mélanger les zones denses avec les vignettes de taille variable.
+
+On peut s'aider d'un outil de dessin rapide pour maquetter l'impression visuelle. Genre ce sont les bâtiments qui fournissent les délimitations. Il y a un truc : on peut programmatiquement ajouter des blocs de bâtiment pour "étendre" les zones laissées aux dialogues.
+
+Il faut également caser l'image du Fickó. Mais si on met le Fickó en couleur sur des bâtiments ternes ça va péter.
+
+Blender peut-il nous sauver ? Au moins il évite de se disperser avec un outil de plus. Genre on peut modéliser tout ce qu'on veut (bâtiments), les disposer avec un effet de duplication, appliquer les couleurs sur un calque au-dessus de la vue en projection (Grease Pencil), regarder la place qui reste.
+
+=== Maquette
+
+- 1 bâtiment en vue cavalière.
+  - Respect des cotes, `1 m Blender = 1 m terrain`
+  - Textures dessinées sur les surfaces (Grease Pencil) avec épaisseur constante.
+  - Ou : projection de photographies.
+- Duplication du bâtiment pour obtenir 3 îlots.
+- Ajout d'hirondelles et bulles de dialogues dans les îlots.
+- Ajout du Fickó sur un panneau mural.
+
+Option : tout redessiner à la main sur du papier en calquant.
+
+
+== Blender : réalisation d'une maquette
+
+Attention à bien choisir un décalage positif quand on peint par-dessus le Canvas.
+
+Si on veut une épaisseur de trait constante il faut la choisir avant de dessiner.
+
+Pas moyen de copier un objet avec le Grease Pencil associé. Il faut des textures (plus économiques).
+
+Les textures doivent être rectangulaires, sans transparence sur les côtés.
+
+Pour texturer juste une face il faut désactiver la projection UV sur cette face.
+
+== Façades d'immeubles
+
+http://kollektiv.hu/works/tArsashAz-homlokzati-felUjItAsAnak
+
+http://www.mke.hu/about/epuletek.php
+
+http://www.hpv.hu/en/benczur+business+center.html
