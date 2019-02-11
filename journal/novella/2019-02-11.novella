@@ -8,7 +8,15 @@ de libGDX car elles fournissent une apparence cohérente à l'application.
 
 [VisUI]
 https://github.com/kotcrab/vis-ui
-est la dernière version de la skin par défaut. Il y a une démo en ligne (déploiement Web). Pas de hi-DPI -- la faute au navigateur ?-_ Le Command-C ne fonctionne pas.
+est la dernière version de la skin par défaut. Il y a une démo en ligne (déploiement Web). Pas de HiDPI -- la faute au navigateur ?-_ Le Command-C ne fonctionne pas.
+
+
+La meilleure skin est [Android Holo]
+https://github.com/czyzby/gdx-skins/tree/master/gdx-holo
+déclinée en Dark Theme et HiDPI !
+
+
+
 
 === HiDPI
 
@@ -16,13 +24,19 @@ est la dernière version de la skin par défaut. Il y a une démo en ligne (dép
 http://wiki.lwjgl.org/wiki/Using_High_DPI_Mode.html
 il faut juste activer une propriété //et prendre en compte le facteur d'échelle//. Mais ça ne fonctionne que sur macOS.
 
+Merveille ! En se basant sur un bout de la [démo]
+https://libgdx.info/basic-label/
+on observe que la ligne suivante provoque bien un rétrécissement apparent du texte :
 
-Il y a des [bricolages]
-https://github.com/Arcnor/gdx-backend-jglfw
+<<<
+System.setProperty("org.lwjgl.opengl.Display.enableHighDPI", "true") ;
+>>>
 
-Peut-être que [libGDX intègre le correctif ?]
-https://github.com/libgdx/libgdx/issues/1623
+./2019-02-11/HidpiDemoDesktop.png
 
+Sur Android on observe le même rétrécissement (indépendemment de l'activation explicite) :
+
+./2019-02-11/HidpiDemoAndroid.png
 
 
 === Assets
@@ -33,4 +47,63 @@ https://stackoverflow.com/a/25004366/1923328
 et une sur la [configuration de Gradle]
 https://stackoverflow.com/a/33836590/1923328
 .
+
+=== Défilement
+
+Dans la [démo officielle de VisUI]
+https://vis.kotcrab.com/demo/ui
+on découvre un défilement par effleurement (``textarea`` et ``scrollpane`` en haut à gauche). Ils ne défilent pas avant d'avoir reçu le focus au moins une fois. Une fois qu'ils l'ont reçu le défilement fonctionne même si on focalise un autre widget non sujet au défilement.
+
+La question, c'est d'où sortent les événements de défilement. Ça doit [se voir dans la démo]
+https://github.com/kotcrab/vis-ui/blob/master/ui/src/test/java/com/kotcrab/vis/ui/test/manual/TestTextAreaAndScroll.java
+de VisUI. Celle-ci utilise la [``ScrollableTextArea``]
+https://github.com/kotcrab/vis-ui/blob/master/ui/src/main/java/com/kotcrab/vis/ui/widget/ScrollableTextArea.java
+qui dit des trucs intéressants.
+
+Mais les [tests officiels]
+https://github.com/libgdx/libgdx/blob/master/tests/gdx-tests/src/com/badlogic/gdx/tests/ScrollPaneTest.java
+sont tout aussi intéressants.
+
+Le mieux c'est de se débrouiller sans VisUI et de comprendre ce qui se passe, quitte à y pomper des idées. Autrement c'est un coup à programmer des trucs pour contourner VisUI.
+
+
+
+
+
+== Racontars
+
+libGDX est fantastique. Parfois le projet semble tombé en désuétude mais c'est souvent parce qu'on tombe sur de la documentation obsolète. 
+
+Par exemple je me posais des questions sur le support du HiDPI. Eh bien ça fonctionne ! Bon il faut juste trouver la ligne magique dans la doc de LWJGL pour l'activer sur macOS, et après il faut faire de la gymnastique pour prendre en compte le facteur d'échelle si on veut une taille d'affichage constante.
+
+
+=== Kotlin multiplateforme
+
+Petite mise au point (surtout pour Emmanuel P. que j'ai bassiné avec Kotlin). Pour des applications graphiques multiplateformes on peut trouver deux façons d'utiliser Kotlin :
+- Avec libGDX.
+- Sans libGDX.
+
+Si on veut du libGDX on active l'option "Kotlin" dans le générateur de projet libGDX, et on écrit du code en Kotlin tout comme on l'écrirait du Java ou autre chose. On peut s'aider de la bibliothèque KTX (Kotlin pour libGDX) mais c'est surtout du sucre syntaxique, niveau architecture ça ne change rien. L'infrastructure de construction de libGDX (qui est une configuration spécifique de Gradle) va faire le nécessaire pour générer le code natif en appelant le compilateur ou transpileur adapté à la plateforme-cible. C'est l'approche la plus portable et la plus agréable à coder. Elle a deux inconvénients. D'une part, pas de code généré pour déploiement Web parce que GWT ne sait pas compiler du Kotlin. D'autre part, pas moyen de réutiliser les bibliothèques Kotlin précompilées (telles que Ktor client). 
+
+Attention le déploiement Web de libGDX nécessite WebGL (vu que libGDX utilise OpenGL ES pour l'affichage, exclusivement) et le HiDPI ne fonctionne pas.
+
+Si on ne veut pas de libGDX on utilise Kotlin comme un langage disposant de plusieurs cibles de compilation, avec les outils fournis par JetBrains. En-dehors du code multiplateforme on appelle des bibliothèques iOS ou JavaScript à partir d'en-têtes générés par un moyen approprié. Ça peut sembler débile de réécrire sa propre couche multiplateforme (c'est refaire le boulot de libGDX) mais ça permet d'autres trucs, par exemple de faire de la 3D sur des navigateurs sans OpenGL. Un inconvénient c'est qu'on doit plus ou moins réinventer son infrastructure de construction. La bonne nouvelle concernant le code exécuté dans le navigateur Web, c'est qu'on l'écrit en Kotlin (JetBrains fournit les en-têtes appropriés) et qu'on bénéficie de toutes les optimisations trouvées par JetBrains à partir du code source en Kotlin, sans passer par un transpileur. Un autre avantage, c'est qu'on bénéficie des bibliothèques de Kotlin sans recompiler.
+
+Si on peut se passer d'un déploiment Web il reste le desktop Linux-macOS-Windows, Android, et iOS, rien que ça. Et là on peut bénéficier de Kotlin avec libGDX, et probablement KTX, et le HiDPI fonctionne. Et on résoud sans s'en apercevoir plein de problèmes affreux.
+
+Si on veut un déploiement Web on a deux solutions. La solution pas chère c'est de coder en Java et d'utiliser libGDX mais le résultat n'est pas super-génial (par exemple pas de HiDPI). La solution chère c'est de recoder le nécessaire en Kotlin, et là on a les mêmes primitives qu'en pur JavaScript. Ça implique aussi de bricoler l'infrastructure de construction.
+
+Concernant le déploiement Web il faut bien garder en tête que c'est souvent la version bon marché du déploiement multiplateforme (pour retomber après sur des monstres comme React Native, bravo les gars). Donc si on couvre toutes les plateformes en natif il se peut que le déploiement Web ne soit plus une nécessité.
+
+La [démo en ligne des widgets]
+https://vis.kotcrab.com/demo/ui
+montre que ça manque de finitions, notamment (et sans surprise) concernant tout ce qui touche à la focalisation et au copier-coller.
+
+
+
+
+
+
+
+
 

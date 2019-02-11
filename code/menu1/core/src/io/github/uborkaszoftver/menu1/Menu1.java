@@ -1,93 +1,127 @@
 package io.github.uborkaszoftver.menu1;
 
+
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
-import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.BitmapFont;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
-import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
-import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.utils.Align;
-import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.scenes.scene2d.ui.Slider;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
+import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+
 
 public class Menu1 extends ApplicationAdapter {
-	private Stage stage;
-@Override
+  private Stage stage;
+  private Table container;
+
   public void create () {
-    stage = new Stage(new ScreenViewport());
-    int Help_Guides = 12;
-    int row_height = Gdx.graphics.getWidth() / 12;
-    int col_width = Gdx.graphics.getWidth() / 12;
-    addBackgroundGuide(Help_Guides);
-/*
-    Label.LabelStyle label1Style = new Label.LabelStyle();
-    BitmapFont myFont = new BitmapFont(Gdx.files.internal("bitmapfont/Amble-Regular-26.fnt"));
-    label1Style.font = myFont;
-    label1Style.fontColor = Color.RED;
+    stage = new Stage();
+    Skin skin = new Skin(Gdx.files.internal("skin/dark-hdpi/Holo-dark-hdpi.json"));
+    Gdx.input.setInputProcessor(stage);
 
-    Label label1 = new Label("Title (BitmapFont)",label1Style);
-    label1.setSize(Gdx.graphics.getWidth(),row_height);
-    label1.setPosition(0,Gdx.graphics.getHeight()-row_height*2);
-    label1.setAlignment(Align.center);
-    stage.addActor(label1);
-*/
-    FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("GloriaHallelujah.ttf"));
-    FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-    parameter.size = 30;
-    parameter.borderWidth = 1;
-    parameter.color = Color.YELLOW;
-    parameter.shadowOffsetX = 3;
-    parameter.shadowOffsetY = 3;
-    parameter.shadowColor = new Color(0, 0.5f, 0, 0.75f);
-    BitmapFont font24 = generator.generateFont(parameter); // font size 24 pixels
-    generator.dispose();
+    // Gdx.graphics.setVSync(false);
 
-    Label.LabelStyle labelStyle = new Label.LabelStyle();
-    labelStyle.font = font24;
+    container = new Table();
+    stage.addActor(container);
+    container.setFillParent(true);
 
-    Label label2 = new Label("True Type Font (.ttf) - Gdx FreeType",labelStyle);
-    label2.setSize(Gdx.graphics.getWidth()/Help_Guides*5,row_height);
-    label2.setPosition(col_width*2,Gdx.graphics.getHeight()-row_height*4);
-    stage.addActor(label2);
-/*
-    Skin mySkin = new Skin(Gdx.files.internal("skin/glassy-ui.json"));
+    Table table = new Table();
+    //table.debug();
 
-    Label label3 = new Label("This is a Label (skin) on  5 columns ",mySkin,"black");
-    label3.setSize(Gdx.graphics.getWidth()/Help_Guides,row_height);
-    label3.setPosition(col_width*2,Gdx.graphics.getHeight()-row_height*6);
-    stage.addActor(label3);
+    final ScrollPane scroll = new ScrollPane(table, skin);
 
-    Label label4 = new Label("This is a Label (skin) with a 5 columns width but WITH wrap",mySkin,"black");
-    label4.setSize(Gdx.graphics.getWidth()/Help_Guides*5,row_height);
-    label4.setPosition(col_width*2,Gdx.graphics.getHeight()-row_height*7);
-    label4.setWrap(true);
-    stage.addActor(label4);
-*/
-}
+    InputListener stopTouchDown = new InputListener() {
+      public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
+        event.stop();
+        return false;
+      }
+    };
 
-public void addBackgroundGuide(int columns){
-    Texture texture = new Texture(Gdx.files.internal("background.jpg"));
-    texture.setWrap(Texture.TextureWrap.MirroredRepeat, Texture.TextureWrap.MirroredRepeat);
+    table.pad(10).defaults().expandX().space(4);
+    for (int i = 0; i < 100; i++) {
+      table.row();
+      table.add(new Label(i + "uno", skin)).expandX().fillX();
 
-    TextureRegion textureRegion = new TextureRegion(texture);
-    textureRegion.setRegion(0,0,texture.getWidth()*columns,texture.getWidth()*columns);
-    Image background = new Image(textureRegion);
-    background.setSize(Gdx.graphics.getWidth(),Gdx.graphics.getWidth());
-    background.setPosition(0,Gdx.graphics.getHeight()-background.getHeight());
-    stage.addActor(background);
-}
+      TextButton button = new TextButton(i + "dos", skin);
+      table.add(button);
+      button.addListener(new ClickListener() {
+        public void clicked (InputEvent event, float x, float y) {
+          System.out.println("click " + x + ", " + y);
+        }
+      });
 
-@Override
+      Slider slider = new Slider(0, 100, 1, false, skin);
+      slider.addListener(stopTouchDown); // Stops touchDown events from propagating to the FlickScrollPane.
+      table.add(slider);
+
+      table.add(new Label(i + "tres long0 long1 long2 long3 long4 long5 long6 long7 long8 long9 long10 long11 long12", skin));
+    }
+
+    final TextButton flickButton = new TextButton("Flick Scroll", skin );
+    flickButton.setChecked(true);
+    flickButton.addListener(new ChangeListener() {
+      public void changed (ChangeEvent event, Actor actor) {
+        scroll.setFlickScroll(flickButton.isChecked());
+      }
+    });
+
+    final TextButton fadeButton = new TextButton("Fade Scrollbars", skin );
+    fadeButton.setChecked(true);
+    fadeButton.addListener(new ChangeListener() {
+      public void changed (ChangeEvent event, Actor actor) {
+        scroll.setFadeScrollBars(fadeButton.isChecked());
+      }
+    });
+
+    final TextButton smoothButton = new TextButton("Smooth Scrolling", skin );
+    smoothButton.setChecked(true);
+    smoothButton.addListener(new ChangeListener() {
+      public void changed (ChangeEvent event, Actor actor) {
+        scroll.setSmoothScrolling(smoothButton.isChecked());
+      }
+    });
+
+    final TextButton onTopButton = new TextButton("Scrollbars On Top", skin );
+    onTopButton.addListener(new ChangeListener() {
+      public void changed (ChangeEvent event, Actor actor) {
+        scroll.setScrollbarsOnTop(onTopButton.isChecked());
+      }
+    });
+
+    container.add(scroll).expand().fill().colspan(4);
+    container.row().space(10).padBottom(10);
+    container.add(flickButton).right().expandX();
+    container.add(onTopButton);
+    container.add(smoothButton);
+    container.add(fadeButton).left().expandX();
+  }
+
   public void render () {
-    Gdx.gl.glClearColor(1, 1, 1, 1);
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-    stage.act();
+    stage.act(Gdx.graphics.getDeltaTime());
     stage.draw();
   }
-}
+
+  public void resize (int width, int height) {
+    stage.getViewport().update(width, height, true);
+
+    // Gdx.gl.glViewport(100, 100, width - 200, height - 200);
+    // stage.setViewport(800, 600, false, 100, 100, width - 200, height - 200);
+  }
+
+  public void dispose () {
+    stage.dispose();
+  }
+
+  public boolean needsGL20 () {
+    return false;
+  }}
