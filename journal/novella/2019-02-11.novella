@@ -1,0 +1,36 @@
+== libGDX 
+
+=== Skins
+
+On s'intéressera aux [skins]
+https://github.com/czyzby/gdx-skins
+de libGDX car elles fournissent une apparence cohérente à l'application.
+
+[VisUI]
+https://github.com/kotcrab/vis-ui
+est la dernière version de la skin par défaut. Il y a une démo en ligne (déploiement Web). Pas de hi-DPI -- la faute au navigateur ?-_ Le Command-C ne fonctionne pas.
+
+=== HiDPI
+
+[Selon la doc de LWGL]
+http://wiki.lwjgl.org/wiki/Using_High_DPI_Mode.html
+il faut juste activer une propriété //et prendre en compte le facteur d'échelle//. Mais ça ne fonctionne que sur macOS.
+
+
+Il y a des [bricolages]
+https://github.com/Arcnor/gdx-backend-jglfw
+
+Peut-être que [libGDX intègre le correctif ?]
+https://github.com/libgdx/libgdx/issues/1623
+
+
+
+=== Assets
+
+En réponse à la question "Managing assets between desktop and device version in libgdx"
+on a une [solution basé sur les liens symboliques]
+https://stackoverflow.com/a/25004366/1923328
+et une sur la [configuration de Gradle]
+https://stackoverflow.com/a/33836590/1923328
+.
+
