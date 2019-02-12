@@ -4,124 +4,171 @@ package io.github.uborkaszoftver.menu1;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.Container;
+import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
 import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
 import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
+import com.badlogic.gdx.scenes.scene2d.utils.Layout;
+
+import java.util.Random;
 
 
 public class Menu1 extends ApplicationAdapter {
-  private Stage stage;
-  private Table container;
+    private Stage stage;
+    private Table container;
 
-  public void create () {
-    stage = new Stage();
-    Skin skin = new Skin(Gdx.files.internal("skin/dark-hdpi/Holo-dark-hdpi.json"));
-    Gdx.input.setInputProcessor(stage);
+    public void create() {
+        stage = new Stage();
+        Skin skin = new Skin(Gdx.files.internal("skin/dark-hdpi/Holo-dark-hdpi.json"));
+        Gdx.input.setInputProcessor(stage);
 
-    // Gdx.graphics.setVSync(false);
+        // Gdx.graphics.setVSync(false);
 
-    container = new Table();
-    stage.addActor(container);
-    container.setFillParent(true);
+        container = new Table();
+        stage.addActor(container);
+        container.setFillParent(true);
 
-    Table table = new Table();
-    //table.debug();
+        final String[] texts = newTextualEntries( 5, 10, 200 ) ;
+        Vector2 size = new Vector2(400, 500) ;
+        ScrollPane scrollPane = newChoicePane( texts, size, skin ) ;
 
-    final ScrollPane scroll = new ScrollPane(table, skin);
-
-    InputListener stopTouchDown = new InputListener() {
-      public boolean touchDown (InputEvent event, float x, float y, int pointer, int button) {
-        event.stop();
-        return false;
-      }
-    };
-
-    table.pad(10).defaults().expandX().space(4);
-    for (int i = 0; i < 100; i++) {
-      table.row();
-      table.add(new Label(i + "uno", skin)).expandX().fillX();
-
-      TextButton button = new TextButton(i + "dos", skin);
-      table.add(button);
-      button.addListener(new ClickListener() {
-        public void clicked (InputEvent event, float x, float y) {
-          System.out.println("click " + x + ", " + y);
-        }
-      });
-
-      Slider slider = new Slider(0, 100, 1, false, skin);
-      slider.addListener(stopTouchDown); // Stops touchDown events from propagating to the FlickScrollPane.
-      table.add(slider);
-
-      table.add(new Label(i + "tres long0 long1 long2 long3 long4 long5 long6 long7 long8 long9 long10 long11 long12", skin));
+        container.add( scrollPane ).size( size.x, size.y );
+        container.row().space(10).padBottom(10);
     }
 
-    final TextButton flickButton = new TextButton("Flick Scroll", skin );
-    flickButton.setChecked(true);
-    flickButton.addListener(new ChangeListener() {
-      public void changed (ChangeEvent event, Actor actor) {
-        scroll.setFlickScroll(flickButton.isChecked());
-      }
-    });
+    public void render() {
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        stage.act(Gdx.graphics.getDeltaTime());
+        stage.draw();
+    }
 
-    final TextButton fadeButton = new TextButton("Fade Scrollbars", skin );
-    fadeButton.setChecked(true);
-    fadeButton.addListener(new ChangeListener() {
-      public void changed (ChangeEvent event, Actor actor) {
-        scroll.setFadeScrollBars(fadeButton.isChecked());
-      }
-    });
+    public void resize(int width, int height) {
+        stage.getViewport().update(width, height, true);
 
-    final TextButton smoothButton = new TextButton("Smooth Scrolling", skin );
-    smoothButton.setChecked(true);
-    smoothButton.addListener(new ChangeListener() {
-      public void changed (ChangeEvent event, Actor actor) {
-        scroll.setSmoothScrolling(smoothButton.isChecked());
-      }
-    });
+        // Gdx.gl.glViewport(100, 100, width - 200, height - 200);
+        // stage.setViewport(800, 600, false, 100, 100, width - 200, height - 200);
+    }
 
-    final TextButton onTopButton = new TextButton("Scrollbars On Top", skin );
-    onTopButton.addListener(new ChangeListener() {
-      public void changed (ChangeEvent event, Actor actor) {
-        scroll.setScrollbarsOnTop(onTopButton.isChecked());
-      }
-    });
+    public void dispose() {
+        stage.dispose();
+    }
 
-    container.add(scroll).expand().fill().colspan(4);
-    container.row().space(10).padBottom(10);
-    container.add(flickButton).right().expandX();
-    container.add(onTopButton);
-    container.add(smoothButton);
-    container.add(fadeButton).left().expandX();
-  }
+    public boolean needsGL20() {
+        return false;
+    }
 
-  public void render () {
-    Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-    stage.act(Gdx.graphics.getDeltaTime());
-    stage.draw();
-  }
 
-  public void resize (int width, int height) {
-    stage.getViewport().update(width, height, true);
+    private String[] newTextualEntries(
+            final int count,
+            final int minLength,
+            final int maxLength
+    ) {
+        final Random random = new Random( 0 ) ;
+        final StringBuilder builder = new StringBuilder( maxLength ) ;
+        final String[] entries = new String[ count ] ;
+        int counter = 0 ;
+        for( int i = 0 ; i < entries.length ; i ++ ) {
+            builder.setLength( 0 ) ;
+            final int wordCount = random.nextInt( maxLength ) ;
+            for( int j = minLength ; j < wordCount ; j ++ ) {
+                builder.append( "word-" ).append( i ).append( '-' ).append( j ).append( ' ' ) ;
+            }
+            entries[ i ] = builder.toString() ;
+        }
+        return entries ;
+    }
 
-    // Gdx.gl.glViewport(100, 100, width - 200, height - 200);
-    // stage.setViewport(800, 600, false, 100, 100, width - 200, height - 200);
-  }
+    private ScrollPane newChoicePane( String[] texts, Vector2 size, Skin skin  ) {
+        final HorizontalGroup group = new HorizontalGroup() ;
+        Vector2 innerSize = new Vector2(size.x - 50, size.y - 50 ) ;
 
-  public void dispose () {
-    stage.dispose();
-  }
+        for( final String text : texts ) {
+            final Actor textPane = newTextPane( text, innerSize, skin ) ;
+            group.addActor( textPane ) ;
+        }
+        group.setSize( innerSize.x, innerSize.y ) ;
+        final ScrollPane scrollPane = new ScrollPane( group, skin ) ;
+        return scrollPane ;
+    }
 
-  public boolean needsGL20 () {
-    return false;
-  }}
+    private Actor newTextPane(String text, final Vector2 size, Skin skin  ) {
+        final TextArea textArea = new TextArea( text, skin ){
+            @Override
+            public float getMinWidth() {
+                return size.x ;
+            }
+
+            @Override
+            public float getMinHeight() {
+                return size.y ;
+            }
+
+            @Override
+            public float getPrefWidth() {
+                return size.x ;
+            }
+
+            @Override
+            public float getPrefHeight() {
+                return size.y ;
+            }
+
+            @Override
+            public float getMaxWidth() {
+                return size.x ;
+            }
+
+            @Override
+            public float getMaxHeight() {
+                return size.y ;
+            }
+        } ;
+        final ScrollPane scrollPane = new ScrollPane( textArea, skin ) ;
+        final Container< Actor > container = new Container< Actor >( scrollPane ) {
+            @Override
+            public float getMinWidth() {
+                return size.x ;
+            }
+
+            @Override
+            public float getMinHeight() {
+                return size.y ;
+            }
+
+            @Override
+            public float getPrefWidth() {
+                return size.x ;
+            }
+
+            @Override
+            public float getPrefHeight() {
+                return size.y ;
+            }
+
+            @Override
+            public float getMaxWidth() {
+                return size.x ;
+            }
+
+            @Override
+            public float getMaxHeight() {
+                return size.y ;
+            }
+        };
+        return container ;
+    }
+
+}

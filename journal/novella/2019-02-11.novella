@@ -1,22 +1,5 @@
 == libGDX 
 
-=== Skins
-
-On s'intéressera aux [skins]
-https://github.com/czyzby/gdx-skins
-de libGDX car elles fournissent une apparence cohérente à l'application.
-
-[VisUI]
-https://github.com/kotcrab/vis-ui
-est la dernière version de la skin par défaut. Il y a une démo en ligne (déploiement Web). Pas de HiDPI -- la faute au navigateur ?-_ Le Command-C ne fonctionne pas.
-
-
-La meilleure skin est [Android Holo]
-https://github.com/czyzby/gdx-skins/tree/master/gdx-holo
-déclinée en Dark Theme et HiDPI !
-
-
-
 
 === HiDPI
 
@@ -39,6 +22,24 @@ Sur Android on observe le même rétrécissement (indépendemment de l'activatio
 ./2019-02-11/HidpiDemoAndroid.png
 
 
+=== Skins
+
+On s'intéressera aux [skins]
+https://github.com/czyzby/gdx-skins
+de libGDX car elles fournissent une apparence cohérente à l'application.
+
+[VisUI]
+https://github.com/kotcrab/vis-ui
+est la dernière version de la skin par défaut. Il y a une démo en ligne (déploiement Web). Pas de HiDPI -- la faute au navigateur ?-_ Le Command-C ne fonctionne pas.
+
+
+La meilleure skin est [Android Holo]
+https://github.com/czyzby/gdx-skins/tree/master/gdx-holo
+déclinée en Dark Theme et HiDPI ! License : "Give credit to Daniel Holderbaum."
+
+
+
+
 === Assets
 
 En réponse à la question "Managing assets between desktop and device version in libgdx"
@@ -48,7 +49,7 @@ et une sur la [configuration de Gradle]
 https://stackoverflow.com/a/33836590/1923328
 .
 
-=== Défilement
+=== Défilement : démo
 
 Dans la [démo officielle de VisUI]
 https://vis.kotcrab.com/demo/ui
@@ -62,11 +63,23 @@ qui dit des trucs intéressants.
 
 Mais les [tests officiels]
 https://github.com/libgdx/libgdx/blob/master/tests/gdx-tests/src/com/badlogic/gdx/tests/ScrollPaneTest.java
-sont tout aussi intéressants.
+sont tout aussi intéressants. 
 
 Le mieux c'est de se débrouiller sans VisUI et de comprendre ce qui se passe, quitte à y pomper des idées. Autrement c'est un coup à programmer des trucs pour contourner VisUI.
 
+Le code de ``ScrollPaneTest.java`` (lien plus haut) s'extrait facilement. Avec la skin Android Holo on obtient un résultat correct sur Desktop et simulateur Android. Ce code apparaît dans le projet ``menu1``, ``Menu3.java``.
 
+
+=== Défilement : qu'est-ce qu'on veut ?
+
+- Un défilement vertical rapide avec inertie.
+- Du texte justifié.
+- Un défilement horizontal fluide mais qui nécessite plus d'"énergie", avec les éléments de dialogue apparaissant un par un (pas de défilement continu).
+- Des indicateurs de présence de texte, pas de scrollbar.
+
+Le défilement ne doit pas fonctionner de boutons spécifiques au Desktop (réservé aux tests).   
+
+Implication : le texte apparaît dans un rectangle, pas moyen de 
 
 
 
