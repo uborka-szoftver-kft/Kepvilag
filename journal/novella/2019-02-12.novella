@@ -1,0 +1,29 @@
+== Menus, libGDX
+
+Comment accomoder le ``ScrollPane`` ? 
+- Un ``ScrollPane`` horizontal avec une ``HorizontalBox``.
+  - Dans celle-ci, une série de ``ScrollPane`` verticaux, chacun contenant une ``TextArea``.
+  
+Lors d'un défilement horizontal sur un ``fling`` le ``ScrollPane`` qui était affiché doit-il revenir à un décalage de 0 ? Bof bof.
+
+Est-ce que l'``HorizontalBox`` est contrainte de façon à juste prendre la hauteur disponible, ce qui activerait la capacité de défilement de chacun des ``ScrollPane`` qu'elle contient ?
+
+Note : pour supporter le choix par boutons séparés il faut une méthode programmatique pour provoquer les défilements. 
+
+Note : on a aussi le cas où tous les choix tiennent dans une seule bulle. Il faut trouver un symbole (genre `>` devant le premier paragraphe) pour indiquer à l'utilisateur qu'il est face à un élément de menu.
+
+Note : si tous les choix s'affichent et que la sélection par bouton est possible, il faut un indicateur de sélection en cours (lettrage en gras ?).
+
+Donc le contrat c'est :
+- Taille (hauteur, largeur).
+- Skin (donc taille des caractères) plus interlignage.
+- Activer la sélection par bouton (déplacement de la sélection en cours).
+
+
+
+
+
+== libGDX : tutoriel
+
+[Mambow 2]
+http://www.norakomi.com/tutorial_mambow2_scroll.php

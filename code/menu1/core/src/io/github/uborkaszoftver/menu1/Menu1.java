@@ -6,22 +6,13 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
-import com.badlogic.gdx.scenes.scene2d.InputEvent;
-import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.Stage;
 import com.badlogic.gdx.scenes.scene2d.ui.Container;
 import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.ScrollPane;
 import com.badlogic.gdx.scenes.scene2d.ui.Skin;
-import com.badlogic.gdx.scenes.scene2d.ui.Slider;
 import com.badlogic.gdx.scenes.scene2d.ui.Table;
-import com.badlogic.gdx.scenes.scene2d.ui.TextArea;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
-import com.badlogic.gdx.scenes.scene2d.ui.TextButton.TextButtonStyle;
-import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
-import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
-import com.badlogic.gdx.scenes.scene2d.utils.Layout;
 
 import java.util.Random;
 
@@ -43,9 +34,9 @@ public class Menu1 extends ApplicationAdapter {
 
         final String[] texts = newTextualEntries( 5, 10, 200 ) ;
         Vector2 size = new Vector2(400, 500) ;
-        ScrollPane scrollPane = newChoicePane( texts, size, skin ) ;
+        Actor choicePane = newChoicePane( texts, size, skin ) ;
 
-        container.add( scrollPane ).size( size.x, size.y );
+        container.add( choicePane ).size( size.x, size.y );
         container.row().space(10).padBottom(10);
     }
 
@@ -79,7 +70,6 @@ public class Menu1 extends ApplicationAdapter {
         final Random random = new Random( 0 ) ;
         final StringBuilder builder = new StringBuilder( maxLength ) ;
         final String[] entries = new String[ count ] ;
-        int counter = 0 ;
         for( int i = 0 ; i < entries.length ; i ++ ) {
             builder.setLength( 0 ) ;
             final int wordCount = random.nextInt( maxLength ) ;
@@ -91,7 +81,7 @@ public class Menu1 extends ApplicationAdapter {
         return entries ;
     }
 
-    private ScrollPane newChoicePane( String[] texts, Vector2 size, Skin skin  ) {
+    private Actor newChoicePane( String[] texts, Vector2 size, Skin skin  ) {
         final HorizontalGroup group = new HorizontalGroup() ;
         Vector2 innerSize = new Vector2(size.x - 50, size.y - 50 ) ;
 
@@ -99,44 +89,18 @@ public class Menu1 extends ApplicationAdapter {
             final Actor textPane = newTextPane( text, innerSize, skin ) ;
             group.addActor( textPane ) ;
         }
-        group.setSize( innerSize.x, innerSize.y ) ;
+        //group.setSize( innerSize.x, innerSize.y ) ;
         final ScrollPane scrollPane = new ScrollPane( group, skin ) ;
+        scrollPane.setScrollingDisabled( false, true ) ;
         return scrollPane ;
     }
 
     private Actor newTextPane(String text, final Vector2 size, Skin skin  ) {
-        final TextArea textArea = new TextArea( text, skin ){
-            @Override
-            public float getMinWidth() {
-                return size.x ;
-            }
-
-            @Override
-            public float getMinHeight() {
-                return size.y ;
-            }
-
-            @Override
-            public float getPrefWidth() {
-                return size.x ;
-            }
-
-            @Override
-            public float getPrefHeight() {
-                return size.y ;
-            }
-
-            @Override
-            public float getMaxWidth() {
-                return size.x ;
-            }
-
-            @Override
-            public float getMaxHeight() {
-                return size.y ;
-            }
-        } ;
-        final ScrollPane scrollPane = new ScrollPane( textArea, skin ) ;
+        final Label multilineLabel = new Label( text, skin ) ;
+        multilineLabel.setWrap( true ) ;
+        final ScrollPane scrollPane = new ScrollPane( multilineLabel, skin ) ;
+        scrollPane.setScrollingDisabled( true, false );
+        scrollPane.setFillParent( true ) ;
         final Container< Actor > container = new Container< Actor >( scrollPane ) {
             @Override
             public float getMinWidth() {

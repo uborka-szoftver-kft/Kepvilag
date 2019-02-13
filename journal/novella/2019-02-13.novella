@@ -1,0 +1,8 @@
+== Menus, libGDX
+
+Est-ce qu'on peut s'en tirer avec des ``ScrollPane`` imbriqués ? Pas sûr. Mais ça n'explique pas pourquoi les ``TextArea`` s'affichent avec des coordonnées incorrectes.
+
+Par ailleurs on devrait utiliser des ``Label`` avec retour à la ligne, plus légers. Et là miracle ! On a bien 2 scrollbars et pas de décalage. Bon les événements sont propagés n'importe comment mais ça c'était prévu.
+
+./2019-02-13/NestedScrollbars.png
+
