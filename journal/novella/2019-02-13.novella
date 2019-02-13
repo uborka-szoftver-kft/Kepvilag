@@ -6,3 +6,113 @@ Par ailleurs on devrait utiliser des ``Label`` avec retour à la ligne, plus lé
 
 ./2019-02-13/NestedScrollbars.png
 
+L'étape suivante c'est de faire un ``FlingPane``. Référence : [libGDX Gesture Detection]
+https://github.com/libgdx/libgdx/wiki/Gesture-detection
+.
+
+=== À propos des gestuelles
+
+"libGDX two-finger pan instead of single finger?"
+https://stackoverflow.com/questions/22576840/libgdx-two-finger-pan-instead-of-single-finger
+
+
+La JavaDoc de [``GestureDetector.GestureListener``]
+https://libgdx.badlogicgames.com/ci/nightlies/docs/api/com/badlogic/gdx/input/GestureDetector.GestureListener.html
+
+
+La [doc]
+https://github.com/libgdx/libgdx/wiki/Mouse%2C-Touch-and-Keyboard
+:
+
+<<
+LibGDX abstracts unified handling of mouse and touch input. We view mouse input as a specialized form of touch input. Only a single finger is tracked, and in addition to coordinates we also report which buttons were pressed. For touch input we support tracking multiple fingers (pointers) and report the left mouse button for all events.
+>>
+
+
+=== À propos des événements 
+
+Sur l'activation programmatique d'un clic : "LibGDX -- Sending event to a button behaves differently from actually clicking it-_"
+https://gamedev.stackexchange.com/questions/146413/libgdx-sending-event-to-a-button-behaves-differently-from-actually-clicking-it
+
+D'après la doc de [``Scene2d``]
+https://github.com/libgdx/libgdx/wiki/Scene2d#event-system
+:
+
+<<
+``Stage`` is an ``InputProcessor``. When it receives input events, it fires them on the appropriate actors. If the stage is being used as a UI on top of other content (eg, a HUD), an ``InputMultiplexer`` can be used to first give the stage a chance to handle an event. If an actor in the stage handles an event, stage's ``InputProcessor`` methods will return true, indicating the event has been handled and should not continue on to the next ``InputProcessor``.
+>>
+
+<<
+``Scene2d`` uses a generic event system. Each actor has a list of listeners that are notified for events on that actor. Events are propagated in two phases. First, during the "capture" phase an event is given to each actor from the root down to the target actor. Only capture listeners are notified during this phase. This gives parents a chance to intercept and potentially cancel events before children see them. Next, during the "normal" phase the event is given to each actor from the target up to the root. Only normal listeners are notified during this phase. This allows actors to handle an event themselves or let the parent have a try at it.
+
+The event provided to each actor when it is notified contains state about the event. The target is the actor that the event originated on. The listener actor is the actor that the listener is attached to. The event also has a few important methods. If stop is called on the event, any remaining listeners for the current actor are still notified, but after those no other actors will receive the event. This can be used to prevent children (during the capture phase) or parents (during the normal phase) from seeing the event. If cancel is called on the event, it stops propagation the same as stop and also prevents any default action that would have been taken by the code that fired the event. E.g., if the event is for a check-box being checked, cancelling the event could prevent the check-box from being checked.
+
+For example, imagine a group (a button) which has a child (a label). When the label is clicked, capture listeners are fired. Usually there are none. Next, the label's normal listeners are notified. The label is both the target and the listener actor. If the event was not stopped, the button gets the event and its normal listeners are notified. The label is the target and the button is the listener actor. This continues up to the root. This system allows a single listener on a parent to handle events on its children.
+>>
+
+(Suit la description de l'``InputListener`` et des autres Listeneres comme le ``ClickListener``)
+
+C'est mieux que Swing dans la mesure où on n'a plus besoin de ``GlassPane``.
+
+
+
+=== Étude détaillée du ``ScrollPane`` (`libGDX-1.9.9`)
+
+Le ``flickScroll`` est une option qui implique un listener particulier (``flickScrollListener``).
+
+WordReference: //flick [sth] : donner une chiquenaude à//.
+
+On dirait que le flick désigne le défilement inertiel. Sauf qu'on ne voit pas la différence, ni sur le Desktop, ni sur le simulateur Android. Enfin si, on la voit sur la démo officielle de la Scrollbar, avec une gestuelle "pinch" qui déborde sur l'affichage (il faut essayer plusieurs fois).
+
+JavaDoc de ``setFlingTime(float)`` : //For flick scroll, sets the amount of time in seconds that a fling will continue to scroll. Default is 1.//
+
+On a aussi une méthode ``setFlickScrollTapSquareSize(float)``.
+
+On a aussi une méthode ``setForceScroll(boolean x, boolean y)`` : //Forces enabling scrollbars (for non-flick scroll) and overscrolling (for flick scroll) in a direction, even if the contents do not exceed the bounds in that direction. // L'overscroll correspond à un scroll avec élan qui va trop loin et "revient sur ses pas" pour montrer qu'on a atteint la limite. 
+
+Sur un événement ``touchDown`` (détaillé ci-après) les scrollbars deviennent visibles //si// le flick scroll n'est pas activé.
+
+Quels sont les Listeners utilisés ?
+- ligne 109 : ``addCaptureListener( new InputListener() { ...``
+- ligne 215 : ``addListener( flickScrollListener ) ;``
+- ligne 217 : ``addListener( new InputListener() { ...``
+
+Le premier ``InputListener`` surcharge :
+- ``touchDown``
+- ``touchUp``
+- ``touchDragged``
+- ``mouseMoved``
+
+Le second ``InputListener`` surcharge :
+- ``scrolled``
+
+Les deux ne sont pas ajoutés de la même façon (``addCaptureListener`` contre ``addListener``).
+
+Le ``flickScrollListener`` (un ``ActorGestureListener``) surcharge :
+- ``pan``
+- ``fling``
+- ``handle``
+
+Un problème sous-jacent c'est comment les événements de souris et trackpad sont transformés en gestuelles. La doc (citée plus haut) dit que les événements de souris sont synthétisés en gestuelles mais alors pourquoi surcharger ``InputListener#scrolled`` ?
+
+Le contrat de ``...scene2d.EventListener#handle(Event) : boolean`` c'est de renvoyer ``true`` pour acter la prise en comte : //returns ``true``if the event should be considered handled by scene2d//
+
+``...scene2d.Actor#addCaptureListener(EventListener)`` : //Adds a listener that is only notified during the capture phase.// Si la valeur de retour est ``true`` alors la propagation s'arrête.
+
+La phase de capture dans le ``ScrollPane`` sert également à afficher les scrollbars, et à interpréter les actions directement dessus (genre on initie un glisser-déplacer en enregistrement l'indice dans la variable-membre ``draggingPointer``). Mais le plus important c'est l'appel à ``...scene2d.Stage#setScrollFocus(Actor)``, pour rediriger les événements de scroll vers un Actor particulier.
+
+La méthode ``updateWidgetPosition()`` recalcule les coordonnées (x, y) du composant à faire défiler. Il met à jour la ``widgetCullingArea`` si possible. ``updateWidgetPosition()`` est appelée par ``layout()`` et ``draw(...)``. Cette dernière fait des trucs intelligents avec ``getStage().calculateScissors(...)`` et la ``ScissorStack``.
+
+=== Perspectives
+
+Que faut-il pour transformer un ``ScrollPane`` en ``FlingPane`` ? Ce dernier a les caractéristiques suivantes :
+- Défilement horizontal uniquement.
+- Une gestuelle "fling" ne dévoile que le composant immédiatement suivant ou précédent.
+- Une gestuelle "fling" ne peut être interrompue.
+
+Là où ça se complique c'est qu'on ne sait pas au moment du ``touchDown`` si la gestuelle sera un fling horizontal ou vertical. C'est le ``touchDragged`` qui peut calculer si c'est la composante X ou Y qui est majoritaire. Est-ce qu'il faut différer l'envoi du ``touchDown`` ? Ça ne fonctionnera pas vu que c'est le ``Stage`` qui gère. Comme le ``touchDown`` appelle le ``setScrollFocus`` la solution c'est de l'appliquer au ``FlingPanel`` par défaut, puis de corriger si besoin dans ``touchDragged``.
+
+Le ``FlingPane`` sera nécessairement un copié-collé du ``ScrollPane`` car on ne peut pas modifier le code des Listeners qui sont des classes anonymes.
+
+
+
