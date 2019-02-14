@@ -90,7 +90,7 @@ public class Menu1 extends ApplicationAdapter {
             group.addActor( textPane ) ;
         }
         //group.setSize( innerSize.x, innerSize.y ) ;
-        final ScrollPane scrollPane = new ScrollPane( group, skin ) ;
+        final FlingPane scrollPane = new FlingPane( group, skin ) ;
         scrollPane.setScrollingDisabled( false, true ) ;
         return scrollPane ;
     }
