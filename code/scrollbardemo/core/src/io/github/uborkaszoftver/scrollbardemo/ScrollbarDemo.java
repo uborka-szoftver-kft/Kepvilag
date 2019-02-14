@@ -23,6 +23,7 @@ public class ScrollbarDemo extends ApplicationAdapter {
 	public void create () {
 		stage = new Stage();
 		Skin skin = new Skin(Gdx.files.internal("skin/dark-hdpi/Holo-dark-hdpi.json"));
+		// Skin skin = new Skin(Gdx.files.internal("skin/default/uiskin.json"));
 		Gdx.input.setInputProcessor(stage);
 
 		// Gdx.graphics.setVSync(false);

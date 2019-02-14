@@ -1,0 +1,159 @@
+== Comptes 
+
+=== Ce qu'on a 
+
+||||
+| GMail    | ``uborka.szoftver.kft@gmail.com`` | Pour la correspondance avec Apple. |
+| Apple ID | ``uborka.szoftver.kft@gmail.com`` | Sur l'iPod. |
+| Apple ID | ``laurent.caillette@gmail.com``   | Utilisé sur le MacBook Pro. |
+
+
+
+=== Ce qu'on veut
+
+||||
+| GMail | ``uborka-szoftver-kft@gmail.com`` | Pour la correspondance avec Apple. |
+| GMail | ``robot.uborka-szoftver-kft@gmail.com`` | Pour la validation du compte uniquement. |
+| Apple ID | ``laurent.caillette@gmail.com``   | Utilisé sur l'iPod Touch. |
+| Apple ID | ``uborka-szoftver-kft@gmail.com`` | Pour le livrable. |
+| Apple ID | ``robot.uborka-szoftver-kft@gmail.com`` | Dans les machines virtuelles //surtout si elles sont exportées// |
+
+Qu'est-ce que ça vaut d'avoir une identité différente sur le MacBook et sur l'iPod Touch ? Moins de flicage ? Ça serait bien d'avoir le même compte pour le provisionnement des paiements.
+
+
+
+== Création d'un projet ``ScrollbarDemo``
+
+Valide la procédure "Deploying to a Device without an Apple Developer Account"
+https://blog.ionicframework.com/deploying-to-a-device-without-an-apple-developer-account/
+
+La première exécution a lieu sans problème pour Android et Desktop.
+
+=== Pour iOS 
+
+Il manque une image. Xcode propose de la générer. Ça fonctionne.
+
+On remplace `moe-gradle-1.4.0` par `1.4.4` (la dernière à ce jour).
+
+On lance : 
+
+<<<
+./gradlew moeUpdateXcodeSettings
+./gradlew ios-moe:copyNatives
+>>>
+
+(Il semblerait que le copié-collé de la page HTML générée par Novelang dans la console ajoute un caractère malvenu.)
+
+La reconstruction dans Xcode fonctionne.
+
+Le déploiement dans le simulateur échoue. On se prend une erreur :
+
+<<<
+Caused by: com.badlogic.gdx.utils.SerializationException: Error reading file: skin/dark-hdpi/Holo-dark-hdpi.json
+[...]
+Caused by: com.badlogic.gdx.utils.SerializationException: Field not found: titleFont (com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle)
+>>>
+
+C'est bizarre parce que dans la skin (Holo-dark-hdpi) ``titleFont`` est affecté à ``default-font``. Dans Xcode on a bien le répertoire ``assets`` (``../../android/assets``) qui contient les bons fichiers.
+
+On tente un ``./gradlew clean build``. Ça plante à cause d'une dépendance manquante pour ``:android:lintClassPath`` (Trove4J). Mais on le trouve sur [Internet]
+https://mvnrepository.com/artifact/org.jetbrains.trove4j/trove4j/20160824
+. On ajoute une dépendance dans le ``build.gradle``. Ça ne marche pas. On télécharge la dépendance à la main. Ça marche. 
+
+Après on réessaye de lancer à partir de Xcode. Erreur connue : 
+
+<<<
+error: Build input file cannot be found: '/Users/laurent/Projects/Kepvilag/code/scrollbardemo/ios-moe/build/moe/main/ui-headers/moe-main-interfaces.m'
+>>>
+
+On relance ``moeUpdateXcodeSettings`` et ``ios-moe:copyNatives`` comme ci-avant. Ça passe. Mais si on démarre même problème avec ``titleFont``.
+
+On essaye une nouvelle Skin, celle [par défaut]
+https://github.com/libgdx/libgdx/tree/master/extensions/gdx-tools/assets
+et on reconstruit tout au passage (voir utilisation de ``moeMainReleaseIphoneosXcodeBuild`` plus loin). 
+
+On a toujours la même erreur ``Field not found: titleFont``.
+
+
+
+=== Connexion de l'iPod
+
+
+La connection de l'iPod fonctionne.
+
+On ajoute une identité pour signer. Mais il faut une "development team". 
+
+<<
+error: Signing for "ios-moe" requires a development team. Select a development team in the project editor. (in target ''ios-moe'')
+>>
+
+Ça se trouve en choisissant toutes les propriétés projet ("All") et en filtrant sur "Team".
+
+La construction réussit alors.
+
+Sur l'iPod il faut aller dans Preferences `>` General `>` Device Management. La vérification de l'identité requiert une connexion à Internet.
+
+
+== Mystère du ``Field not found: titleFont``
+
+Dans ``ios-moe/build/moe/main/proguard/ProGuard.log`` :
+
+<<<
+com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle:
+    public com.badlogic.gdx.scenes.scene2d.utils.Drawable background
+    public com.badlogic.gdx.graphics.g2d.BitmapFont titleFont
+    343:354:public Window$WindowStyle(com.badlogic.gdx.graphics.g2d.BitmapFont,com.badlogic.gdx.graphics.Color,com.badlogic.gdx.scenes.scene2d.utils.Drawable)
+    343:360:public Window$WindowStyle(com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle)
+>>>
+
+On dézippe ``ios-moe/build/moe/main/proguard/output.jar`` et on voit un ``com/badlogic/gdx/scenes/scene2d/ui/Window\$WindowStyle.class`` :
+
+
+<<<
+$ javap ios-moe/build/moe/main/proguard/output-jar/com/badlogic/gdx/scenes/scene2d/ui/Window\$WindowStyle.class
+Compiled from "Window.java"
+public class com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle {
+  public com.badlogic.gdx.graphics.Color titleFontColor;
+  public com.badlogic.gdx.scenes.scene2d.utils.Drawable stageBackground;
+  public com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle();
+}
+>>>
+
+Est-ce que le ``ProGuard.log`` indique ce qu'il enlève plutôt que ce qu'il conserve ? Oui selon la [doc du moe-plugin-gradle]
+https://jitpack.io/p/multi-os-engine/moe-plugin-gradle
+.
+
+Ça veut dire que le ``/proguard.append.cfg`` (sous la racine du projet) n'est pas pris en compte. On s'en tire en copiant celui qui est généré et qui permet tout. Après reconstruction sous Xcode (qui échoue), exécution de ``moeUpdateXcodeSettings`` et ``ios-moe:copyNatives``, reconstruction et lancement, ça passe dans l'iOS simulator, y compris avec la Holo-dark-hidpi Skin. Et ça passe aussi sur l'iPod.
+
+
+
+
+
+
+
+== Xcode et xcodebuild
+
+<<<
+$ ./gradlew moeMainReleaseIphoneosXcodeBuild
+[...]
+xcrun: error: unable to find utility "xcodebuild", not a developer tool or in PATH
+
+$ xcode-select --install
+xcode-select: error: command line tools are already installed, use "Software Update" to install updates
+>>>
+
+Des gens [disent]
+https://stackoverflow.com/a/17980786/1923328
+de faire ça :
+
+<<<
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+>>>
+
+Ça passe.
+
+
+
+
+
+
