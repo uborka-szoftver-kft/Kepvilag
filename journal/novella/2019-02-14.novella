@@ -102,7 +102,7 @@ Dans ``ios-moe/build/moe/main/proguard/ProGuard.log`` :
 com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle:
     public com.badlogic.gdx.scenes.scene2d.utils.Drawable background
     public com.badlogic.gdx.graphics.g2d.BitmapFont titleFont
-    343:354:public Window$WindowStyle(com.badlogic.gdx.graphics.g2d.BitmapFont,com.badlogic.gdx.graphics.Color,com.badlogic.gdx.scenes.scene2d.utils.Drawable)
+    343:354:public Window$WindowStyle(com.badlogic.gdx.graphics.g2d.BitmapFont,com.badlogic.gdx.graphics.Color, com.badlogic.gdx.scenes.scene2d.utils.Drawable)
     343:360:public Window$WindowStyle(com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle)
 >>>
 
@@ -110,7 +110,8 @@ On dézippe ``ios-moe/build/moe/main/proguard/output.jar`` et on voit un ``com/b
 
 
 <<<
-$ javap ios-moe/build/moe/main/proguard/output-jar/com/badlogic/gdx/scenes/scene2d/ui/Window\$WindowStyle.class
+$ cd ios-moe/build/moe/main/proguard/output-jar
+$ javap com/badlogic/gdx/scenes/scene2d/ui/Window\$WindowStyle.class
 Compiled from "Window.java"
 public class com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle {
   public com.badlogic.gdx.graphics.Color titleFontColor;
@@ -127,7 +128,79 @@ https://jitpack.io/p/multi-os-engine/moe-plugin-gradle
 
 
 
+=== Issue 5560
 
+"Improper ProGuard configuration causing ios-moe crash"
+https://github.com/libgdx/libgdx/issues/5560
+
+Current version of libGDX Project Setup (as of  2019-01-15) generates a ProGuard configuration which causes useful classes to be omitted by the build. As a consequence, an iOS application can not load skin resources.
+
+This is the exact version of libGDX I'm using to generate the setup:
+
+<<<
+$ git rev-parse HEAD
+18477473e7a552b8e4abb95fe855998e7bf84548
+>>>
+
+Xcode was kind enough to show this stack trace in the log:
+
+<<<
+com.badlogic.gdx.utils.SerializationException: Error reading file: skin/dark-hdpi/Holo-dark-hdpi.json
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin.load(Skin.java:104)
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin.<init>(Skin.java:81)
+  at io.github.uborkaszoftver.scrollbardemo.ScrollbarDemo.create(ScrollbarDemo.java:25)
+  at com.badlogic.gdx.backends.iosmoe.IOSGraphics.glkViewDrawInRect(IOSGraphics.java:241)
+  at com.badlogic.gdx.backends.iosmoe.IOSGLKView.drawRect(IOSGLKView.java:81)
+  at apple.uikit.c.UIKit.UIApplicationMain(Native Method)
+  at io.github.uborkaszoftver.scrollbardemo.IOSMoeLauncher.main(IOSMoeLauncher.java:24)
+Caused by: com.badlogic.gdx.utils.SerializationException: Error reading file: skin/dark-hdpi/Holo-dark-hdpi.json
+  at com.badlogic.gdx.utils.Json.fromJson(Json.java:715)
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin.load(Skin.java:102)
+  ... 6 more
+Caused by: com.badlogic.gdx.utils.SerializationException: Field not found: titleFont (com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle)
+Serialization trace:
+{}."com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle".default.titleFont
+  at com.badlogic.gdx.utils.Json.readFields(Json.java:811)
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin$1.readFields(Skin.java:462)
+  at com.badlogic.gdx.utils.Json.readValue(Json.java:958)
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin$1.readValue(Skin.java:436)
+  at com.badlogic.gdx.utils.Json.readValue(Json.java:883)
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin$2.readNamedObjects(Skin.java:485)
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin$2.read(Skin.java:474)
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin$2.read(Skin.java:468)
+  at com.badlogic.gdx.utils.Json.readValue(Json.java:917)
+  at com.badlogic.gdx.scenes.scene2d.ui.Skin$1.readValue(Skin.java:436)
+  at com.badlogic.gdx.utils.Json.fromJson(Json.java:713)
+  ... 7 more
+>>>
+
+
+This is an extract of ``ios-moe/build/moe/main/proguard/ProGuard.log`` :
+
+<<<
+com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle:
+    public com.badlogic.gdx.scenes.scene2d.utils.Drawable background
+    public com.badlogic.gdx.graphics.g2d.BitmapFont titleFont
+    343:354:public Window$WindowStyle(com.badlogic.gdx.graphics.g2d.BitmapFont,com.badlogic.gdx.graphics.Color, com.badlogic.gdx.scenes.scene2d.utils.Drawable)
+    343:360:public Window$WindowStyle(com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle)
+>>>
+
+I dezipped ``ios-moe/build/moe/main/proguard/output.jar``, which contains ``Window$WindowStyle.class`` in package ``com.badlogic.gdx.scenes.scene2d.ui``. I decompiled it:
+
+<<<
+$ cd ios-moe/build/moe/main/proguard/output-jar
+$ javap com/badlogic/gdx/scenes/scene2d/ui/Window\$WindowStyle.class
+Compiled from "Window.java"
+public class com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle {
+  public com.badlogic.gdx.graphics.Color titleFontColor;
+  public com.badlogic.gdx.scenes.scene2d.utils.Drawable stageBackground;
+  public com.badlogic.gdx.scenes.scene2d.ui.Window$WindowStyle();
+}
+>>>
+
+So the field is clearly missing.
+
+As a workaround, I moved the ``proguard.append.cfg`` generated (if none exist) at project root to ``ios-moe`` directory.
 
 
 
@@ -153,6 +226,26 @@ sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 Ça passe.
 
 
+== Matériel
+
+=== Tablette Android
+
+La [Samsung Galaxy Tab S3]
+https://www.cnet.com/reviews/samsung-galaxy-tab-s3-review/
+à `$544` est souvent citée. L'écran AMOLED de `9,5"` est réputé excellent. Elle est livrée avec un stylet. Mais il y a une S4.
+
+[Google Pixel C]
+https://www.cnet.com/reviews/google-pixel-c-review/
+`$860`, écran `10,2", 308 ppi`. Date de sortie : 2015. 
+
+[Google Pixel Slate]
+https://en.wikipedia.org/wiki/Google_Pixel_Slate
+`$?`, Chrome OS, remplace la `Pixel C`.
+
+[Amazon Fire HD 10]
+https://www.techradar.com/reviews/amazon-fire-hd-10-2017-review
+(2017)
+mais tourne sur FireOS.
 
 
 

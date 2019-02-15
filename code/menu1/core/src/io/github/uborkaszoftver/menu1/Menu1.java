@@ -1,6 +1,7 @@
 package io.github.uborkaszoftver.menu1;
 
 
+import com.badlogic.gdx.Application;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
@@ -22,6 +23,7 @@ public class Menu1 extends ApplicationAdapter {
     private Table container;
 
     public void create() {
+        Gdx.app.setLogLevel(Application.LOG_DEBUG) ;
         stage = new Stage();
         Skin skin = new Skin(Gdx.files.internal("skin/dark-hdpi/Holo-dark-hdpi.json"));
         Gdx.input.setInputProcessor(stage);
@@ -34,7 +36,7 @@ public class Menu1 extends ApplicationAdapter {
 
         final String[] texts = newTextualEntries( 5, 10, 200 ) ;
         Vector2 size = new Vector2(400, 500) ;
-        Actor choicePane = newChoicePane( texts, size, skin ) ;
+        Actor choicePane = newFlingPane( texts, size, skin ) ;
 
         container.add( choicePane ).size( size.x, size.y );
         container.row().space(10).padBottom(10);
@@ -86,16 +88,33 @@ public class Menu1 extends ApplicationAdapter {
         Vector2 innerSize = new Vector2(size.x - 50, size.y - 50 ) ;
 
         for( final String text : texts ) {
-            final Actor textPane = newTextPane( text, innerSize, skin ) ;
+            final Actor textPane = newTextWidget2( text, innerSize, skin ) ;
             group.addActor( textPane ) ;
         }
-        //group.setSize( innerSize.x, innerSize.y ) ;
-        final FlingPane scrollPane = new FlingPane( group, skin ) ;
+        final ScrollPane scrollPane = new ScrollPane( group, skin ) ;
         scrollPane.setScrollingDisabled( false, true ) ;
         return scrollPane ;
     }
 
-    private Actor newTextPane(String text, final Vector2 size, Skin skin  ) {
+    private Actor newFlingPane( String[] texts, Vector2 size, Skin skin  ) {
+        final Actor[] actors = new Actor[ texts.length ] ;
+
+        for( int i = 0 ; i < texts.length ; i ++ ) {
+            final String text = texts[ i ] ;
+            final Actor textWidget = newTextWidget( text, skin ) ;
+            actors[ i ] = textWidget ;
+        }
+        final FlingPane flingPane = new FlingPane( size.x, size.y, 10, actors ) ;
+        return flingPane ;
+    }
+
+    private Actor newTextWidget( String text, Skin skin  ) {
+        final Label multilineLabel = new Label( text, skin ) ;
+        multilineLabel.setWrap( true ) ;
+        return multilineLabel ;
+    }
+
+    private Actor newTextWidget2( String text, final Vector2 size, Skin skin  ) {
         final Label multilineLabel = new Label( text, skin ) ;
         multilineLabel.setWrap( true ) ;
         final ScrollPane scrollPane = new ScrollPane( multilineLabel, skin ) ;

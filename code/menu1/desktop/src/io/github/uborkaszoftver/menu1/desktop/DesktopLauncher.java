@@ -2,6 +2,8 @@ package io.github.uborkaszoftver.menu1.desktop;
 
 import com.badlogic.gdx.backends.lwjgl.LwjglApplication;
 import com.badlogic.gdx.backends.lwjgl.LwjglApplicationConfiguration;
+
+import io.github.uborkaszoftver.menu1.ActorDemo1;
 import io.github.uborkaszoftver.menu1.Menu1;
 
 public class DesktopLauncher {

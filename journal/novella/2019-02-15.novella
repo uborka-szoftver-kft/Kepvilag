@@ -1,0 +1,208 @@
+
+
+== FlingPane : on fait quoi ?
+
+L'étude technique de la veille dévoile le fonctionnement du ``ScrollPane``. Il y a beaucoup de fonctionnalités non-souhaitées, comme les scrollbars. De plus la propagation d'événements semble très aléatoire.
+
+Il faut repenser le FlingPane comme conteneur d'un groupe (``WidgetGroup``) qui va modifier le décalage des widgets dans le groupe.
+
+On dit qu'un Rack contient des Lane :
+
+<<<
+    Lane
+ O===|=============O
+ I +----+ +------+ I
+ I |aaa | |bb bb |<--- Lane
+ I |aaaa| |bbbbbb| I
+ I +----+ |bb b  | I
+ I        |bbbbb | I
+ I        |bbb   | I
+ I        +------+ I
+ O=================O
+  |
+ Rack
+>>>
+
+Le FlingPane a une //Sight// (symbolisé par des `:`) qui affiche une fraction d'une Lane :
+
+<<<
+           :      :
+  O=================O
+  I +----+ :::::::: I ::
+  I |aaa | :bb bb : I
+  I |aaaa| :bbbbbb: I
+  I +----+ :bb b  : I
+  I        :::::::: I ::
+  I        |bbb   | I
+  I        +------+ I
+  O=================O
+>>>
+
+Il faut faire "remonter" la Lane active, comme ça lors d'un défilement horizontal la Lane disparaissant laissera la place à une Lane positionnée au début.
+
+<<<
+          :      :
+          +------+
+          |bb bb |
+   +----+ |bbbbbb|  ::
+   |aaa | |bb b  |
+y  |aaaa| |bbbbb |
+^  +----+ |bbb   |
+|         +------+  ::
++---> x
+>>>
+
+Donc pour que ça fonctionne :
+- Toutes les Lane ont la même largeur.
+- Une Lane "remonte" quand on progresse vers la fin du texte.
+- On connaît la hauteur et la largeur de la Sight.
+- La largeur de la Lane est toujours inférieure à celle de la Sight.
+
+Donc chaque Lane possède un débattement vertical qui est de 0 pour une Lane d'une hauteur inférieure à celle de la Sight.
+
+<<<
+                                _
+                      .....       \
+    x=0   .....       .   .        > parking height
+    |     .   .       .   .      _/
+y=0-+---+ +---+ +---+ +---+  ::
+    |   | |   | |   | |   |
+    |   | |   | +---+ |   |
+    +---+ |   |       |   |  ::
+          |   |       |   |
+          +---+       |   |
+                      +---+
+>>>
+
+Comme ça on garde l'état de défilement de la Lane et on n'est pas perdu quand on revient.
+
+Ça veut dire que le FlingPane a directement connaissance de ses widgets, il ne doit pas déléguer à un ``HorizontalGroup``.
+
+Le système de coordonnées étant [celui de l'écran]
+https://github.com/libgdx/libgdx/wiki/Coordinate-systems#screen-or-image-coordinates
+on a un axe y qui progresse vers le haut.
+
+Le ``ScrollPane`` nous montre comment effectuer un changement de repère à l'aide des //scissors// et de la variable-membre ``widgetAreaBounds``. De plus il effectue un élaguage (``setCullingArea``). Ça se complique avec la transformation affine dont le rôle n'est pas encore établi.
+
+Il ne faut bouger les widgets que sur l'axe y.
+
+La solution c'est d'appliquer les scissors sur :
+
+<<<
+     x = laneIndex * ( sightWidth + interLaneMargin )
+     y = 0
+ width = sightWidth
+height = sightHeight
+>>>
+
+Après ça se discute, peut-être que c'est mieux de mettre les Lane à un endroit qui soit visible par défaut.
+
+La question "Getting Stage coordinates of Actor in Table in libGDX"
+https://stackoverflow.com/questions/18075414/getting-stage-coordinates-of-actor-in-table-in-libgdx
+aide à comprendre les coordonnées utilisées.
+
+
+
+
+
+
+
+=== Utilité de ``group#setTransform``
+
+``Group#setTransform(boolean)``
+
+<<
+ When true (the default), the Batch is transformed so children are drawn in their parent's coordinate system. This has a performance impact because ``Batch#flush()`` must be done before and after the transform. If the actors in a group are not rotated or scaled, then the transform for the group can be set to false. In this case, each child's position will be offset by the group's position for drawing, causing the children to appear in the correct location even though the Batch has not been transformed. 
+>>
+
+C'est uniquement si on veut effectuer des transformations sur tout le Group.
+
+La vérité derrière tout ça c'est que chaque composant est responsable de son propre affichage, donc il tape dans les primitives OpenGL. Une implication c'est qu'il doit trouver les coordonnées écran correctes. Intuitivement il est clair que cela nécessite au moins une translation pour ajouter les coordonnées du parent. 
+
+Mais des fois on se retrouve avec une homotétie sans avoir rien demandé ; par exemple dans une application qui n'a pas géré le redimensionnement du Viewport.
+
+Il est logique que le ``Group`` supporte les transformations. Mais pourquoi le ``ScrollPane`` surcharge-t-il ``draw(Batch,float parentAlpha)`` ? Pour ajouter les scissors, le culling, et les scrollbars. Entre parenthèses c'est malin de faire que les scrollbars ne soient pas déclarées comme des ``Actor``.
+
+On ne peut pas reprendre facilement le code du ``ScrollPane`` qui ne fait défiler qu'un seul ``widget``. Il faut traiter les 2 Lanes chacune à leur tour.
+
+
+=== Positionnement
+
+(On ne cherche pas à réécrire ``updateWidgetPosition`` qui fait surtout des choses avec les scrollbars.)
+
+Données de base :
+- ``currentLane`` 
+- ``disappearingLane`` (des fois). 
+- ``scrollAmountX`` 
+
+Pas de ``scrollAmountY``, c'est fourni par ``currentLane.y``.
+
+Invariants :
+- ``currentLane`` toujours définie.
+- ``disappearingLane`` définie que si défilement horizontal.
+- ``scrollAmountX != 0`` si défilement horizontal uniquement.
+- ``scrollAmountX <= sightWidth``.
+- ``currentLane.y >= 0`` si défilement vertical uniquement.
+- Le défilement est horizontal //ou// vertical.
+
+Le ``scrollAmountX > 0``pour la dernière Lane, ou `< 0` pour la première Lane, correspond à un overscroll horizontal.
+
+
+Le défilement horizontal a peu à voir avec le défilement vertical. Donc on a 2 cas.
+
+- Défilement vertical :
+  - Calcul de la ``cullingArea`` et des ``scissors`` pour ``currentLane``.
+- Défilement horizontal :
+  - Calcul d'un ``sightHorizontalOffset`` .
+  - Calcul de la ``cullingArea`` et des ``scissors`` pour ``currentLane`` et ``disappearingLane``.
+  
+Tout se joue au niveau des Scissors qui définissent la visibilité des Lanes.
+  
+
+
+
+
+
+== Achats depuis l'application
+
+[gdx-pay]
+https://github.com/libgdx/gdx-pay
+, pour nous sauver.
+
+L'article "Everything You Need to Know About Google Play's In-App Billing"
+https://android.jlelse.eu/everything-you-need-to-know-about-google-plays-in-app-billing-29b728a32822
+(2017) nous dit clairement :
+
+<<
+We are laying stress on digital goods because they are the only concern of In-app Billing. In case you want to sell and deliver products like clothes, shoes, food, and other stuff related to the physical world, you're certain to need the help of third-party payment gateway providers (think PayPal, Braintree, Stripe, and others).
+>>
+
+Ça c'est pas sympa.
+
+Mais "Enable simple, secure checkout with Google Pay"
+https://developer.android.com/distribute/best-practices/earn/goods-and-services
+nous dit :
+
+<<
+The Android Pay API is open to all developers selling physical goods and services in the markets where Google Pay is available.
+>>
+
+Mais c'est [pas si simple]
+https://stackoverflow.com/questions/7125230/purchases-in-android
+. On dirait que ça change selon les dates et les services. Le plus probable : pour des biens et des services hors-application il faut utiliser un "moyen autorisé" qui pour l'instant se limite à Google Wallet.
+
+Pourtant la présentation de [Google Pay]
+https://pay.google.com/about/
+nous dit :
+
+<<
+With Google Pay, you can check out across the web and in apps without having to enter any payment information. Catch a ride, buy tickets, or get that pizza ordered with a simple click or press of a button.
+>>
+
+
+== Tests
+
+Un jour il faudra bien s'y mettre. Quelques idées [sur Stack Overflow]
+https://stackoverflow.com/questions/22984129/unit-testing-of-libgdx-using-classes
+.
+
