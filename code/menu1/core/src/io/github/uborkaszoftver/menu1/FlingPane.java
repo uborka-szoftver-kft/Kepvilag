@@ -8,6 +8,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.Cullable;
 import com.badlogic.gdx.scenes.scene2d.utils.Layout;
@@ -369,40 +370,43 @@ y=0-+---+ |   |       |   |      -+
             logDebug( "Applying full layout because of size change." ) ;
             Actor previousRoll = null ;
             for( int rollIndex = 0 ; rollIndex < getChildren().size ; rollIndex ++ ) {
-                final Actor Ascender = getChildren().get( rollIndex ) ;
-                boolean isLayout = Ascender instanceof Layout ;
-                final float newRollWidth, newRollHeight ;
+                final Actor ascender = getChildren().get( rollIndex ) ;
+                boolean isLayout = ascender instanceof Layout ;
                 if( isLayout ) {
-                    final Layout rollAsLayout = ( Layout ) Ascender ;
-                    newRollWidth = rollAsLayout.getPrefWidth() > 0 ?
-                            Math.min( rollAsLayout.getPrefWidth(), getWidth() ) : getWidth() ;
-                    newRollHeight = rollAsLayout.getPrefHeight() ;
+                    final Layout ascenderAsLayout = ( Layout ) ascender ;
+                    ascenderAsLayout.layout() ;
+                    if( ascenderAsLayout.getPrefWidth() <= 0 ) {
+                        // When word-wrapping, a Label returns 0 for its preferred size,
+                        // which also depends on current width.
+                        ascender.setWidth( getWidth() ) ;
+                    } else {
+                        ascender.setWidth( Math.min( ascenderAsLayout.getPrefWidth(), getWidth() ) ) ;
+                    }
+                    ascender.setHeight( ascenderAsLayout.getPrefHeight() ) ;
                 } else {
-                    newRollWidth = getWidth() ;
-                    newRollHeight = getHeight() ;
+                    ascender.setSize( getWidth(), getHeight() ) ;
                 }
-                Ascender.setSize( newRollWidth, newRollHeight ) ;
 
                 if( previousRoll == null ) {
-                    Ascender.setX( 0 ) ;
+                    ascender.setX( 0 ) ;
                 } else {
-                    Ascender.setX( previousRoll.getX() + getWidth() + interRollMargin ) ;
+                    ascender.setX( previousRoll.getX() + getWidth() + interRollMargin ) ;
                 }
 
-                Ascender.setY( getHeight() - Ascender.getHeight() ) ;
+                ascender.setY( getHeight() - ascender.getHeight() ) ;
                 if( previousHeight == getHeight() ) {
                 } else {
                     // Some resize happened, so we want to maintain Y offset basing on a ratio.
                 }
 
-                previousRoll = Ascender ;
+                previousRoll = ascender ;
 
                 logDebug(
                         "Ascender[" + rollIndex + "]: " +
-                                "x=" + Ascender.getX() + ", " +
-                                "y=" + Ascender.getY() + ", " +
-                                "w=" + Ascender.getWidth() + ", " +
-                                "h=" + Ascender.getHeight()
+                                "x=" + ascender.getX() + ", " +
+                                "y=" + ascender.getY() + ", " +
+                                "w=" + ascender.getWidth() + ", " +
+                                "h=" + ascender.getHeight()
                 ) ;
             }
             sightBounds.set( getWidth() * currentRollIndex, 0, getWidth(), getHeight() ) ;
