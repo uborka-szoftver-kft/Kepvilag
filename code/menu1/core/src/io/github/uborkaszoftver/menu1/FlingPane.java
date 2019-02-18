@@ -123,9 +123,11 @@ public class FlingPane extends WidgetGroup {
                     final int pointer,
                     final int button
             ) {
-                logDebug( "touchDown: event=" + event + ", x=" + x + ", y=" + y + ", " +
-                        "pointer=" + pointer + ", button=" + button ) ;
+                logDebug( "#touchDown( event=" + event + ", x=" + x + ", y=" + y + ", " +
+                        "pointer=" + pointer + ", button=" + button + " )") ;
                 scrollAxis = null ;
+                scrollAmount = 0 ;
+                scrollVelocity = 0 ;
                 overscrollPhase = null ;
                 lastPoint.set( x, y ) ;
                 flingTimer = 0 ;
@@ -140,8 +142,8 @@ public class FlingPane extends WidgetGroup {
                     final float y,
                     final int pointer
             ) {
-                logDebug( "touchDragged: event=" + event + ", x=" + x + ", y=" + y + ", " +
-                        "pointer=" + pointer ) ;
+                logDebug( "#touchDragged( event=" + event + ", x=" + x + ", y=" + y + ", " +
+                        "pointer=" + pointer + " )" ) ;
                 final float deltaX = x - lastPoint.x ;
                 final float deltaY = y - lastPoint.y ;
                 final ScrollAxis previousScrollAxis = scrollAxis ;
@@ -149,7 +151,7 @@ public class FlingPane extends WidgetGroup {
                 if( scrollAxis == previousScrollAxis ) {
                     switch ( scrollAxis ) {
                         case VERTICAL :
-                            scrollVelocity = deltaY ;
+                            scrollVelocity = deltaY * SCROLL_VELOCITY_CORRECTION ;
                             scrollAmount += deltaY ;
                             break;
                         case HORIZONTAL:
@@ -170,8 +172,8 @@ public class FlingPane extends WidgetGroup {
                     final int pointer,
                     final int button
             ) {
-                logDebug ( "touchUp: event=" + event + ", x=" + x + ", y=" + y + ", " +
-                        "pointer=" + pointer + ", button=" + button ) ;
+                logDebug ( "#touchUp( event=" + event + ", x=" + x + ", y=" + y + ", " +
+                        "pointer=" + pointer + ", button=" + button + " )" ) ;
             }
 
             @Override
@@ -181,9 +183,10 @@ public class FlingPane extends WidgetGroup {
                     final float y,
                     final int amount
             ) {
-                logDebug ( "scrolled: event=" + event + ", x=" + x + ", y=" + y + ", " +
-                        "amount=" + amount  ) ;
+                logDebug ( "#scrolled( event=" + event + ", x=" + x + ", y=" + y + ", " +
+                        "amount=" + amount + " )" ) ;
                 scrollAxis = ScrollAxis.VERTICAL ;
+                // How to derive speed from this?
                 scrollAmount += amount * SCROLL_AMOUNT_CORRECTION ;
                 scrollVelocity += amount * SCROLL_VELOCITY_CORRECTION ;
                 flingTimer = flingTime ;
@@ -201,8 +204,8 @@ public class FlingPane extends WidgetGroup {
                     final float velocityY,
                     final int button
             ) {
-                logDebug( "fling: event=" + event + ", vx=" + velocityX + ", " +
-                        "vy=" + velocityY + ", button=" + button ) ;
+                logDebug( "#fling( event=" + event + ", vx=" + velocityX + ", " +
+                        "vy=" + velocityY + ", button=" + button + " )" ) ;
                 final ScrollAxis resolved = resolveScrollAxis( velocityX, velocityY ) ;
                 if( resolved == ScrollAxis.VERTICAL ) {
                     FlingPane.this.scrollAxis = ScrollAxis.VERTICAL ;
@@ -338,6 +341,8 @@ public class FlingPane extends WidgetGroup {
             ScissorStack.popScissors() ;
         }
         resetTransform( batch ) ;
+
+        // logDebug( "#draw(...) complete." );
     }
 
 
@@ -353,8 +358,8 @@ public class FlingPane extends WidgetGroup {
         }
 
         if( scrollVelocity != 0 ) {
-            scrollAmount = scrollAmount + scrollVelocity * deltaSecond ;
-            scrollVelocity *= 0.9 ;
+            scrollAmount += scrollVelocity * deltaSecond ;
+            scrollVelocity -= deltaSecond ;
             if( scrollVelocity < 0.001 ) {
                 scrollVelocity = 0 ;
             }
@@ -422,7 +427,7 @@ y=0-+---+ |   |       |   |      -+
      */
     @Override
     public void layout() {
-        logDebug( "Layout begins: w=" + getWidth() + ", h=" + getHeight() + ", " +
+        logDebug( "#layout() begins: w=" + getWidth() + ", h=" + getHeight() + ", " +
                 "currentRollIndex=" + currentRollIndex);
         if ( sizeChanged ) {
             logDebug( "Applying full layout because of size change." ) ;
@@ -474,7 +479,7 @@ y=0-+---+ |   |       |   |      -+
 
         }
 
-        logDebug( "Layout ends." ) ;
+        logDebug( "#layout() ends." ) ;
 
     }
 
