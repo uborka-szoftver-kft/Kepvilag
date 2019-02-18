@@ -13,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ActorGestureListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Cullable;
 import com.badlogic.gdx.scenes.scene2d.utils.Layout;
 import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
+import com.badlogic.gdx.utils.TimeUtils;
 
 /**
  * Contains a collection of {@code Actor}s that may be too high to fit vertically, so it shows one at a time,
@@ -54,7 +55,15 @@ public class FlingPane extends WidgetGroup {
      * gets zeroed by {@link Actor#act(float)}.
      */
     private float scrollAmount = 0 ;
+
+    /**
+     * Initial value to compute decreasing {@link #scrollVelocity} from.
+     */
+    private float initialScrollVelocity = 0 ;
+
     private float scrollVelocity = 0 ;
+
+    private long inertialScrollingStartTime = 0 ;
 
     private static final float AXIS_DIFFERENCIATION_FACTOR = 1.3f ;
     private static final float FLING_DURATION_SECOND = 1f ;
@@ -79,7 +88,7 @@ public class FlingPane extends WidgetGroup {
 
     /**
      * Same as in {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#flingTimer}.
-     * Access only with {@link #armFlingTimer()}.
+     * Only mutate with {@link #prepareInertialScrolling(float)}, or by zeroing it.
      */
     private float flingTimer ;
 
@@ -116,6 +125,7 @@ public class FlingPane extends WidgetGroup {
         checkInvariants() ;
 
         addListener( new InputListener() {
+
             @Override
             public boolean touchDown(
                     final InputEvent event,
@@ -125,13 +135,15 @@ public class FlingPane extends WidgetGroup {
                     final int button
             ) {
                 logDebug( "#touchDown( event=" + event + ", x=" + x + ", y=" + y + ", " +
-                        "pointer=" + pointer + ", button=" + button + " )") ;
+                        "pointer=" + pointer + ", button=" + button + " )" ) ;
                 scrollAxis = null ;
+                initialScrollVelocity = 0 ;
                 scrollAmount = 0 ;
                 scrollVelocity = 0 ;
+                flingTimer = 0 ;
                 overscrollPhase = null ;
                 lastPoint.set( x, y ) ;
-                armFlingTimer();
+                inertialScrollingStartTime = TimeUtils.millis() ;
                 getStage().setScrollFocus( FlingPane.this ) ;
                 return true ;
             }
@@ -149,20 +161,26 @@ public class FlingPane extends WidgetGroup {
                 final float deltaY = y - lastPoint.y ;
                 final ScrollAxis previousScrollAxis = scrollAxis ;
                 scrollAxis = resolveScrollAxis( deltaX, deltaY ) ;
-                if( scrollAxis == previousScrollAxis ) {
+                if( scrollAxis == previousScrollAxis || previousScrollAxis == null ) {
+                    final float inertialScrollingLastDuration =
+                            TimeUtils.timeSinceMillis( inertialScrollingStartTime ) ;
+                    inertialScrollingStartTime = TimeUtils.millis() ;
+                    final float velocityCorrection = inertialScrollingLastDuration ;
                     switch ( scrollAxis ) {
                         case VERTICAL :
-                            scrollVelocity = deltaY * SCROLL_VELOCITY_CORRECTION ;
-                            scrollAmount += deltaY ;
-                            break;
-                        case HORIZONTAL:
-                            break;
+                            scrollAmount = deltaY ;
+                            prepareInertialScrolling(deltaY * velocityCorrection ) ;
+                            break ;
+                        case HORIZONTAL :
+                            break ;
                         default : break ;
                     }
+                } else {
+                    logDebug( "No scroll initiated, scrollAxis=" + scrollAxis +
+                            " and previousScrollAxis=" + previousScrollAxis + "." ) ;
                 }
 
                 lastPoint.set( x, y ) ;
-                armFlingTimer();
             }
 
             @Override
@@ -188,15 +206,16 @@ public class FlingPane extends WidgetGroup {
                         "amount=" + amount + " )" ) ;
                 scrollAxis = ScrollAxis.VERTICAL ;
                 // How to derive speed from this?
-                scrollAmount += amount * SCROLL_AMOUNT_CORRECTION ;
-                scrollVelocity += amount * SCROLL_VELOCITY_CORRECTION ;
-                armFlingTimer();
+                initialScrollVelocity += amount * SCROLL_VELOCITY_CORRECTION ;
+                scrollVelocity = initialScrollVelocity;
+                flingTimer = 0 ;
+                // scrollAmount += amount * SCROLL_AMOUNT_CORRECTION ;
                 return true ;
             }
 
 
         } ) ;
-
+/*
         addListener( new ActorGestureListener() {
             @Override
             public void fling(
@@ -210,11 +229,11 @@ public class FlingPane extends WidgetGroup {
                 final ScrollAxis resolved = resolveScrollAxis( velocityX, velocityY ) ;
                 if( resolved == ScrollAxis.VERTICAL ) {
                     FlingPane.this.scrollAxis = ScrollAxis.VERTICAL ;
-                    scrollVelocity = velocityY ;
-                    armFlingTimer();
+                    prepareInertialScrolling( velocityY ) ;
                 }
             }
         } ) ;
+*/
     }
 
     /**
@@ -316,30 +335,35 @@ public class FlingPane extends WidgetGroup {
 // Scroll
 // ======
 
-    private void applyScrolling( float deltaSecond ) {
-        decrementFlingTimer( deltaSecond ) ;
-        if( flingTimer <= 0 ) {
-            scrollVelocity = 0 ;
-            scrollAxis = null ;
+    private void prepareInertialScrolling( final float initialScrollVelocity ) {
+        this.initialScrollVelocity = initialScrollVelocity ;
+        scrollVelocity = initialScrollVelocity ;
+        flingTimer = flingDuration ;
+        logDebug( "#prepareInertialScrolling( " + initialScrollVelocity + " )" ) ;
+        invalidate() ;
+    }
+
+    private void slowDownInertialScrolling( final float deltaSecond ) {
+        flingTimer -= deltaSecond ;
+        final float flingProgress = flingTimer / flingDuration ;
+        scrollVelocity = initialScrollVelocity * flingProgress ;
+        scrollAmount += scrollVelocity * ( deltaSecond / flingDuration ) ;
+        if( Math.abs( scrollVelocity ) < 0.001 ) {
+            scrollAmount = 0 ;
         }
 
-        final float previousScrollVelocity = scrollVelocity ;
-        if( scrollVelocity != 0 ) {
-            scrollAmount += scrollVelocity * ( deltaSecond / flingDuration ) ;
-            final float velocityDelta = deltaSecond * 10 ;
-            scrollVelocity -= ( scrollVelocity > 0 ? velocityDelta : - velocityDelta )  ;
-            if( Math.abs( scrollVelocity ) < 0.001 ) {
-                scrollVelocity = 0 ;
-            }
-        }
+        logDebug( "#slowDownInertialScrolling( " + deltaSecond + " ): " +
+                " scrollVelocity=" + scrollVelocity + ", scrollAmount=" + scrollAmount ) ;
+    }
+
+    private void applyScrolling( float deltaSecond ) {
         if( scrollAxis != null && scrollAmount != 0 ) {
             final Actor Ascender = getChildren().get( currentRollIndex ) ;
             switch( scrollAxis ) {
                 case VERTICAL :
                     logDebug(
                             "Applying scroll amount of " + scrollAmount + " on Y axis. " +
-                            "Velocity updated from " + previousScrollVelocity + " to " +
-                                    scrollVelocity + ". " +
+                            "Velocity updated to " + scrollVelocity + ". " +
                             "End of scroll in " + ( flingTimer ) + " s."
                     ) ;
                     Ascender.setY( Ascender.getY() + scrollAmount ) ;
@@ -350,6 +374,14 @@ public class FlingPane extends WidgetGroup {
                     break ;
             }
             scrollAmount = 0 ;
+        }
+
+        if( flingTimer <= 0 ) {
+            initialScrollVelocity = 0 ;
+            scrollVelocity = 0 ;
+            scrollAxis = null ;
+        } else {
+            slowDownInertialScrolling( deltaSecond ) ;
         }
     }
 
@@ -531,14 +563,6 @@ y=0-+---+ |   |       |   |      -+
 // =============
 // Miscellaneous
 // =============
-
-    private void armFlingTimer() {
-        flingTimer = flingDuration;
-    }
-
-    private void decrementFlingTimer( final float deltaSecond ) {
-        flingTimer -= deltaSecond ;
-    }
 
     private static void logDebug( final String message ) {
         Gdx.app.debug( FlingPane.class.getSimpleName(), message ) ;
