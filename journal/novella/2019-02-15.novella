@@ -103,10 +103,6 @@ aide à comprendre les coordonnées utilisées.
 
 
 
-
-
-
-
 === Utilité de ``group#setTransform``
 
 ``Group#setTransform(boolean)``
@@ -159,6 +155,13 @@ Le défilement horizontal a peu à voir avec le défilement vertical. Donc on a 
 Tout se joue au niveau des Scissors qui définissent la visibilité des Lanes.
   
 
+
+
+=== Résultat du jour
+
+Le cadre rouge correspond à l'activation du debug. On logge les coordonnées. Tout ce passe comme prévu : il manque juste le clipping.
+
+./2019-02-15/FlingPane.png
 
 
 

@@ -33,6 +33,7 @@ public class Menu1 extends ApplicationAdapter {
         container = new Table();
         stage.addActor(container);
         container.setFillParent(true);
+        container.setDebug( true, true);
 
         final String[] texts = newTextualEntries( 5, 10, 200 ) ;
         Vector2 size = new Vector2(400, 500) ;

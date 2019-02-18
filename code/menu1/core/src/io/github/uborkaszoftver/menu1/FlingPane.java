@@ -1,18 +1,21 @@
 package io.github.uborkaszoftver.menu1;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.g2d.Batch;
+import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
-import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.Cullable;
 import com.badlogic.gdx.scenes.scene2d.utils.Layout;
+import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
 
 /**
  * Contains a collection of {@code Actor}s that may be too high to fit vertically, so it shows one at a time,
  * with horizontal transitions between them and vertical scroll for each.
  * The display area is known as <b>Sight</b>.
- * Each child {@code Actor} is called a <b>Lane</b>, as its scrolls vertically.
+ * Each child {@code Actor} is called a <b>Roll</b>, as its scrolls vertically.
+ *
  *
  *
  * <h2>Resize</h2>
@@ -24,22 +27,19 @@ import com.badlogic.gdx.scenes.scene2d.utils.Layout;
  */
 public class FlingPane extends WidgetGroup {
 
-    /**
-     * Should not mutate.
-     * For computing display values use {@link Actor#getWidth()} and {@link Actor#getHeight()}.
-     */
-    private final Vector2 preferredSightSize ;
+    private final float preferredWidth ;
+    private final float preferredHeight ;
 
     /**
-     * The distance between {@link #currentLaneIndex} and {@link #disappearingLaneIndex}.
+     * The distance between {@link #currentRollIndex} and {@link #disappearingRollIndex}.
      */
-    private final float interLaneMargin ;
+    private final float interRollMargin ;
 
-    private int currentLaneIndex = 0 ;
-    private int disappearingLaneIndex = -1 ;
+    private int currentRollIndex = 2 ;
+    private int disappearingRollIndex = -1 ;
 
-    private boolean currentLaneIsCullable = false ;
-    private boolean disappearingLaneIsCullable = false ;
+    private boolean currentRollIsCullable = false ;
+    private boolean disappearingRollIsCullable = false ;
 
 
     private float scrollVelocityX = 0 ;
@@ -48,14 +48,17 @@ public class FlingPane extends WidgetGroup {
     private float scrollAmountX = 0 ;
 
     /**
-     * The area in Sight for corresponding Lane, in its own coordinates.
-     * Value of {@link #currentLaneCullingArea}, and scissors area are derived from it.
+     * The area in Sight for corresponding Roll, in its own coordinates.
+     * Value of {@link #currentRollCullingArea}, and scissors area are derived from it.
      */
-    private final Rectangle currentLaneAreaBounds = new Rectangle() ;
+    private final Rectangle currentRollAreaBounds = new Rectangle() ;
 
-    private final Rectangle currentLaneCullingArea = new Rectangle() ;
-    private final Rectangle disappearingLaneAreaBounds = new Rectangle() ;
-    private final Rectangle disappearingLaneCullingArea = new Rectangle() ;
+    private final Rectangle currentRollCullingArea = new Rectangle() ;
+    private final Rectangle disappearingRollAreaBounds = new Rectangle() ;
+    private final Rectangle disappearingRollCullingArea = new Rectangle() ;
+
+    private final Rectangle sightBounds = new Rectangle() ;
+    private final Rectangle scissorBounds = new Rectangle() ;
 
     private ScrollDirection scrollDirection = null ;
     private OverscrollPhase overscrollPhase = null ;
@@ -84,37 +87,39 @@ public class FlingPane extends WidgetGroup {
     public FlingPane(
             final float sightWidth,
             final float sightHeight,
-            final float interLaneMargin,
-            final Actor... lanes
+            final float interRollMargin,
+            final Actor... rolls
     ) {
-        super( lanes ) ;
-        preferredSightSize = new Vector2( sightWidth, sightHeight ) ;
-        this.interLaneMargin = interLaneMargin ;
+        super( rolls ) ;
+        preferredWidth = sightWidth ;
+        preferredHeight = sightHeight ;
+        this.interRollMargin = interRollMargin ;
+        checkInvariants() ;
     }
 
     /**
      * Caller must enforce every invariant. We expect {@link #scrollAmountX} to be consistent with
-     * {@link #currentLaneIndex} and {@link #disappearingLaneIndex}.
+     * {@link #currentRollIndex} and {@link #disappearingRollIndex}.
      */
     private void applyCulling() {
         if( scrollDirection != null ) {
             if( scrollDirection.horizontal ) {
                 // Scroll to the right, first on left is current.
-                if( currentLaneIsCullable ) {
-                    final Actor currentLane = getChildren().items[ currentLaneIndex ] ;
-                    currentLaneCullingArea.x = scrollAmountX ;
-                    currentLaneCullingArea.y = currentLane.getY() ;
-                    currentLaneCullingArea.height = preferredSightSize.x ;
-                    currentLaneCullingArea.width = preferredSightSize.y - scrollAmountX ;
-                    ( ( Cullable ) currentLane ).setCullingArea( currentLaneCullingArea ) ;
+                if( currentRollIsCullable ) {
+                    final Actor currentRoll = getChildren().items[ currentRollIndex ] ;
+                    currentRollCullingArea.x = scrollAmountX ;
+                    currentRollCullingArea.y = currentRoll.getY() ;
+                    currentRollCullingArea.height = preferredHeight ;
+                    currentRollCullingArea.width = preferredWidth - scrollAmountX ;
+                    ( ( Cullable ) currentRoll ).setCullingArea( currentRollCullingArea ) ;
                 }
-                if( disappearingLaneIsCullable && disappearingLaneIndex > -1 ) {  // There could be overscroll.
-                    final Actor disappearingLane = getChildren().items[disappearingLaneIndex];
-                    disappearingLaneCullingArea.x = 0;
-                    disappearingLaneCullingArea.y = disappearingLane.getY();
-                    disappearingLaneCullingArea.height = preferredSightSize.x ;
-                    disappearingLaneCullingArea.width = preferredSightSize.y + interLaneMargin - scrollAmountX;
-                    ((Cullable) disappearingLane).setCullingArea(disappearingLaneCullingArea);
+                if( disappearingRollIsCullable && disappearingRollIndex > -1 ) {  // There could be overscroll.
+                    final Actor disappearingRoll = getChildren().items[disappearingRollIndex];
+                    disappearingRollCullingArea.x = 0;
+                    disappearingRollCullingArea.y = disappearingRoll.getY();
+                    disappearingRollCullingArea.height = preferredWidth ;
+                    disappearingRollCullingArea.width = preferredHeight + interRollMargin - scrollAmountX;
+                    ((Cullable) disappearingRoll).setCullingArea(disappearingRollCullingArea);
                 }
             } else {
                 // Scroll to the left, first on left is disappearing.
@@ -130,17 +135,17 @@ public class FlingPane extends WidgetGroup {
     }
 
 
-    public interface LaneListener {
+    public interface RollListener {
 
-        void laneSightChanged(
-                int laneIndex,
+        void rollSightChanged(
+                int rollIndex,
                 boolean mayScrollUp,
                 boolean mayScrollLeft,
                 boolean mayScrollDown,
                 boolean mayScrollRight
         ) ;
 
-        void laneSelected( int laneIndex ) ;
+        void rollSelected( int rollIndex ) ;
 
     }
 
@@ -155,22 +160,22 @@ public class FlingPane extends WidgetGroup {
         if( ! CHECK_INVARIANTS ) return ;
         if( scrollDirection == null ) {
             check( overscrollPhase == null, "overscrollPhase should be null" ) ;
-            check( disappearingLaneIndex < 0, "disappearingLane should be undefined when not scrolling" ) ;
+            check( disappearingRollIndex < 0, "disappearingRoll should be undefined when not scrolling" ) ;
         } else {
             if( overscrollPhase != null ) {
-                check( disappearingLaneIndex < 0, "disappearingLane should be undefined when overscrolling" ) ;
+                check( disappearingRollIndex < 0, "disappearingRoll should be undefined when overscrolling" ) ;
             }
         }
 
-        final Actor currentLane = getChildren().items[ currentLaneIndex ] ;
-        if( currentLaneIsCullable ) {
-            check( currentLane instanceof Cullable, "currentLane should be Cullable" ) ;
+        final Actor currentRoll = getChildren().items[ currentRollIndex ] ;
+        if( currentRollIsCullable ) {
+            check( currentRoll instanceof Cullable, "currentRoll should be Cullable" ) ;
         }
 
-        if( disappearingLaneIndex >= 0 ) {
-            final Actor disappearingLane = getChildren().items[ disappearingLaneIndex ] ;
-            if( disappearingLaneIsCullable ) {
-                check( disappearingLane instanceof Cullable, "disappearingLane should be Cullable" ) ;
+        if( disappearingRollIndex >= 0 ) {
+            final Actor disappearingRoll = getChildren().items[ disappearingRollIndex ] ;
+            if( disappearingRollIsCullable ) {
+                check( disappearingRoll instanceof Cullable, "disappearingRoll should be Cullable" ) ;
             }
         }
     }
@@ -181,6 +186,47 @@ public class FlingPane extends WidgetGroup {
         }
     }
 
+
+// ====
+// Draw
+// ====
+
+    /**
+     * Lot of code copied from {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#draw(Batch, float)}.
+     */
+    @Override
+    public void draw( final Batch batch, final float parentAlpha ) {
+        // Triggers a call to layout().
+        validate() ;
+
+        final Matrix4 transform = computeTransform() ;
+        transform.translate( - currentRollIndex * ( getWidth() + interRollMargin ), 0, 0 ) ;
+
+        // Setup transform for this group.
+        applyTransform( batch, transform ) ;
+
+        // Caculate the scissor bounds based on the batch transform, the available widget area and the camera transform.
+        // We need to project those to screen coordinates for OpenGL ES to consume.
+        getStage().calculateScissors( sightBounds, scissorBounds ) ;
+
+        // Enable scissors for widget area and draw the widget.
+        batch.flush();
+        if( ScissorStack.pushScissors( scissorBounds ) ) {
+            drawChildren( batch, parentAlpha ) ;
+            batch.flush() ;
+            ScissorStack.popScissors() ;
+        }
+        resetTransform( batch ) ;
+    }
+
+
+// ======
+// Scroll
+// ======
+
+    private void applyScroll() {
+
+    }
 
 // ======
 // Layout
@@ -195,21 +241,22 @@ public class FlingPane extends WidgetGroup {
     private float previousHeight = -1 ;
 
     /**
-     * Sets every Lane's coordinates.
-     * An unscrolled Lane has its top's y -- not its y -- equal to {@link FlingPane#getHeight()} .
+     * Sets every Roll's coordinates according to {@link #getWidth()} and {@link #getHeight()}.
+     * An unscrolled Roll has its top's y -- not its y -- equal to {@link FlingPane#getHeight()} .
+     * For a given {@link #getWidth()} each Roll's horizontal width and height are constant.
      * Components' reference for coordinates is bottom-left corner.
      *
      * <pre>
 
     ^ x goes up
     |                 .....      -+
-          .....       .   .        > A Lane may "go up" of this height
+          .....       .   .        > A Roll may "go up" of this height
           .   .       .   .       |  (until its bottom hits Sight's bottom).
     +---+ +---+ +---+ +---+      -+
     |   | |   | |   | |   |        > This is Sight's height.
     |   | |   | +---+ |   |       |
 y=0-+---+ |   |       |   |      -+
-    |     |   |       |   |        > For the tallest Lane, this is the
+    |     |   |       |   |        > For the tallest Roll, this is the
     x=0   +---+       |   |       |  distance on which it can go "up".
                       +---+      -+
     |   |
@@ -223,57 +270,57 @@ y=0-+---+ |   |       |   |      -+
     public void layout() {
         Gdx.app.debug(
                 FlingPane.class.getSimpleName(),
-                "Layout begins: w=" + getWidth() + ", h=" + getHeight()
+                "Layout begins: w=" + getWidth() + ", h=" + getHeight() + ", " +
+                        "currentRollIndex=" + currentRollIndex
         ) ;
-        Actor previousLane = null ;
-        for( int laneIndex = 0 ; laneIndex < getChildren().size ; laneIndex ++  ) {
-            final Actor lane = getChildren().get( laneIndex ) ;
-            boolean isLayout = lane instanceof Layout ;
-            final float newLaneWidth, newLaneHeight ;
+        Actor previousRoll = null ;
+        for( int rollIndex = 0 ; rollIndex < getChildren().size ; rollIndex ++  ) {
+            final Actor roll = getChildren().get( rollIndex ) ;
+            boolean isLayout = roll instanceof Layout ;
+            final float newRollWidth, newRollHeight ;
             if( isLayout ) {
-                Layout laneAsLayout = ( Layout ) lane ;
-                newLaneWidth = laneAsLayout.getPrefWidth() > 0 ?
-                        Math.min( laneAsLayout.getPrefWidth(), getWidth() ) : getWidth() ;
-                newLaneHeight = laneAsLayout.getPrefHeight() ;
+                final Layout rollAsLayout = ( Layout ) roll ;
+                newRollWidth = rollAsLayout.getPrefWidth() > 0 ?
+                        Math.min( rollAsLayout.getPrefWidth(), getWidth() ) : getWidth() ;
+                newRollHeight = rollAsLayout.getPrefHeight() ;
             } else {
-                newLaneWidth = getWidth() ;
-                newLaneHeight = getHeight() ;
+                newRollWidth = getWidth() ;
+                newRollHeight = getHeight() ;
             }
-            final float previousLaneHeight = lane.getHeight() ;
-            lane.setSize( newLaneWidth, newLaneHeight ) ;
+            final float previousRollHeight = roll.getHeight() ;
+            roll.setSize( newRollWidth, newRollHeight ) ;
 
-            if( previousLane == null ) {
-                lane.setX( 0 ) ;
+            if( previousRoll == null ) {
+                roll.setX( 0 ) ;
             } else {
-                lane.setX( previousLane.getX() + getWidth() + interLaneMargin ) ;
+                roll.setX( previousRoll.getX() + getWidth() + interRollMargin ) ;
             }
-            float previousLaneOffsetY = previousHeight - previousLaneHeight;
-            float newLaneOffsetY = getHeight() - lane.getHeight();
-            if( lane.getY() > previousLaneOffsetY) {
-                // The Lane was scrolled up, so we keep the scrolling ratio regarding new height.
-                final float previousScrollRatio = previousLaneOffsetY / lane.getY() ;
-                lane.setY( newLaneOffsetY * previousScrollRatio ) ;
+            float previousRollOffsetY = previousHeight - previousRollHeight;
+            float newRollOffsetY = getHeight() - roll.getHeight();
+            if( roll.getY() > previousRollOffsetY) {
+                // The Roll was scrolled up, so we keep the scrolling ratio regarding new height.
+                final float previousScrollRatio = previousRollOffsetY / roll.getY() ;
+                roll.setY( newRollOffsetY * previousScrollRatio ) ;
             } else {
-                lane.setY( newLaneOffsetY ) ;
+                roll.setY( newRollOffsetY ) ;
             }
             Gdx.app.debug(
                     FlingPane.class.getSimpleName(),
-                    "Lane[" + laneIndex + "]: " +
-                            "x=" + lane.getX() + ", " +
-                            "y=" + lane.getY() + ", " +
-                            "w=" + lane.getWidth() + ", " +
-                            "h=" + lane.getHeight()
-            ); ;
-            previousLane = lane ;
+                    "Roll[" + rollIndex + "]: " +
+                            "x=" + roll.getX() + ", " +
+                            "y=" + roll.getY() + ", " +
+                            "w=" + roll.getWidth() + ", " +
+                            "h=" + roll.getHeight()
+            ) ;
+            previousRoll = roll ;
         }
         previousHeight = getHeight() ;
 
-        Gdx.app.debug(
-                FlingPane.class.getSimpleName(),
-                "Layout ends."
-        ); ;
+        sightBounds.set( getWidth() * currentRollIndex, 0, getWidth(), getHeight() ) ;
 
+        Gdx.app.debug( FlingPane.class.getSimpleName(), "Layout ends." ) ;
     }
+
 
 // ===============
 // Layout contract
@@ -281,31 +328,31 @@ y=0-+---+ |   |       |   |      -+
 
     @Override
     public float getMinWidth() {
-        return preferredSightSize.x ;
+        return preferredWidth ;
     }
 
     @Override
     public float getMinHeight() {
-        return preferredSightSize.y ;
+        return preferredHeight ;
     }
 
     @Override
     public float getPrefWidth() {
-        return preferredSightSize.x ;
+        return preferredWidth ;
     }
 
     @Override
     public float getPrefHeight() {
-        return preferredSightSize.y ;
+        return preferredHeight ;
     }
 
     @Override
     public float getMaxWidth() {
-        return preferredSightSize.x ;
+        return preferredWidth ;
     }
 
     @Override
     public float getMaxHeight() {
-        return preferredSightSize.y ;
+        return preferredHeight ;
     }
 }
