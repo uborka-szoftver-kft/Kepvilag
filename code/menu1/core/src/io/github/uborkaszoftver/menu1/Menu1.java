@@ -76,7 +76,7 @@ public class Menu1 extends ApplicationAdapter {
         for( int i = 0 ; i < entries.length ; i ++ ) {
             builder.setLength( 0 ) ;
             final int wordCount = random.nextInt( maxLength ) ;
-            for( int j = minLength ; j < wordCount ; j ++ ) {
+            for( int j = 0 ; j < wordCount - minLength ; j ++ ) {
                 builder.append( "word-" ).append( i ).append( '-' ).append( j ).append( ' ' ) ;
             }
             entries[ i ] = builder.toString() ;

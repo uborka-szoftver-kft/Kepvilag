@@ -4,7 +4,10 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputListener;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
 import com.badlogic.gdx.scenes.scene2d.utils.Cullable;
 import com.badlogic.gdx.scenes.scene2d.utils.Layout;
@@ -24,6 +27,10 @@ import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
  *     But it may display inside a non-cooperating layout. For this reason, display relies on {@link Actor}'s size.
  * </p>
  *
+ * <h2>Naming</h2>
+ * <p>
+ *     Rename Roll to Ascender?
+ * </p>
  */
 public class FlingPane extends WidgetGroup {
 
@@ -35,17 +42,19 @@ public class FlingPane extends WidgetGroup {
      */
     private final float interRollMargin ;
 
-    private int currentRollIndex = 2 ;
+    private int currentRollIndex = 0 ;
     private int disappearingRollIndex = -1 ;
 
     private boolean currentRollIsCullable = false ;
     private boolean disappearingRollIsCullable = false ;
 
+    /**
+     * Gets incremented by {@link InputListener#touchDragged(InputEvent, float, float, int)},
+     * gets zeroed by {@link Actor#act(float)}.
+     */
+    private float scrollAmount = 0 ;
 
-    private float scrollVelocityX = 0 ;
-    private float scrollVelocityY = 0 ;
-
-    private float scrollAmountX = 0 ;
+    private static final float AXIS_DIFFERENCIATION_FACTOR = 0.3f ;
 
     /**
      * The area in Sight for corresponding Roll, in its own coordinates.
@@ -63,7 +72,19 @@ public class FlingPane extends WidgetGroup {
     private ScrollDirection scrollDirection = null ;
     private OverscrollPhase overscrollPhase = null ;
 
+    private Vector2 lastPoint = new Vector2() ;
+
+    /**
+     * {@code null} when no drag or other scroll operation.
+     */
+    private ScrollAxis scrollAxis = null ;
+
+
+    private enum ScrollAxis { UNDEFINED, VERTICAL, HORIZONTAL }
+
+    @Deprecated
     private enum ScrollDirection {
+        UNKNOWN( false, false ),
         LEFT( false ),
         RIGHT( false ),
         UP( true ),
@@ -71,8 +92,12 @@ public class FlingPane extends WidgetGroup {
         ;
 
         ScrollDirection( boolean vertical ) {
+            this( vertical, ! vertical ) ;
+        }
+
+        ScrollDirection( boolean vertical, boolean horizontal ) {
             this.vertical = vertical ;
-            this.horizontal = ! vertical ;
+            this.horizontal = horizontal ;
         }
 
         private final boolean vertical ;
@@ -95,10 +120,79 @@ public class FlingPane extends WidgetGroup {
         preferredHeight = sightHeight ;
         this.interRollMargin = interRollMargin ;
         checkInvariants() ;
+
+        addListener( new InputListener() {
+            @Override
+            public boolean touchDown(
+                    final InputEvent event,
+                    final float x,
+                    final float y,
+                    final int pointer,
+                    final int button
+            ) {
+                logDebug( "touchDown: event=" + event + ", x=" + x + ", y=" + y + ", " +
+                        "pointer=" + pointer + ", button=" + button ) ;
+                scrollDirection = ScrollDirection.UNKNOWN ;
+                scrollAxis = null ;
+                overscrollPhase = null ;
+                lastPoint.set( x, y ) ;
+                return true ;
+            }
+
+            @Override
+            public void touchDragged(
+                    final InputEvent event,
+                    final float x,
+                    final float y,
+                    final int pointer
+            ) {
+                logDebug( "touchDragged: event=" + event + ", x=" + x + ", y=" + y + ", " +
+                        "pointer=" + pointer ) ;
+                final float deltaX = x - lastPoint.x ;
+                final float deltaY = y - lastPoint.y ;
+                final ScrollAxis previousScrollAxis = scrollAxis ;
+                if( Math.abs( deltaY ) > Math.abs( deltaX ) * AXIS_DIFFERENCIATION_FACTOR) {
+                    scrollAxis = ScrollAxis.VERTICAL ;
+                } else if( Math.abs( deltaX ) > Math.abs( deltaY ) * AXIS_DIFFERENCIATION_FACTOR) {
+                    scrollAxis = ScrollAxis.HORIZONTAL ;
+                } else {
+                    scrollAxis = ScrollAxis.UNDEFINED ;
+                }
+                if( scrollAxis == previousScrollAxis ) {
+                    switch ( scrollAxis ) {
+                        case VERTICAL :
+                            scrollAmount += deltaY ;
+                            break;
+                        case HORIZONTAL:
+                            scrollAmount += deltaY ;
+                            break;
+                        default : break ;
+                    }
+                }
+
+                lastPoint.set( x, y ) ;
+                invalidate() ;
+            }
+
+            @Override
+            public void touchUp(
+                    final InputEvent event,
+                    final float x,
+                    final float y,
+                    final int pointer,
+                    final int button
+            ) {
+                logDebug ("touchUp: event=" + event + ", x=" + x + ", y=" + y + ", " +
+                        "pointer=" + pointer + ", button=" + button ) ;
+                scrollAxis = null ;
+                scrollDirection = null ;
+                overscrollPhase = null ;
+            }
+        } ) ;
     }
 
     /**
-     * Caller must enforce every invariant. We expect {@link #scrollAmountX} to be consistent with
+     * Caller must enforce every invariant. We expect {@link #scrollAmount} to be consistent with
      * {@link #currentRollIndex} and {@link #disappearingRollIndex}.
      */
     private void applyCulling() {
@@ -107,10 +201,10 @@ public class FlingPane extends WidgetGroup {
                 // Scroll to the right, first on left is current.
                 if( currentRollIsCullable ) {
                     final Actor currentRoll = getChildren().items[ currentRollIndex ] ;
-                    currentRollCullingArea.x = scrollAmountX ;
+                    currentRollCullingArea.x = scrollAmount ;
                     currentRollCullingArea.y = currentRoll.getY() ;
                     currentRollCullingArea.height = preferredHeight ;
-                    currentRollCullingArea.width = preferredWidth - scrollAmountX ;
+                    currentRollCullingArea.width = preferredWidth - scrollAmount ;
                     ( ( Cullable ) currentRoll ).setCullingArea( currentRollCullingArea ) ;
                 }
                 if( disappearingRollIsCullable && disappearingRollIndex > -1 ) {  // There could be overscroll.
@@ -118,8 +212,8 @@ public class FlingPane extends WidgetGroup {
                     disappearingRollCullingArea.x = 0;
                     disappearingRollCullingArea.y = disappearingRoll.getY();
                     disappearingRollCullingArea.height = preferredWidth ;
-                    disappearingRollCullingArea.width = preferredHeight + interRollMargin - scrollAmountX;
-                    ((Cullable) disappearingRoll).setCullingArea(disappearingRollCullingArea);
+                    disappearingRollCullingArea.width = preferredHeight + interRollMargin - scrollAmount ;
+                    ((Cullable) disappearingRoll).setCullingArea(disappearingRollCullingArea) ;
                 }
             } else {
                 // Scroll to the left, first on left is disappearing.
@@ -187,6 +281,17 @@ public class FlingPane extends WidgetGroup {
     }
 
 
+// ===
+// Act
+// ===
+
+    @Override
+    public void act(float delta) {
+        super.act( delta ) ;
+        applyScrolling() ;
+    }
+
+
 // ====
 // Draw
 // ====
@@ -224,20 +329,40 @@ public class FlingPane extends WidgetGroup {
 // Scroll
 // ======
 
-    private void applyScroll() {
-
+    private void applyScrolling() {
+        if( scrollAxis != null ) {
+            final Actor roll = getChildren().get( currentRollIndex ) ;
+            switch( scrollAxis ) {
+                case VERTICAL :
+                    logDebug( "Applying scroll amount of " + scrollAmount + " on Y axis." ) ;
+                    roll.setY( roll.getY() + scrollAmount ) ;
+                    break ;
+                case HORIZONTAL :
+                    break ;
+                default :
+                    break ;
+            }
+            scrollAmount = 0 ;
+        }
     }
+
 
 // ======
 // Layout
 // ======
 
+    private boolean sizeChanged = true ;
+
     @Override
     protected void sizeChanged() {
+        sizeChanged = true ;
         super.sizeChanged() ;
     }
 
 
+    /**
+     * Detects vertical resize between two calls to {@link #layout()}.
+     */
     private float previousHeight = -1 ;
 
     /**
@@ -268,58 +393,58 @@ y=0-+---+ |   |       |   |      -+
      */
     @Override
     public void layout() {
-        Gdx.app.debug(
-                FlingPane.class.getSimpleName(),
-                "Layout begins: w=" + getWidth() + ", h=" + getHeight() + ", " +
-                        "currentRollIndex=" + currentRollIndex
-        ) ;
-        Actor previousRoll = null ;
-        for( int rollIndex = 0 ; rollIndex < getChildren().size ; rollIndex ++  ) {
-            final Actor roll = getChildren().get( rollIndex ) ;
-            boolean isLayout = roll instanceof Layout ;
-            final float newRollWidth, newRollHeight ;
-            if( isLayout ) {
-                final Layout rollAsLayout = ( Layout ) roll ;
-                newRollWidth = rollAsLayout.getPrefWidth() > 0 ?
-                        Math.min( rollAsLayout.getPrefWidth(), getWidth() ) : getWidth() ;
-                newRollHeight = rollAsLayout.getPrefHeight() ;
-            } else {
-                newRollWidth = getWidth() ;
-                newRollHeight = getHeight() ;
-            }
-            final float previousRollHeight = roll.getHeight() ;
-            roll.setSize( newRollWidth, newRollHeight ) ;
+        logDebug( "Layout begins: w=" + getWidth() + ", h=" + getHeight() + ", " +
+                "currentRollIndex=" + currentRollIndex);
+        if ( sizeChanged ) {
+            logDebug( "Applying full layout because of size change." ) ;
+            Actor previousRoll = null ;
+            for( int rollIndex = 0 ; rollIndex < getChildren().size ; rollIndex ++ ) {
+                final Actor roll = getChildren().get( rollIndex ) ;
+                boolean isLayout = roll instanceof Layout ;
+                final float newRollWidth, newRollHeight ;
+                if( isLayout ) {
+                    final Layout rollAsLayout = ( Layout ) roll ;
+                    newRollWidth = rollAsLayout.getPrefWidth() > 0 ?
+                            Math.min( rollAsLayout.getPrefWidth(), getWidth() ) : getWidth() ;
+                    newRollHeight = rollAsLayout.getPrefHeight() ;
+                } else {
+                    newRollWidth = getWidth() ;
+                    newRollHeight = getHeight() ;
+                }
+                roll.setSize( newRollWidth, newRollHeight ) ;
 
-            if( previousRoll == null ) {
-                roll.setX( 0 ) ;
-            } else {
-                roll.setX( previousRoll.getX() + getWidth() + interRollMargin ) ;
+                if( previousRoll == null ) {
+                    roll.setX( 0 ) ;
+                } else {
+                    roll.setX( previousRoll.getX() + getWidth() + interRollMargin ) ;
+                }
+
+                roll.setY( getHeight() - roll.getHeight() ) ;
+                if( previousHeight == getHeight() ) {
+                } else {
+                    // Some resize happened, so we want to maintain Y offset basing on a ratio.
+                }
+
+                previousRoll = roll ;
+
+                logDebug(
+                        "Roll[" + rollIndex + "]: " +
+                                "x=" + roll.getX() + ", " +
+                                "y=" + roll.getY() + ", " +
+                                "w=" + roll.getWidth() + ", " +
+                                "h=" + roll.getHeight()
+                ) ;
             }
-            float previousRollOffsetY = previousHeight - previousRollHeight;
-            float newRollOffsetY = getHeight() - roll.getHeight();
-            if( roll.getY() > previousRollOffsetY) {
-                // The Roll was scrolled up, so we keep the scrolling ratio regarding new height.
-                final float previousScrollRatio = previousRollOffsetY / roll.getY() ;
-                roll.setY( newRollOffsetY * previousScrollRatio ) ;
-            } else {
-                roll.setY( newRollOffsetY ) ;
-            }
-            Gdx.app.debug(
-                    FlingPane.class.getSimpleName(),
-                    "Roll[" + rollIndex + "]: " +
-                            "x=" + roll.getX() + ", " +
-                            "y=" + roll.getY() + ", " +
-                            "w=" + roll.getWidth() + ", " +
-                            "h=" + roll.getHeight()
-            ) ;
-            previousRoll = roll ;
+            sightBounds.set( getWidth() * currentRollIndex, 0, getWidth(), getHeight() ) ;
+            previousHeight = getHeight() ;
+            sizeChanged = false ;
+
         }
-        previousHeight = getHeight() ;
 
-        sightBounds.set( getWidth() * currentRollIndex, 0, getWidth(), getHeight() ) ;
+        logDebug( "Layout ends." ) ;
 
-        Gdx.app.debug( FlingPane.class.getSimpleName(), "Layout ends." ) ;
     }
+
 
 
 // ===============
@@ -355,4 +480,14 @@ y=0-+---+ |   |       |   |      -+
     public float getMaxHeight() {
         return preferredHeight ;
     }
+
+
+// =============
+// Miscellaneous
+// =============
+
+    private static void logDebug( final String message ) {
+        Gdx.app.debug( FlingPane.class.getSimpleName(), message ) ;
+    }
+
 }
