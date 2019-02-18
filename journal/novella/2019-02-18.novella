@@ -34,7 +34,7 @@ Le défilement horizontal est vraiment différent, il faut être sûr qu'il pren
 - Pour ``OverscrollPhase==FORWARD`` on décrémente la vitesse.
 - Pour ``OverscrollPhase==FORWARD`` une vitesse de 0 provoque le passage à ``BACKWARD`` et une réinitialisation de la vitesse.
 - Pour ``OverscrollPhase==BACKWARD`` une vitesse de 0 provoque le passage à ``BACKWARD``.
-- Pour ``OverscrollPhase==BACKWARD`` une vitesse de 0 met fin à l'Overscroll`.
+- Pour ``OverscrollPhase==BACKWARD`` une vitesse de 0 met fin à l'Overscroll.
 
 Ce n'est pas bon. L'Overscroll est "armé" par la gestuelle, le doigt sur l'écran guide le défilement //dans les 2 sens//. C'est quand on relâche que le composant revient à sa place.
 

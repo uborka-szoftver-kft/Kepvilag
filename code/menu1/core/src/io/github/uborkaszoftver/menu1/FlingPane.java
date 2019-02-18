@@ -79,13 +79,14 @@ public class FlingPane extends WidgetGroup {
 
     /**
      * Same as in {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#flingTimer}.
+     * Access only with {@link #armFlingTimer()}.
      */
     private float flingTimer ;
 
     /**
      * Same as in {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#flingTime}.
      */
-    private final float flingTime = FLING_DURATION_SECOND ;
+    private final float flingDuration = FLING_DURATION_SECOND ;
 
     private Vector2 lastPoint = new Vector2() ;
 
@@ -130,7 +131,7 @@ public class FlingPane extends WidgetGroup {
                 scrollVelocity = 0 ;
                 overscrollPhase = null ;
                 lastPoint.set( x, y ) ;
-                flingTimer = 0 ;
+                armFlingTimer();
                 getStage().setScrollFocus( FlingPane.this ) ;
                 return true ;
             }
@@ -161,7 +162,7 @@ public class FlingPane extends WidgetGroup {
                 }
 
                 lastPoint.set( x, y ) ;
-                flingTimer = flingTime ;
+                armFlingTimer();
             }
 
             @Override
@@ -189,7 +190,7 @@ public class FlingPane extends WidgetGroup {
                 // How to derive speed from this?
                 scrollAmount += amount * SCROLL_AMOUNT_CORRECTION ;
                 scrollVelocity += amount * SCROLL_VELOCITY_CORRECTION ;
-                flingTimer = flingTime ;
+                armFlingTimer();
                 return true ;
             }
 
@@ -210,7 +211,7 @@ public class FlingPane extends WidgetGroup {
                 if( resolved == ScrollAxis.VERTICAL ) {
                     FlingPane.this.scrollAxis = ScrollAxis.VERTICAL ;
                     scrollVelocity = velocityY ;
-                    flingTimer = flingTime ;
+                    armFlingTimer();
                 }
             }
         } ) ;
@@ -311,56 +312,23 @@ public class FlingPane extends WidgetGroup {
     }
 
 
-// ====
-// Draw
-// ====
-
-    /**
-     * Lot of code copied from {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#draw(Batch, float)}.
-     */
-    @Override
-    public void draw( final Batch batch, final float parentAlpha ) {
-        // Triggers a call to layout().
-        validate() ;
-
-        final Matrix4 transform = computeTransform() ;
-        transform.translate( - currentRollIndex * ( getWidth() + interRollMargin ), 0, 0 ) ;
-
-        // Setup transform for this group.
-        applyTransform( batch, transform ) ;
-
-        // Caculate the scissor bounds based on the batch transform, the available widget area and the camera transform.
-        // We need to project those to screen coordinates for OpenGL ES to consume.
-        getStage().calculateScissors( sightBounds, scissorBounds ) ;
-
-        // Enable scissors for widget area and draw the widget.
-        batch.flush();
-        if( ScissorStack.pushScissors( scissorBounds ) ) {
-            drawChildren( batch, parentAlpha ) ;
-            batch.flush() ;
-            ScissorStack.popScissors() ;
-        }
-        resetTransform( batch ) ;
-
-        // logDebug( "#draw(...) complete." );
-    }
-
-
 // ======
 // Scroll
 // ======
 
     private void applyScrolling( float deltaSecond ) {
-        flingTimer -= deltaSecond ;
+        decrementFlingTimer( deltaSecond ) ;
         if( flingTimer <= 0 ) {
             scrollVelocity = 0 ;
             scrollAxis = null ;
         }
 
+        final float previousScrollVelocity = scrollVelocity ;
         if( scrollVelocity != 0 ) {
-            scrollAmount += scrollVelocity * deltaSecond ;
-            scrollVelocity -= deltaSecond ;
-            if( scrollVelocity < 0.001 ) {
+            scrollAmount += scrollVelocity * ( deltaSecond / flingDuration ) ;
+            final float velocityDelta = deltaSecond * 10 ;
+            scrollVelocity -= ( scrollVelocity > 0 ? velocityDelta : - velocityDelta )  ;
+            if( Math.abs( scrollVelocity ) < 0.001 ) {
                 scrollVelocity = 0 ;
             }
         }
@@ -368,7 +336,12 @@ public class FlingPane extends WidgetGroup {
             final Actor Ascender = getChildren().get( currentRollIndex ) ;
             switch( scrollAxis ) {
                 case VERTICAL :
-                    logDebug( "Applying scroll amount of " + scrollAmount + " on Y axis." ) ;
+                    logDebug(
+                            "Applying scroll amount of " + scrollAmount + " on Y axis. " +
+                            "Velocity updated from " + previousScrollVelocity + " to " +
+                                    scrollVelocity + ". " +
+                            "End of scroll in " + ( flingTimer ) + " s."
+                    ) ;
                     Ascender.setY( Ascender.getY() + scrollAmount ) ;
                     break ;
                 case HORIZONTAL :
@@ -428,7 +401,7 @@ y=0-+---+ |   |       |   |      -+
     @Override
     public void layout() {
         logDebug( "#layout() begins: w=" + getWidth() + ", h=" + getHeight() + ", " +
-                "currentRollIndex=" + currentRollIndex);
+                "currentRollIndex=" + currentRollIndex ) ;
         if ( sizeChanged ) {
             logDebug( "Applying full layout because of size change." ) ;
             Actor previousRoll = null ;
@@ -485,6 +458,41 @@ y=0-+---+ |   |       |   |      -+
 
 
 
+// ====
+// Draw
+// ====
+
+    /**
+     * Lot of code copied from {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#draw(Batch, float)}.
+     */
+    @Override
+    public void draw( final Batch batch, final float parentAlpha ) {
+        // Triggers a call to layout().
+        validate() ;
+
+        final Matrix4 transform = computeTransform() ;
+        transform.translate( - currentRollIndex * ( getWidth() + interRollMargin ), 0, 0 ) ;
+
+        // Setup transform for this group.
+        applyTransform( batch, transform ) ;
+
+        // Caculate the scissor bounds based on the batch transform, the available widget area and the camera transform.
+        // We need to project those to screen coordinates for OpenGL ES to consume.
+        getStage().calculateScissors( sightBounds, scissorBounds ) ;
+
+        // Enable scissors for widget area and draw the widget.
+        batch.flush();
+        if( ScissorStack.pushScissors( scissorBounds ) ) {
+            drawChildren( batch, parentAlpha ) ;
+            batch.flush() ;
+            ScissorStack.popScissors() ;
+        }
+        resetTransform( batch ) ;
+
+        // logDebug( "#draw(...) complete." );
+    }
+
+
 // ===============
 // Layout contract
 // ===============
@@ -523,6 +531,14 @@ y=0-+---+ |   |       |   |      -+
 // =============
 // Miscellaneous
 // =============
+
+    private void armFlingTimer() {
+        flingTimer = flingDuration;
+    }
+
+    private void decrementFlingTimer( final float deltaSecond ) {
+        flingTimer -= deltaSecond ;
+    }
 
     private static void logDebug( final String message ) {
         Gdx.app.debug( FlingPane.class.getSimpleName(), message ) ;
