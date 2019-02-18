@@ -17,7 +17,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
  * Contains a collection of {@code Actor}s that may be too high to fit vertically, so it shows one at a time,
  * with horizontal transitions between them and vertical scroll for each.
  * The display area is known as <b>Sight</b>.
- * Each child {@code Actor} is called a <b>Roll</b>, as its scrolls vertically.
+ * Each child {@code Actor} is called a <b>Ascender</b>, as its scrolls vertically.
  *
  *
  *
@@ -29,7 +29,7 @@ import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
  *
  * <h2>Naming</h2>
  * <p>
- *     Rename Roll to Ascender?
+ *
  * </p>
  */
 public class FlingPane extends WidgetGroup {
@@ -57,7 +57,7 @@ public class FlingPane extends WidgetGroup {
     private static final float AXIS_DIFFERENCIATION_FACTOR = 0.3f ;
 
     /**
-     * The area in Sight for corresponding Roll, in its own coordinates.
+     * The area in Sight for corresponding Ascender, in its own coordinates.
      * Value of {@link #currentRollCullingArea}, and scissors area are derived from it.
      */
     private final Rectangle currentRollAreaBounds = new Rectangle() ;
@@ -69,7 +69,7 @@ public class FlingPane extends WidgetGroup {
     private final Rectangle sightBounds = new Rectangle() ;
     private final Rectangle scissorBounds = new Rectangle() ;
 
-    private ScrollDirection scrollDirection = null ;
+    //private ScrollDirection scrollDirection = null ;
     private OverscrollPhase overscrollPhase = null ;
 
     private Vector2 lastPoint = new Vector2() ;
@@ -81,28 +81,6 @@ public class FlingPane extends WidgetGroup {
 
 
     private enum ScrollAxis { UNDEFINED, VERTICAL, HORIZONTAL }
-
-    @Deprecated
-    private enum ScrollDirection {
-        UNKNOWN( false, false ),
-        LEFT( false ),
-        RIGHT( false ),
-        UP( true ),
-        DOWN( true ),
-        ;
-
-        ScrollDirection( boolean vertical ) {
-            this( vertical, ! vertical ) ;
-        }
-
-        ScrollDirection( boolean vertical, boolean horizontal ) {
-            this.vertical = vertical ;
-            this.horizontal = horizontal ;
-        }
-
-        private final boolean vertical ;
-        private final boolean horizontal ;
-    }
 
     private enum OverscrollPhase {
         FORWARD,
@@ -132,7 +110,6 @@ public class FlingPane extends WidgetGroup {
             ) {
                 logDebug( "touchDown: event=" + event + ", x=" + x + ", y=" + y + ", " +
                         "pointer=" + pointer + ", button=" + button ) ;
-                scrollDirection = ScrollDirection.UNKNOWN ;
                 scrollAxis = null ;
                 overscrollPhase = null ;
                 lastPoint.set( x, y ) ;
@@ -185,7 +162,6 @@ public class FlingPane extends WidgetGroup {
                 logDebug ("touchUp: event=" + event + ", x=" + x + ", y=" + y + ", " +
                         "pointer=" + pointer + ", button=" + button ) ;
                 scrollAxis = null ;
-                scrollDirection = null ;
                 overscrollPhase = null ;
             }
         } ) ;
@@ -196,32 +172,26 @@ public class FlingPane extends WidgetGroup {
      * {@link #currentRollIndex} and {@link #disappearingRollIndex}.
      */
     private void applyCulling() {
-        if( scrollDirection != null ) {
-            if( scrollDirection.horizontal ) {
-                // Scroll to the right, first on left is current.
-                if( currentRollIsCullable ) {
-                    final Actor currentRoll = getChildren().items[ currentRollIndex ] ;
-                    currentRollCullingArea.x = scrollAmount ;
-                    currentRollCullingArea.y = currentRoll.getY() ;
-                    currentRollCullingArea.height = preferredHeight ;
-                    currentRollCullingArea.width = preferredWidth - scrollAmount ;
-                    ( ( Cullable ) currentRoll ).setCullingArea( currentRollCullingArea ) ;
-                }
-                if( disappearingRollIsCullable && disappearingRollIndex > -1 ) {  // There could be overscroll.
-                    final Actor disappearingRoll = getChildren().items[disappearingRollIndex];
-                    disappearingRollCullingArea.x = 0;
-                    disappearingRollCullingArea.y = disappearingRoll.getY();
-                    disappearingRollCullingArea.height = preferredWidth ;
-                    disappearingRollCullingArea.width = preferredHeight + interRollMargin - scrollAmount ;
-                    ((Cullable) disappearingRoll).setCullingArea(disappearingRollCullingArea) ;
-                }
-            } else {
-                // Scroll to the left, first on left is disappearing.
-
+        if( scrollAxis == ScrollAxis.HORIZONTAL ) {
+            // Scroll to the right, first on left is current.
+            if( currentRollIsCullable ) {
+                final Actor currentRoll = getChildren().items[ currentRollIndex ] ;
+                currentRollCullingArea.x = scrollAmount ;
+                currentRollCullingArea.y = currentRoll.getY() ;
+                currentRollCullingArea.height = preferredHeight ;
+                currentRollCullingArea.width = preferredWidth - scrollAmount ;
+                ( ( Cullable ) currentRoll ).setCullingArea( currentRollCullingArea ) ;
             }
-
-
+            if( disappearingRollIsCullable && disappearingRollIndex > -1 ) {  // There could be overscroll.
+                final Actor disappearingRoll = getChildren().items[disappearingRollIndex];
+                disappearingRollCullingArea.x = 0;
+                disappearingRollCullingArea.y = disappearingRoll.getY();
+                disappearingRollCullingArea.height = preferredWidth ;
+                disappearingRollCullingArea.width = preferredHeight + interRollMargin - scrollAmount ;
+                ((Cullable) disappearingRoll).setCullingArea(disappearingRollCullingArea) ;
+            }
         } else {
+            // Scroll to the left, first on left is disappearing.
 
         }
 
@@ -252,7 +222,7 @@ public class FlingPane extends WidgetGroup {
 
     void checkInvariants() {
         if( ! CHECK_INVARIANTS ) return ;
-        if( scrollDirection == null ) {
+        if( scrollAxis == null ) {
             check( overscrollPhase == null, "overscrollPhase should be null" ) ;
             check( disappearingRollIndex < 0, "disappearingRoll should be undefined when not scrolling" ) ;
         } else {
@@ -331,11 +301,11 @@ public class FlingPane extends WidgetGroup {
 
     private void applyScrolling() {
         if( scrollAxis != null ) {
-            final Actor roll = getChildren().get( currentRollIndex ) ;
+            final Actor Ascender = getChildren().get( currentRollIndex ) ;
             switch( scrollAxis ) {
                 case VERTICAL :
                     logDebug( "Applying scroll amount of " + scrollAmount + " on Y axis." ) ;
-                    roll.setY( roll.getY() + scrollAmount ) ;
+                    Ascender.setY( Ascender.getY() + scrollAmount ) ;
                     break ;
                 case HORIZONTAL :
                     break ;
@@ -366,22 +336,22 @@ public class FlingPane extends WidgetGroup {
     private float previousHeight = -1 ;
 
     /**
-     * Sets every Roll's coordinates according to {@link #getWidth()} and {@link #getHeight()}.
-     * An unscrolled Roll has its top's y -- not its y -- equal to {@link FlingPane#getHeight()} .
-     * For a given {@link #getWidth()} each Roll's horizontal width and height are constant.
+     * Sets every Ascender's coordinates according to {@link #getWidth()} and {@link #getHeight()}.
+     * An unscrolled Ascender has its top's y -- not its y -- equal to {@link FlingPane#getHeight()} .
+     * For a given {@link #getWidth()} each Ascender's horizontal width and height are constant.
      * Components' reference for coordinates is bottom-left corner.
      *
      * <pre>
 
     ^ x goes up
     |                 .....      -+
-          .....       .   .        > A Roll may "go up" of this height
+          .....       .   .        > A Ascender may "go up" of this height
           .   .       .   .       |  (until its bottom hits Sight's bottom).
     +---+ +---+ +---+ +---+      -+
     |   | |   | |   | |   |        > This is Sight's height.
     |   | |   | +---+ |   |       |
 y=0-+---+ |   |       |   |      -+
-    |     |   |       |   |        > For the tallest Roll, this is the
+    |     |   |       |   |        > For the tallest Ascender, this is the
     x=0   +---+       |   |       |  distance on which it can go "up".
                       +---+      -+
     |   |
@@ -399,11 +369,11 @@ y=0-+---+ |   |       |   |      -+
             logDebug( "Applying full layout because of size change." ) ;
             Actor previousRoll = null ;
             for( int rollIndex = 0 ; rollIndex < getChildren().size ; rollIndex ++ ) {
-                final Actor roll = getChildren().get( rollIndex ) ;
-                boolean isLayout = roll instanceof Layout ;
+                final Actor Ascender = getChildren().get( rollIndex ) ;
+                boolean isLayout = Ascender instanceof Layout ;
                 final float newRollWidth, newRollHeight ;
                 if( isLayout ) {
-                    final Layout rollAsLayout = ( Layout ) roll ;
+                    final Layout rollAsLayout = ( Layout ) Ascender ;
                     newRollWidth = rollAsLayout.getPrefWidth() > 0 ?
                             Math.min( rollAsLayout.getPrefWidth(), getWidth() ) : getWidth() ;
                     newRollHeight = rollAsLayout.getPrefHeight() ;
@@ -411,28 +381,28 @@ y=0-+---+ |   |       |   |      -+
                     newRollWidth = getWidth() ;
                     newRollHeight = getHeight() ;
                 }
-                roll.setSize( newRollWidth, newRollHeight ) ;
+                Ascender.setSize( newRollWidth, newRollHeight ) ;
 
                 if( previousRoll == null ) {
-                    roll.setX( 0 ) ;
+                    Ascender.setX( 0 ) ;
                 } else {
-                    roll.setX( previousRoll.getX() + getWidth() + interRollMargin ) ;
+                    Ascender.setX( previousRoll.getX() + getWidth() + interRollMargin ) ;
                 }
 
-                roll.setY( getHeight() - roll.getHeight() ) ;
+                Ascender.setY( getHeight() - Ascender.getHeight() ) ;
                 if( previousHeight == getHeight() ) {
                 } else {
                     // Some resize happened, so we want to maintain Y offset basing on a ratio.
                 }
 
-                previousRoll = roll ;
+                previousRoll = Ascender ;
 
                 logDebug(
-                        "Roll[" + rollIndex + "]: " +
-                                "x=" + roll.getX() + ", " +
-                                "y=" + roll.getY() + ", " +
-                                "w=" + roll.getWidth() + ", " +
-                                "h=" + roll.getHeight()
+                        "Ascender[" + rollIndex + "]: " +
+                                "x=" + Ascender.getX() + ", " +
+                                "y=" + Ascender.getY() + ", " +
+                                "w=" + Ascender.getWidth() + ", " +
+                                "h=" + Ascender.getHeight()
                 ) ;
             }
             sightBounds.set( getWidth() * currentRollIndex, 0, getWidth(), getHeight() ) ;
