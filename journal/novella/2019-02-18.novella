@@ -1,0 +1,52 @@
+== Le ``FlingPane``
+
+Qu'est-ce qu'on a ?
+- Une méthode ``layout`` qui affecte les coordonnées en fonction de la taille réelle du ``FlingPane``.
+- Un calcul des Scissors qui évite de modifier l'abscisse des Rolls.
+
+Prochaine étape : le défilement. Sur l'axe horizontal ou vertical ?
+- Verticalement : on se base sur le ``roll.getY()`` car la hauteur dépend de chacun.
+- Horizontalement : on pourrait utiliser un pourcentage.
+
+Comment ça se passe ?
+- La gestuelle définit la vitesse et l'orientation et d'autres trucs.
+- La méthode ``act(float)`` effectue les mises à jour et demande le réaffichage.
+
+Comment caractériser le défilement vertical ?
+- (Orientation.)
+- Overscroll ?
+- Vitesse.
+- Décélération.
+
+
+Comment caractériser le défilement horizontal ?
+- (Orientation.)
+- Overscroll ?
+- Vitesse.
+- Décélération.
+- Roll en cours de disparition.
+
+Le défilement horizontal est vraiment différent, il faut être sûr qu'il prenne fin lorsque le Roll en cours de disparition a totalement disparu.
+
+
+=== La formule de l'Overscroll 
+
+- Pour ``OverscrollPhase==FORWARD`` on décrémente la vitesse.
+- Pour ``OverscrollPhase==FORWARD`` une vitesse de 0 provoque le passage à ``BACKWARD`` et une réinitialisation de la vitesse.
+- Pour ``OverscrollPhase==BACKWARD`` une vitesse de 0 provoque le passage à ``BACKWARD``.
+- Pour ``OverscrollPhase==BACKWARD`` une vitesse de 0 met fin à l'Overscroll`.
+
+Ce n'est pas bon. L'Overscroll est "armé" par la gestuelle, le doigt sur l'écran guide le défilement //dans les 2 sens//. C'est quand on relâche que le composant revient à sa place.
+
+Ce qui compte c'est la vitesse atteinte au moment où cesse le contact. 
+
+
+=== On reprend
+
+- Lors du contact le défilement "suit" le doigt. Au passage il dérive la vitesse.
+- À la fin du contact le défilement continue avec décélération progressive.
+
+On retient que la vitesse n'est pas suffisante pour caractériser le mouvement.
+
+Le débogueur montre que dans le ``ScrollPane`` ``act(float)`` est appelé indépendemment de ``draw()``.
+

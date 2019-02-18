@@ -1,0 +1,55 @@
+== Versions d'Android
+
+[Mobile `&` Tablet Android Version Market Share Worldwide]
+http://gs.statcounter.com/android-version-market-share/mobile-tablet/worldwide
+on a du monde à partir de `7.0 Nougat`.
+
+Sur Wikipedia on trouve un tableau avec [version et SDK associé]
+https://en.wikipedia.org/wiki/Android_version_history
+
+
+=== Matériel : Samsung T820 Galaxy Tab S3 (tablette `9.7"`)
+
+Samsung est notablement minable concernant les mises à jour. Pour une tablette il faut minimum une Samsung T820 Galaxy Tab S3, qui peut [passer à `Oreo 8.0`]
+https://www.thecustomdroid.com/install-galaxy-tab-s3-android-oreo-update/ 
+(en-dessous de la T820 aucune chance).
+
+D'[occasion]
+https://hasznaltandroid.hu/aprohirdetesek/android-termekek/tablet/samsung/samsung-t820-galaxy-tab-s3-9-7-32gb-fekete-853
+la T820 se négocie à `163 000 Ft` pour une version Wi-Fi seule. On a `4 Go` de RAM, un processeur quadricœur, un écran `9.7"` super-AMOLED (2048 «times» 1536, 264 ppi), un GPS. La version de fabrique est `Android 7.0 Nougat`
+
+
+
+=== Matériel : Sony Xperia Tablet Z4 
+
+Présentée en 2015. 
+
+Wi-Fi. Écran `10.1"` 2560 «times» 1600, 299 ppi. 3 Go de RAM, octocœur. Bonne résistance à l'eau.
+`600 €` rien que ça, et pour un modèle d'occasion. 
+
+Mise à jour : [`Android 7.1`]
+https://support.sonymobile.com/global-en/xperiaz4tablet/kb/801930740113d1bd101599e4b9c720078f3/
+et [rien d'autre]
+https://blogs.sonymobile.com/2017/08/31/xperia-android-8-0-oreo/
+.
+
+Supportée par [Lineage OS]
+https://wiki.lineageos.org/devices/karin_windy
+.
+
+=== Matériel : Lenovo Tab 4 8
+
+Wi-Fi. Écran `8"` 1200 «times» 800, 2 Go de RAM. `Android 7.0`.
+`47.000 Ft`.
+
+
+https://www.laptopmag.com/reviews/tablets/lenovo-tab-4-10-plus
+
+=== Lineage OS
+
+Pas très rassurant : la Samsung T820 Galaxy Tab S3 `9.7` n'apparaît nulle part dans la liste des [matériels supportés]
+https://wiki.lineageos.org/devices/
+. On voit une `S2 9.7` mais ce n'est clairement pas le même modèle (3 Go au lieu de 4 pour la S3).
+
+
+

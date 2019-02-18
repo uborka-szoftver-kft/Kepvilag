@@ -8,8 +8,8 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.InputEvent;
 import com.badlogic.gdx.scenes.scene2d.InputListener;
-import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.ui.WidgetGroup;
+import com.badlogic.gdx.scenes.scene2d.utils.ActorGestureListener;
 import com.badlogic.gdx.scenes.scene2d.utils.Cullable;
 import com.badlogic.gdx.scenes.scene2d.utils.Layout;
 import com.badlogic.gdx.scenes.scene2d.utils.ScissorStack;
@@ -54,24 +54,38 @@ public class FlingPane extends WidgetGroup {
      * gets zeroed by {@link Actor#act(float)}.
      */
     private float scrollAmount = 0 ;
+    private float scrollVelocity = 0 ;
 
-    private static final float AXIS_DIFFERENCIATION_FACTOR = 0.3f ;
+    private static final float AXIS_DIFFERENCIATION_FACTOR = 1.3f ;
+    private static final float FLING_DURATION_SECOND = 1f ;
+    private static final float SCROLL_AMOUNT_CORRECTION = 8f ;
+    private static final float SCROLL_VELOCITY_CORRECTION = SCROLL_AMOUNT_CORRECTION / 2 ;
 
     /**
      * The area in Sight for corresponding Ascender, in its own coordinates.
-     * Value of {@link #currentRollCullingArea}, and scissors area are derived from it.
+     * Value of {@link #currentAscenderCullingArea}, and scissors area are derived from it.
      */
-    private final Rectangle currentRollAreaBounds = new Rectangle() ;
+    private final Rectangle currentAscenderAreaBounds = new Rectangle() ;
 
-    private final Rectangle currentRollCullingArea = new Rectangle() ;
-    private final Rectangle disappearingRollAreaBounds = new Rectangle() ;
-    private final Rectangle disappearingRollCullingArea = new Rectangle() ;
+    private final Rectangle currentAscenderCullingArea = new Rectangle() ;
+    private final Rectangle disappearingAscenderAreaBounds = new Rectangle() ;
+    private final Rectangle disappearingAscenderCullingArea = new Rectangle() ;
 
     private final Rectangle sightBounds = new Rectangle() ;
     private final Rectangle scissorBounds = new Rectangle() ;
 
     //private ScrollDirection scrollDirection = null ;
     private OverscrollPhase overscrollPhase = null ;
+
+    /**
+     * Same as in {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#flingTimer}.
+     */
+    private float flingTimer ;
+
+    /**
+     * Same as in {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#flingTime}.
+     */
+    private final float flingTime = FLING_DURATION_SECOND ;
 
     private Vector2 lastPoint = new Vector2() ;
 
@@ -114,6 +128,8 @@ public class FlingPane extends WidgetGroup {
                 scrollAxis = null ;
                 overscrollPhase = null ;
                 lastPoint.set( x, y ) ;
+                flingTimer = 0 ;
+                getStage().setScrollFocus( FlingPane.this ) ;
                 return true ;
             }
 
@@ -129,27 +145,21 @@ public class FlingPane extends WidgetGroup {
                 final float deltaX = x - lastPoint.x ;
                 final float deltaY = y - lastPoint.y ;
                 final ScrollAxis previousScrollAxis = scrollAxis ;
-                if( Math.abs( deltaY ) > Math.abs( deltaX ) * AXIS_DIFFERENCIATION_FACTOR) {
-                    scrollAxis = ScrollAxis.VERTICAL ;
-                } else if( Math.abs( deltaX ) > Math.abs( deltaY ) * AXIS_DIFFERENCIATION_FACTOR) {
-                    scrollAxis = ScrollAxis.HORIZONTAL ;
-                } else {
-                    scrollAxis = ScrollAxis.UNDEFINED ;
-                }
+                scrollAxis = resolveScrollAxis( deltaX, deltaY ) ;
                 if( scrollAxis == previousScrollAxis ) {
                     switch ( scrollAxis ) {
                         case VERTICAL :
+                            scrollVelocity = deltaY ;
                             scrollAmount += deltaY ;
                             break;
                         case HORIZONTAL:
-                            scrollAmount += deltaY ;
                             break;
                         default : break ;
                     }
                 }
 
                 lastPoint.set( x, y ) ;
-                invalidate() ;
+                flingTimer = flingTime ;
             }
 
             @Override
@@ -160,10 +170,45 @@ public class FlingPane extends WidgetGroup {
                     final int pointer,
                     final int button
             ) {
-                logDebug ("touchUp: event=" + event + ", x=" + x + ", y=" + y + ", " +
+                logDebug ( "touchUp: event=" + event + ", x=" + x + ", y=" + y + ", " +
                         "pointer=" + pointer + ", button=" + button ) ;
-                scrollAxis = null ;
-                overscrollPhase = null ;
+            }
+
+            @Override
+            public boolean scrolled(
+                    final InputEvent event,
+                    final float x,
+                    final float y,
+                    final int amount
+            ) {
+                logDebug ( "scrolled: event=" + event + ", x=" + x + ", y=" + y + ", " +
+                        "amount=" + amount  ) ;
+                scrollAxis = ScrollAxis.VERTICAL ;
+                scrollAmount += amount * SCROLL_AMOUNT_CORRECTION ;
+                scrollVelocity += amount * SCROLL_VELOCITY_CORRECTION ;
+                flingTimer = flingTime ;
+                return true ;
+            }
+
+
+        } ) ;
+
+        addListener( new ActorGestureListener() {
+            @Override
+            public void fling(
+                    final InputEvent event,
+                    final float velocityX,
+                    final float velocityY,
+                    final int button
+            ) {
+                logDebug( "fling: event=" + event + ", vx=" + velocityX + ", " +
+                        "vy=" + velocityY + ", button=" + button ) ;
+                final ScrollAxis resolved = resolveScrollAxis( velocityX, velocityY ) ;
+                if( resolved == ScrollAxis.VERTICAL ) {
+                    FlingPane.this.scrollAxis = ScrollAxis.VERTICAL ;
+                    scrollVelocity = velocityY ;
+                    flingTimer = flingTime ;
+                }
             }
         } ) ;
     }
@@ -177,19 +222,19 @@ public class FlingPane extends WidgetGroup {
             // Scroll to the right, first on left is current.
             if( currentRollIsCullable ) {
                 final Actor currentRoll = getChildren().items[ currentRollIndex ] ;
-                currentRollCullingArea.x = scrollAmount ;
-                currentRollCullingArea.y = currentRoll.getY() ;
-                currentRollCullingArea.height = preferredHeight ;
-                currentRollCullingArea.width = preferredWidth - scrollAmount ;
-                ( ( Cullable ) currentRoll ).setCullingArea( currentRollCullingArea ) ;
+                currentAscenderCullingArea.x = scrollAmount ;
+                currentAscenderCullingArea.y = currentRoll.getY() ;
+                currentAscenderCullingArea.height = preferredHeight ;
+                currentAscenderCullingArea.width = preferredWidth - scrollAmount ;
+                ( ( Cullable ) currentRoll ).setCullingArea( currentAscenderCullingArea ) ;
             }
             if( disappearingRollIsCullable && disappearingRollIndex > -1 ) {  // There could be overscroll.
                 final Actor disappearingRoll = getChildren().items[disappearingRollIndex];
-                disappearingRollCullingArea.x = 0;
-                disappearingRollCullingArea.y = disappearingRoll.getY();
-                disappearingRollCullingArea.height = preferredWidth ;
-                disappearingRollCullingArea.width = preferredHeight + interRollMargin - scrollAmount ;
-                ((Cullable) disappearingRoll).setCullingArea(disappearingRollCullingArea) ;
+                disappearingAscenderCullingArea.x = 0;
+                disappearingAscenderCullingArea.y = disappearingRoll.getY();
+                disappearingAscenderCullingArea.height = preferredWidth ;
+                disappearingAscenderCullingArea.width = preferredHeight + interRollMargin - scrollAmount ;
+                ((Cullable) disappearingRoll).setCullingArea( disappearingAscenderCullingArea ) ;
             }
         } else {
             // Scroll to the left, first on left is disappearing.
@@ -257,9 +302,9 @@ public class FlingPane extends WidgetGroup {
 // ===
 
     @Override
-    public void act(float delta) {
-        super.act( delta ) ;
-        applyScrolling() ;
+    public void act( float deltaSecond ) {
+        super.act( deltaSecond ) ;
+        applyScrolling( deltaSecond ) ;
     }
 
 
@@ -300,8 +345,21 @@ public class FlingPane extends WidgetGroup {
 // Scroll
 // ======
 
-    private void applyScrolling() {
-        if( scrollAxis != null ) {
+    private void applyScrolling( float deltaSecond ) {
+        flingTimer -= deltaSecond ;
+        if( flingTimer <= 0 ) {
+            scrollVelocity = 0 ;
+            scrollAxis = null ;
+        }
+
+        if( scrollVelocity != 0 ) {
+            scrollAmount = scrollAmount + scrollVelocity * deltaSecond ;
+            scrollVelocity *= 0.9 ;
+            if( scrollVelocity < 0.001 ) {
+                scrollVelocity = 0 ;
+            }
+        }
+        if( scrollAxis != null && scrollAmount != 0 ) {
             final Actor Ascender = getChildren().get( currentRollIndex ) ;
             switch( scrollAxis ) {
                 case VERTICAL :
@@ -375,9 +433,10 @@ y=0-+---+ |   |       |   |      -+
                 if( isLayout ) {
                     final Layout ascenderAsLayout = ( Layout ) ascender ;
                     ascenderAsLayout.layout() ;
+                    // When word-wrapping, a Label returns 0 for its preferred size,
+                    // which also depends on current width. So we set current width
+                    // before calculating preferred size.
                     if( ascenderAsLayout.getPrefWidth() <= 0 ) {
-                        // When word-wrapping, a Label returns 0 for its preferred size,
-                        // which also depends on current width.
                         ascender.setWidth( getWidth() ) ;
                     } else {
                         ascender.setWidth( Math.min( ascenderAsLayout.getPrefWidth(), getWidth() ) ) ;
@@ -462,6 +521,18 @@ y=0-+---+ |   |       |   |      -+
 
     private static void logDebug( final String message ) {
         Gdx.app.debug( FlingPane.class.getSimpleName(), message ) ;
+    }
+
+    private ScrollAxis resolveScrollAxis( float deltaX, float deltaY ) {
+        ScrollAxis axis;
+        if( Math.abs( deltaY ) > Math.abs( deltaX ) * AXIS_DIFFERENCIATION_FACTOR) {
+            axis = ScrollAxis.VERTICAL ;
+        } else if( Math.abs( deltaX ) > Math.abs( deltaY ) * AXIS_DIFFERENCIATION_FACTOR) {
+            axis = ScrollAxis.HORIZONTAL ;
+        } else {
+            axis = ScrollAxis.UNDEFINED ;
+        }
+        return axis;
     }
 
 }
