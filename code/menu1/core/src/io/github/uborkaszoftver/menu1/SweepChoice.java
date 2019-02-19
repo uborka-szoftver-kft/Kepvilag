@@ -33,7 +33,7 @@ import com.badlogic.gdx.utils.TimeUtils;
  *     SweepChoice?
  * </p>
  */
-public class FlingPane extends WidgetGroup {
+public class SweepChoice extends WidgetGroup {
 
     private final float preferredWidth ;
     private final float preferredHeight ;
@@ -113,7 +113,7 @@ public class FlingPane extends WidgetGroup {
         BACKWARD
     }
 
-    public FlingPane(
+    public SweepChoice(
             final float sightWidth,
             final float sightHeight,
             final float interRollMargin,
@@ -146,7 +146,7 @@ public class FlingPane extends WidgetGroup {
                 lastPoint.set( x, y ) ;
                 touchDownTime = TimeUtils.millis() ;
                 lastMouseScrollTime = 0 ;
-                getStage().setScrollFocus( FlingPane.this ) ;
+                getStage().setScrollFocus( SweepChoice.this ) ;
                 return true ;
             }
 
@@ -163,7 +163,10 @@ public class FlingPane extends WidgetGroup {
                 final float deltaY = y - lastPoint.y ;
                 final ScrollAxis previousScrollAxis = scrollAxis ;
                 scrollAxis = resolveScrollAxis( deltaX, deltaY ) ;
-                if( scrollAxis == previousScrollAxis || previousScrollAxis == null ) {
+                if( scrollAxis == previousScrollAxis ||
+                    previousScrollAxis == null ||
+                    previousScrollAxis == ScrollAxis.UNDEFINED
+                ) {
                     final float inertialScrollingLastDuration =
                             TimeUtils.timeSinceMillis(touchDownTime) ;
                     touchDownTime = TimeUtils.millis() ;
@@ -175,7 +178,7 @@ public class FlingPane extends WidgetGroup {
                             // Forcing amount to some reasonable value avoids delay
                             // before scroll begins.
                             scrollAmount = deltaY ;
-                            prepareInertialScrolling(deltaY * velocityCorrection ) ;
+                            prepareInertialScrolling( deltaY * velocityCorrection ) ;
                             break ;
                         case HORIZONTAL :
                             break ;
@@ -374,7 +377,7 @@ public class FlingPane extends WidgetGroup {
 
     /**
      * Sets every Ascender's coordinates according to {@link #getWidth()} and {@link #getHeight()}.
-     * An unscrolled Ascender has its top's y -- not its y -- equal to {@link FlingPane#getHeight()} .
+     * An unscrolled Ascender has its top's y -- not its y -- equal to {@link SweepChoice#getHeight()} .
      * For a given {@link #getWidth()} each Ascender's horizontal width and height are constant.
      * Components' reference for coordinates is bottom-left corner.
      *
@@ -533,7 +536,7 @@ y=0-+---+ |   |       |   |      -+
 // =============
 
     private static void logDebug( final String message ) {
-        Gdx.app.debug( FlingPane.class.getSimpleName(), message ) ;
+        Gdx.app.debug( SweepChoice.class.getSimpleName(), message ) ;
     }
 
     private ScrollAxis resolveScrollAxis( float deltaX, float deltaY ) {

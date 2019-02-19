@@ -34,7 +34,7 @@ public class Menu1 extends ApplicationAdapter {
 
         final String[] texts = newTextualEntries( 5, 10, 200 ) ;
         Vector2 size = new Vector2(400, 500) ;
-        Actor choicePane = newFlingPane( texts, size, skin ) ;
+        Actor choicePane = newSweepChoice( texts, size, skin ) ;
         stage.setScrollFocus( choicePane ) ;
 
         container.add( choicePane ).size( size.x, size.y );
@@ -82,7 +82,7 @@ public class Menu1 extends ApplicationAdapter {
         return entries ;
     }
 
-    private Actor newFlingPane( String[] texts, Vector2 size, Skin skin  ) {
+    private Actor newSweepChoice( String[] texts, Vector2 size, Skin skin  ) {
         final Actor[] actors = new Actor[ texts.length ] ;
 
         for( int i = 0 ; i < texts.length ; i ++ ) {
@@ -90,8 +90,8 @@ public class Menu1 extends ApplicationAdapter {
             final Actor textWidget = newTextWidget( text, skin ) ;
             actors[ i ] = textWidget ;
         }
-        final FlingPane flingPane = new FlingPane( size.x, size.y, 10, actors ) ;
-        return flingPane ;
+        final SweepChoice sweepChoice = new SweepChoice( size.x, size.y, 10, actors ) ;
+        return sweepChoice;
     }
 
     private Actor newTextWidget( String text, Skin skin  ) {
