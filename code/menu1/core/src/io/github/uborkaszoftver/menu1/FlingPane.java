@@ -30,7 +30,7 @@ import com.badlogic.gdx.utils.TimeUtils;
  *
  * <h2>Naming</h2>
  * <p>
- *
+ *     SweepChoice?
  * </p>
  */
 public class FlingPane extends WidgetGroup {
@@ -89,11 +89,13 @@ public class FlingPane extends WidgetGroup {
      * Same as in {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#flingTimer}.
      * Only mutate with {@link #prepareInertialScrolling(float)}, or by zeroing it.
      */
+    @SuppressWarnings( "JavadocReference" )
     private float flingTimer ;
 
     /**
      * Same as in {@link com.badlogic.gdx.scenes.scene2d.ui.ScrollPane#flingTime}.
      */
+    @SuppressWarnings( "JavadocReference" )
     private final float flingDuration = FLING_DURATION_SECOND ;
 
     private Vector2 lastPoint = new Vector2() ;
@@ -248,20 +250,6 @@ public class FlingPane extends WidgetGroup {
 
     }
 
-
-    public interface RollListener {
-
-        void rollSightChanged(
-                int rollIndex,
-                boolean mayScrollUp,
-                boolean mayScrollLeft,
-                boolean mayScrollDown,
-                boolean mayScrollRight
-        ) ;
-
-        void rollSelected( int rollIndex ) ;
-
-    }
 
 
 // ==========
