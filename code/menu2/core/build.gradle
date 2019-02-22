@@ -3,9 +3,28 @@ apply plugin: "kotlin"
 sourceCompatibility = 1.6
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
-sourceSets.main.java.srcDirs = [ "src/" ]
+project.ext.mainClassName = "com.mygdx.game.desktop.DesktopLauncher"
+project.ext.assetsDir = new File("../android/assets");
 
+sourceSets {
+    main.kotlin.srcDirs += 'src/main/kotlin'
+    main.kotlin.outputDir = file('classes/java/main')
+    main.java.srcDirs += 'src/main/java'
+}
 
-eclipse.project {
-    name = appName + "-core"
+task run( dependsOn: classes, type: JavaExec ) {
+    main = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    workingDir = project.assetsDir
+    ignoreExitValue = true
+}
+
+task debug(dependsOn: classes, type: JavaExec) {
+    main = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    workingDir = project.assetsDir
+    ignoreExitValue = true
+    debug = true
 }

@@ -400,9 +400,46 @@ task afterEclipseImport(description: "Post processing after project generation",
 
 The ``classpath = sourceSets.main.runtimeClasspath`` seems to resolve as a single directory from a list of 2 directories.
 
-As a workaround I run the application through Gradle with ``desktop:run`` target but this is unclear and annoying.
+As a workaround I run the application through Gradle with ``desktop:run`` target but this is slower and unclear.
 
 
+=== On recommence
+
+Un [commentaire]
+https://github.com/libgdx/libgdx/issues/5574#issuecomment-466442107
+me renvoie à la [doc du plugin Gradle]
+https://kotlinlang.org/docs/reference/using-gradle.html#targeting-the-jvm
+.
+
+Et si on créait 2 répertoires source ?
+
+Mais ça ne fonctionne pas. Ajout d'un commentaire :
+
+<<
+Thanks `@mgsx-dev` for the quick answer. I split my sources into ``src/main/java`` and ``src/main/kotlin`` and declared both as suggested. But the ``sourceSets.main.runtimeClasspath`` did not the magic I expected. The runtime classpath remains the same (with 2 directories ending by ``build/classes/java/main``).
+>>
+
+Intéressant : si on lance avec ``desktop:run`` dans le classpath on a bien :
+
+<<<
+.../desktop/build/classes/java/main
+.../desktop/build/classes/kotlin/main
+>>>
+
+Un bug de l'intégration Gradle ?
+
+On s'en tire avec :
+
+<<<
+    main.kotlin.outputDir = file('classes/java/main')
+>>>
+
+
+
+=== Par curiosité
+
+"IntelliJ should be aware that a custom sourceSet contains Test sources for production code"
+https://youtrack.jetbrains.com/issue/IDEA-151925
 
 
 == Bon article sur MOE
