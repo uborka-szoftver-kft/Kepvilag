@@ -7,16 +7,17 @@ import com.badlogic.gdx.graphics.Texture
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
 
 class Menu2K : ApplicationAdapter(){
-  internal var batch : SpriteBatch? = null
-  internal var img : Texture? = null
+  private var batch : SpriteBatch? = null
+  private var img : Texture? = null
 
   override fun create() {
     batch = SpriteBatch()
     img = Texture("badlogic.jpg")
+    Gdx.app.log( "Classpath", System.getProperty( "java.class.path" ) )
   }
 
   override fun render() {
-    Gdx.gl.glClearColor(1f, 0f, 0f, 1f)
+    Gdx.gl.glClearColor(1f, 1f, 0f, 1f)
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
     batch!!.begin()
     batch!!.draw(img, 0f, 0f)

@@ -14,6 +14,7 @@ public class Menu2 extends ApplicationAdapter {
 	public void create () {
 		batch = new SpriteBatch();
 		img = new Texture("badlogic.jpg");
+		Gdx.app.log( "Classpath", System.getProperty( "java.class.path" ) ) ;
 	}
 
 	@Override
