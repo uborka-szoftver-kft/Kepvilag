@@ -1,0 +1,412 @@
+== Le ``SweepChoice`` (anciennement ``FlingPane``)
+
+Le comportement du glisser-déplacer est (presque) bon. Il repose sur le calcul du mouvement //et// de l'accélération lors du glisser-déplacer, puis de leur application lors du ``act(_)``.
+
+Cependant la vitesse est appliquée alors qu'on est encore en phase de glisser-déplacer. Ça peut donner une légère impression d'inertie, il semble qu'un composant natif (sur l'AppStore d'iOS) réagisse un peu plus vivement.
+
+Il semblerait qu'on ait trouvé par hasard le comportement de "smooth scrolling" décrit dans l'article "Smooth Scrolling, Frame Uniformity, Touch Interpolation and Touch Responsiveness"
+http://www.masonchang.com/blog/2014/8/11/smooth-scrolling-frame-uniformity-touch-interpolation-and-touch-responsiveness
+mais l'article oublie que dans la pratique si on veut quelque chose de lisse on laisse l'élan s'appliquer.
+
+Notons au passage l'excellent article "Scrolling with pleasure"
+https://pavelfatin.com/scrolling-with-pleasure/
+par un collaborateur de JetBrains, avec un impressionnant effort d'ingénierie inverse (un Arduino pour intercepter le signal USB). On découvre le terme de "touch bounce".
+
+
+https://github.com/jesusgollonet/processing-penner-easing/tree/master/src
+
+La mécanique du glisser-déplacer est dépendante de l'axe. On peut abstraire ça en déplaçant plein de méthodes dans la classe ``ScrollAxis`` et en introduisant des termes génériques comme "position" (~x`/`y) et "span" (~width`/`height).
+
+L'overscroll continue de faire mal. Il faut tout repenser avec une machine à états.
+
+Et faut-il passer à Kotlin ? On pourrait dire que le plus tôt est le mieux, même si ça fait peur concernant la taille de l'exécutable.
+
+Maintenant on voit mieux les besoins, on n'est plus encombré par les scrollbars du ``ScrollPane``.
+
+Les états :
+
+<<<
+QUIET
+DRAGGING
+MOMENTUM / RUNUP
+OVERSCROLL_FORWARD
+OVERSCROLL_BACKWARD
+>>>
+
+L'élan est calculé de la façon suivante :
+- Dérivation de la vitesse.
+- Application dégressive de la vitesse.
+  - Application de la distance de défilement.
+  - Remise à 0 de la distance de défilement.
+  - Calcul de la distance de défilement.
+
+C'est confus et c'est ça qui rend difficile le calcul de l'overscroll. L'overscroll s'applique dans 2 cas :
+- Lors du glisser-déplacer.
+- Lors de l'élan. 
+
+Le glisser-déplacer, lorsqu'il provoque un dépassement, accumule une force de retour qui sera appliquée en cas de relâchement. La force est proportionnelle à l'éloignement du point terminal, donc si le glisser-déplacer revient avant le point de dépassement, il n'y aura pas de retour automatique.
+
+Sur le Finder de macOS on voit qu'il est possible de "reprendre en vol" un défilement de retour automatique. On voit aussi que le relâchement (qui libère le défilement de retour) s'applique avec une légère progressivité.
+
+Le calcul de cette force de retour est trivial : elle dépend juste la distance qui sépare de l'extrémité. 
+
+Il faut extraire ce comportement dans un ``KineticScrollEngine``. On l'alimente avec les paramètres suivants :
+- Distance visible.
+- Distance totale.
+- Distance parcourue par le pointeur sur la distance visible //ou// relâchement.
+- Horloge.
+
+En sortie on a une fonction :
+- Quantité de défilement depuis le dernier appel (en secondes).
+
+On branchera quelque part un convertisseur qui applique directement la quantité de défilement sur l'abscisse ou l'ordonnée d'un ``Actor``.
+
+La bonne nouvelle c'est que le ``KineticScrollEngine`` devient complètement enfichable. Ça tombe bien, il faut une variante qui limite le défilement à 1 Ascender, qu'on renomme pour l'occasion en ``Page``.
+
+
+== Kotlin et LibGDX
+
+On récupère la dernière version de LibGDX et on reconstruit.
+
+<<<
+cd ~/Projects/Clone/libgdx/extensions/gdx-setup
+ant
+java -jar gdx-setup.jar
+>>>
+
+On coche "Kotlin" quelque part. Après import du projet Gradle dans IDEA la création de classes Kotlin est activée. On crée un ``Menu2k.kt`` qui copie le ``Menu2.java`` généré, mais avec une couleur de fond différente. Le répertoire de démarrage de ``DesktopLauncher`` est ``android/assets``.
+
+Ça tourne dans le simulateur Android, ainsi qu'en ligne de commande (``./gradlew desktop:run``). Mais pas moyen de démarrer en tant qu'application à partir d'IDEA. Et on se retrouve avec du `Kotlin 1.2`.
+
+Passer à la version `1.3.21` ne semble déranger personne. On met à jour le niveau de langage du module IDEA.
+
+Dans le classpath on voit :
+
+<<<
+...Kepvilag/code/menu2/desktop/build/classes/java/main
+...Kepvilag/code/menu2/core/build/classes/java/main
+>>>
+
+Donc il manque ``...classes/kotlin/main``.
+
+On a une "piste"
+https://stackoverflow.com/a/50386047/1923328
+avec l'ajout d'une dépendance : 
+
+<<<
+dependencies {
+    runtimeClasspath files("build/classes/kotlin/main")
+}
+>>>
+
+Mais où ? Et il faut prendre en compte le répertoire courant qui est ``android/assets``
+
+On peut modifier les paramètres du module IDEA dans Paths: "Use module compile output path". Là on force le répertoire avec ``build/classes/kotlin/main``. En bricolant les paramètres des projets ``core`` et ``desktop`` on arrive à démarrer avec une erreur sur une ressource non-trouvée (sous-entendu on arrive à charger le ``DesktopLauncherK`` et le ``Menu2K`` qui sont des copies en Kotlin de leurs homologues Java). Mais on a un message d'IDEA qui dit que ces paramètres seront effacés à la prochaine génération de projet par le plugin Gradle.
+
+La doc du [Gradle-plugin]
+https://docs.gradle.org/current/dsl/org.gradle.plugins.ide.idea.model.IdeaModule.html
+nous montre la propriété ``outputDir``.
+
+Malheureusement le [~Kotlin`/`Native Gradle plugin]
+https://kotlinlang.org/docs/reference/native/gradle_plugin.html
+ne nous dit pas comment changer le répertoire de destination.
+
+
+=== Solution 1 : changer le répertoire de destination (pas bon)
+
+Au passage on a une piste pour éviter de forcer répertoire de travail forcé dans ``android/assets`` : assigner le [``resourceDirs``]
+https://docs.gradle.org/current/dsl/org.gradle.plugins.ide.idea.model.IdeaModule.html#org.gradle.plugins.ide.idea.model.IdeaModule:resourceDirs
+et garder le répertoire par défaut.
+
+Pour le répertoire de génération il y a un [truc]
+https://youtrack.jetbrains.com/issue/KT-23807
+décrit comme suit : 
+
+<<<
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+    destinationDir = new File(buildDir, "classes/java/main")
+}
+>>>
+
+(Problème : ça broute le répertoire de tests. On verra plus tard.) 
+
+On place le bout de code à divers endroits du ``build.gradle`` du projet-chapeau et ça ne fonctionne pas, on a toujours des fichiers ``.class`` produits dans ``classes/kotlin/main``.
+
+
+=== Solution 2 : modifier le répertoire 
+
+<<<
+allProjects {
+    ...
+    idea {
+        module {
+            outputDir = file('classes/kotlin/main')
+
+        }
+    }
+}
+>>>
+
+Pas d'effet observable, si ce n'est la disparition du répertoire ``classes/java/main`` du classpath.
+
+
+=== Idéalement
+
+Les fichiers ``.class`` restent ségrégés. On a juste des entrées supplémentaire dans le classpath pour les classes compilées à partir de kotlin.
+
+=== Au pire
+
+On bricole pour ajouter une copie de fichiers.
+
+
+
+=== Étude des fichiers Module d'IDEA
+
+``desktop/desktop.iml`` :
+
+<<<
+<module external.linked.project.id=":desktop" 
+    external.linked.project.path="$MODULE_DIR$" 
+    external.root.project.path="$MODULE_DIR$/.." 
+    external.system.id="GRADLE" type="JAVA_MODULE" 
+    version="4"
+>
+  <component name="FacetManager">
+    <facet type="android-gradle" name="Android-Gradle">
+      <configuration>
+        <option name="GRADLE_PROJECT_PATH" value=":desktop" />
+      </configuration>
+    </facet>
+    <facet type="java-gradle" name="Java-Gradle">
+      <configuration>
+        <option name="BUILD_FOLDER_PATH" value="$MODULE_DIR$/build" />
+        <option name="BUILDABLE" value="true" />
+      </configuration>
+    </facet>
+    <facet type="kotlin-language" name="Kotlin">
+      <configuration 
+          version="3" 
+          platform="JVM 1.6" 
+          useProjectSettings="false"
+      >
+        <compilerSettings />
+        <compilerArguments>
+          <option 
+              name="destination" 
+              value="$MODULE_DIR$/build/classes/kotlin/main" 
+          />
+          <option name="classpath" ... />
+          <option name="noStdlib" value="true" />
+          <option name="noReflect" value="true" />
+          <option name="moduleName" value="desktop" />
+          <option name="addCompilerBuiltIns" value="true" />
+          <option name="loadBuiltInsFromDependencies" value="true" />
+          <option name="languageVersion" value="1.3" />
+          <option name="apiVersion" value="1.3" />
+...          
+>>>
+
+Le classpath énumère les dépendances résolues par Gradle.
+
+Si on édite l'option ``destination`` pour mettre ``classes/java/main``, qu'on fait un ``./gradlew clean`` et qu'on redémarre IDEA ? La valeur ``classes/kotlin/main`` est régénérée.
+
+
+=== Que fait ``desktop/build.gradle`` ?
+
+Plein de choses :
+
+<<<
+apply plugin: "kotlin"
+sourceCompatibility = 1.6
+sourceSets.main.java.srcDirs = ["src/"]
+project.ext.mainClassName = "com.github.uborkaszoftverkft.menu2.desktop.DesktopLauncherK"
+project.ext.assetsDir = new File("../android/assets");
+task run(dependsOn: classes, type: JavaExec) {
+    main = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    workingDir = project.assetsDir
+    ignoreExitValue = true
+}
+...
+>>>
+
+Mais le projet ``core`` ne contient pas toutes ces choses (vraisemblablement parce que le générateur de projets sait que ``core`` n'est pas un point d'entrée).
+
+C'est le moment de gougler ``classpath = sourceSets.main.runtimeClasspath``. On essaye :
+
+<<<
+    classpath = sourceSets.main.runtimeClasspath + files('build/classes/kotlin/main')
+>>>
+
+Ça ne modifie pas le classpath à l'exécution. Mais quand on y réfléchit ce n'est pas cette tâche qui est utilisée par IDEA. Comme ``desktop:run`` fonctionnait la modification ci-dessus n'apporte rien.
+
+** Mais on arrive à lancer la cible ``menu2:desktop:other/run`` en mode debug. ** À quoi bon s'énerver ? Passer par Gradle n'a pas l'air de ralentir quoique ce soit. 
+
+Conclusion : le générateur de projets d'IDEA broute la création des modules à partir de Gradle sous certaines conditions. Un projet normal (avec Maven) a un seul répertoire ``target/classes``. Là on a vu que le module définissait les ``compilerArguments`` avec ``<option name="destination"`` ``value="$MODULE_DIR$/build/classes/kotlin/main"``. La transformation se fait correctement dans le ``build.gradle`` avec ``classpath = sourceSets.main.runtimeClasspath`` mais ça propage le répertoire intermédiaire ``kotlin``. Ce mécanisme-là crée un répertoire-cible par répertoire de sources, il fonctionne si on a un seul répertoire de sources, autrement avec un seul répertoire de classpath il broute.
+
+Cela dit lancer un bout de code Kotlin pour un essai quelconque avec le classpath en cours ça serait bien aussi. Qu'est-ce qu'il faut corriger ? Les suspects :
+- gdx-setup
+- Plugin Gradle pour générer les modules IDEA.
+- Plugin Gradle pour compiler du Kotlin.
+
+
+== Issue 5574
+
+"Can not run from IDEA a Desktop project using Kotlin"
+https://github.com/libgdx/libgdx/issues/5574
+
+I'm having hard times using libGDX with Kotlin under IntelliJ IDEA. This looks like a problem with Gradle defining 2 target directories (one for Java, one for Kotlin) and it configures IDEA so there is only one at runtime.
+
+=== Versions used
+
+The ``git rev-parse HEAD`` of libGDX shows ``f2ed6b4a365922964eb06538f486d9526d1803af`` as last commit. 
+
+IntelliJ IDEA says I am using:
+
+<<<
+IntelliJ IDEA 2018.3.3 (Community Edition)
+Build #IC-183.5153.8, built on December 24, 2018
+JRE: 1.8.0_152-release-1343-b26 x86_64
+JVM: OpenJDK 64-Bit Server VM by JetBrains s.r.o
+macOS 10.14.3
+>>>
+
+=== Reproduction path
+
+Generate a libGDX project with gdx-setup. In order to achieve this, check out latest version of libGDX on 
+https://github.com/libgdx/libgdx
+. Build and run the gdx-setup project as follows:
+
+<<< 
+git clone https://github.com/libgdx/libgdx.git
+cd libgdx/extensions/gdx-setup
+git rev-parse HEAD
+ant
+java -jar gdx-setup
+>>>
+
+Check "Desktop" as subproject. Open "Advanced" dialog and check "Kotlin". Run the generation.
+
+From IntelliJ IDEA, open the directory generated by gdx-setup. Open the main class. Its defaul name was ``MyGdxGame`` and it is the one inheriting from ``ApplicationAdapter``. Replace everything (except package declaration at the top) by the code below:
+
+<<<
+
+import com.badlogic.gdx.ApplicationAdapter
+import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.graphics.Texture
+import com.badlogic.gdx.graphics.g2d.SpriteBatch
+
+class MyGdxGameK : ApplicationAdapter(){
+  internal var batch : SpriteBatch? = null 
+  internal var img : Texture? = null 
+
+  override fun create() {
+    batch = SpriteBatch()
+    img = Texture("badlogic.jpg")
+  }
+
+  override fun render() {
+    Gdx.gl.glClearColor(1f, 1f, 0f, 1f)
+    Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
+    batch!!.begin()
+    batch!!.draw(img, 0f, 0f)
+    batch!!.end()
+  }
+
+  override fun dispose() {
+    batch!!.dispose()
+    img!!.dispose()
+  }
+}
+>>>
+
+(Please note that background color is yellow, it differs from the class generated by libGDX, which is red.)
+
+Modify ``DesktopLauncher`` so it instantiates the Kotlin class.
+
+Create a Run Configuration for ``DesktopLauncher`` with ``android/assets`` as working directory. Run the ``DesktopLauncher``. 
+
+There is a ``NoClassDefFoundError``: the ``MyGdxGameK`` class is not in the classpath. IntelliJ logs the following the classpath in the console, among which we can see those:
+
+<<<
+<project root>/desktop/build/classes/java/main
+<project root>/core/build/classes/java/main
+>>>
+
+Looking at ``core/build/classes`` directory we can see 2 directories, ``java`` and ``kotlin``. The ``MyGdxGameK.class`` file is under the ``kotlin`` directory. So it does not appear in the classpath.
+
+This is the ``build.gradle`` in ``core`` project:
+
+<<<
+apply plugin: "kotlin"
+
+sourceCompatibility = 1.6
+sourceSets.main.java.srcDirs = [ "src/" ]
+
+project.ext.mainClassName = "com.mygdx.game.desktop.DesktopLauncher"
+project.ext.assetsDir = new File("../android/assets");
+
+task run(dependsOn: classes, type: JavaExec) {
+    main = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    workingDir = project.assetsDir
+    ignoreExitValue = true
+}
+
+task debug(dependsOn: classes, type: JavaExec) {
+    main = project.mainClassName
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    workingDir = project.assetsDir
+    ignoreExitValue = true
+    debug = true
+}
+
+task dist(type: Jar) {
+    from files(sourceSets.main.output.classesDir)
+    from files(sourceSets.main.output.resourcesDir)
+    from {configurations.compile.collect {zipTree(it)}}
+    from files(project.assetsDir);
+ 
+    manifest {
+        attributes 'Main-Class': project.mainClassName
+    }
+}
+
+dist.dependsOn classes
+
+eclipse {
+    project {
+        name = appName + "-desktop"
+        linkedResource name: 'assets', type: '2', location: 'PARENT-1-PROJECT_LOC/android/assets'
+    }
+}
+
+task afterEclipseImport(description: "Post processing after project generation", group: "IDE") {
+  doLast {
+    def classpath = new XmlParser().parse(file(".classpath"))
+    new Node(classpath, "classpathentry", [ kind: 'src', path: 'assets' ]);
+    def writer = new FileWriter(file(".classpath"))
+    def printer = new XmlNodePrinter(new PrintWriter(writer))
+    printer.setPreserveWhitespace(true)
+    printer.print(classpath)
+  }
+}
+
+>>>
+
+The ``classpath = sourceSets.main.runtimeClasspath`` seems to resolve as a single directory from a list of 2 directories.
+
+As a workaround I run the application through Gradle with ``desktop:run`` target but this is unclear and annoying.
+
+
+
+
+== Bon article sur MOE
+
+"My experience using Intel's Multi OS Engine porting a small proof of concept app to iOS"
+https://www.reddit.com/r/androiddev/comments/4w4or5/my_experience_using_intels_multi_os_engine/
+
