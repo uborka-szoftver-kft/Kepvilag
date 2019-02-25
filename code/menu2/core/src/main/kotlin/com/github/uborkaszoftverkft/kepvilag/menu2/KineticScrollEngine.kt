@@ -168,27 +168,15 @@ class AbstractKineticScrollEngine(
    * @throws IllegalStateException if [beginDrag] or [pursueDrag] was not called before.
    */
   override fun pursueDrag( time : Long, position : Float ) {
-    doDrag( "#pursueDrag", time, position )
-  }
-
-  private fun doDrag( logCategory : String, time : Long, position : Float ) {
-    check( dragging ) { "Not dragging" }
+    check(dragging) { "Not dragging" }
     checkUpdateTime(time)
-//    check( position >= 0 ) { "Inconsistent position: $position" }
     val distance = position - lastPosition
-
-    // The drag takes immediate effect.
     scrollAmount += distance
-
     val deltaTime = time - lastUpdateTime
-
-    // We derive only the last value. It would be better to use a ring of position-time values.
     velocity = if( distance == 0f || deltaTime == 0L ) 0f else velocityCorrection * distance / deltaTime
-
     lastUpdateTime = time
     lastPosition = position
-
-    logDebug( "$logCategory, scrollAmount=$scrollAmount, velocity=$velocity, lastPosition=$lastPosition" )
+    logDebug( "#pursueDrag, scrollAmount=$scrollAmount, velocity=$velocity, lastPosition=$lastPosition" )
   }
 
   private fun checkUpdateTime(time : Long) {
@@ -199,11 +187,11 @@ class AbstractKineticScrollEngine(
    * Indicates that some drag gesture ended.
    * This method mirrors [com.badlogic.gdx.scenes.scene2d.InputListener.touchUp].
    *
-   * @param position in the same unit as [sightLength].
+   * @param position in the same unit as [sightLength]. Happens to be the same value as in last
+   *     call to [pursueDrag] so it cannot be used for speed derivation at this point.
    * @throws IllegalStateException if [pursueDrag] was not called before.
    */
   override fun endDrag( time : Long, position : Float ) {
-    doDrag( "#endDrag", time, position )
     dragging = false
   }
 

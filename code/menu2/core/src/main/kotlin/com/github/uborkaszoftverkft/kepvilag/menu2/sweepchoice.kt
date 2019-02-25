@@ -124,8 +124,7 @@ class SweepChoice(
           pointer:Int,
           button:Int
       ) : Boolean {
-        logDebug("#touchDown( event=" + event + ", x=" + x + ", y=" + y + ", " +
-        "pointer=" + pointer + ", button=" + button + " )")
+        logDebug("#touchDown( x=$x, y=$y ), time=${TimeUtils.millis()}")
         kineticScrollEngine.beginDrag( TimeUtils.millis(), y)
 //        scrollAxis = null
 //        initialScrollVelocity = 0f
@@ -146,8 +145,7 @@ class SweepChoice(
           y:Float,
           pointer:Int
       ) {
-        logDebug("#touchDragged( event=" + event + ", x=" + x + ", y=" + y + ", " +
-        "pointer=" + pointer + " )")
+        logDebug("#touchDragged( event=$event, x=$x, y=$y ), time=${TimeUtils.millis()}")
         val deltaX = x - lastPoint.x
         val deltaY = y - lastPoint.y
         val previousScrollAxis = scrollAxis
@@ -182,7 +180,7 @@ class SweepChoice(
           pointer:Int,
           button:Int
       ) {
-          logDebug("#touchUp( event=$event, x=$x, y=$y, pointer=$pointer, button=$button )")
+          logDebug("#touchUp( x=$x, y=$y ), time=${TimeUtils.millis()}")
         kineticScrollEngine.endDrag( TimeUtils.millis(), y)
       }
 
