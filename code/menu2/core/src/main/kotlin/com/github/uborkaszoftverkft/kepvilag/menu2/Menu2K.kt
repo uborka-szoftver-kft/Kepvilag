@@ -1,31 +1,102 @@
 package com.github.uborkaszoftverkft.kepvilag.menu2
 
+import com.badlogic.gdx.Application
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.GL20
-import com.badlogic.gdx.graphics.Texture
-import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.math.Vector2
+import com.badlogic.gdx.scenes.scene2d.Actor
+import com.badlogic.gdx.scenes.scene2d.Stage
+import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup
+import com.badlogic.gdx.scenes.scene2d.ui.Label
+import com.badlogic.gdx.scenes.scene2d.ui.Skin
+import com.badlogic.gdx.scenes.scene2d.ui.Table
+import java.util.*
 
 class Menu2K : ApplicationAdapter(){
-  private var batch : SpriteBatch? = null
-  private var img : Texture? = null
+
+  private var stage : Stage? = null
+  private var container : Table? = null
 
   override fun create() {
-    batch = SpriteBatch()
-    img = Texture("badlogic.jpg")
-    Gdx.app.log( "Classpath", System.getProperty( "java.class.path" ) )
+    Gdx.app.logLevel = Application.LOG_DEBUG
+    stage = Stage()
+    val skin = Skin(Gdx.files.internal("skin/dark-hdpi/Holo-dark-hdpi.json"))
+    Gdx.input.inputProcessor = stage
+
+    // Gdx.graphics.setVSync(false);
+
+    container = Table()
+    stage !!.addActor(container)
+    container !!.setFillParent(true)
+    container !!.setDebug(true, true)
+
+    val texts = newTextualEntries(5, 10, 200)
+    val size = Vector2(400f, 500f)
+    val choicePane = newSweepChoice(texts, size, skin)
+    stage !!.scrollFocus = choicePane
+
+    container !!.add(choicePane).size(size.x, size.y)
+    container !!.row().space(10f).padBottom(10f)
   }
 
   override fun render() {
-    Gdx.gl.glClearColor(1f, 1f, 0f, 1f)
     Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT)
-    batch!!.begin()
-    batch!!.draw(img, 0f, 0f)
-    batch!!.end()
+    stage !!.act(Gdx.graphics.deltaTime)
+    stage !!.draw()
+  }
+
+  override fun resize(width : Int, height : Int) {
+    stage !!.viewport.update(width, height, true)
+
+    // Gdx.gl.glViewport(100, 100, width - 200, height - 200);
+    // stage.setViewport(800, 600, false, 100, 100, width - 200, height - 200);
   }
 
   override fun dispose() {
-    batch!!.dispose()
-    img!!.dispose()
+    stage !!.dispose()
   }
+
+  fun needsGL20() : Boolean {
+    return false
+  }
+
+
+  private fun newTextualEntries(
+      count : Int,
+      minLength : Int,
+      maxLength : Int
+  ) : Array<String> {
+    val random = Random(0)
+    val builder = StringBuilder(maxLength)
+    val entries = arrayOfNulls<String>(count)
+    for(i in entries.indices) {
+      builder.setLength(0)
+      val wordCount = random.nextInt(maxLength)
+      for(j in 0 until wordCount - minLength) {
+        builder.append("word-").append(i).append('-').append(j).append(' ')
+      }
+      entries[i] = builder.toString()
+    }
+    return entries.requireNoNulls()
+  }
+
+  private fun newSweepChoice(texts : Array<String>, size : Vector2, skin : Skin) : Actor {
+    val actors = arrayOfNulls<Actor>(texts.size)
+
+    for(i in texts.indices) {
+      val text = texts[i]
+      val textWidget = newTextWidget(text, skin)
+      actors[i] = textWidget
+    }
+    return SweepChoice( size.x, size.y, 10f, *actors.requireNoNulls() )
+  }
+
+  private fun newTextWidget(text : String, skin : Skin) : Actor {
+    val multilineLabel = Label(text, skin)
+    multilineLabel.setWrap(true)
+    return multilineLabel
+  }
+
+
 }

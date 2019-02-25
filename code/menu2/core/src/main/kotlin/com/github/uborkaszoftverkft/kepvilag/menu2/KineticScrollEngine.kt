@@ -13,7 +13,18 @@ interface KineticScrollEngine {
    */
   val availableLength : Float
 
-  fun resize( newSightLength : Float, newAvailableLength : Float)
+  fun setGeometry(
+      newSightLength : Float,
+      newAvailableLength : Float,
+      newScrollAmount : Float = 0f,
+      cancelScrolling : Boolean = false
+  )
+
+  /**
+   * Use this method to resize while keeping the scroll ratio.
+   * Typical use is window resize, or change of inner component.
+   */
+  fun resize( newSightLength : Float, newAvailableLength : Float )
 
   /**
    * Indicates that some drag gesture has begun.
@@ -59,11 +70,6 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
   override var availableLength = 0f
 
   /**
-   * The distance recently set by [pursueDrag].
-   */
-  private var recentDragDistance = 0f
-
-  /**
    * The last time (as [System.currentTimeMillis]) set by [pursueDrag].
    */
   private var lastUpdateTime = 0L
@@ -90,13 +96,31 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
    */
   private var velocity = 0f
 
-  override fun resize( newSightLength : Float, newAvailableLength : Float ) {
+  private fun cancelScrolling() {
+    velocity = 0f
+    val scrollFreedom = availableLength - sightLength
+    if( scrollAmount > scrollFreedom ) scrollAmount = scrollFreedom
+    else if( scrollAmount < 0f ) scrollAmount = 0f
+  }
+
+  override fun setGeometry(
+      newSightLength : Float,
+      newAvailableLength : Float,
+      newScrollAmount : Float,
+      cancelScrolling : Boolean
+  ) {
     check( newSightLength >= 0 )
     check( newAvailableLength >= 0 )
+    check( newScrollAmount < newAvailableLength - newSightLength )
+    sightLength = newSightLength
+    availableLength = newAvailableLength
+    scrollAmount = newScrollAmount
+    if( cancelScrolling ) cancelScrolling()
+  }
+
+  override fun resize( newSightLength : Float, newAvailableLength : Float ) {
     val oldRatio = sightLength / availableLength
-    this.sightLength = newSightLength
-    this.availableLength = newAvailableLength
-    scrollAmount *= oldRatio
+    setGeometry( newSightLength, newAvailableLength, scrollAmount * oldRatio )
   }
 
   /**
@@ -147,8 +171,6 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
   override fun endDrag( time : Long, position : Float ) {
     pursueDrag( time, position )
     dragging = false
-    lastUpdateTime = -1
-    lastPosition = -1f
   }
 
   /**
@@ -165,4 +187,6 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
   }
 
 }
+
+fun simple() = AbstractKineticScrollEngine()
 
