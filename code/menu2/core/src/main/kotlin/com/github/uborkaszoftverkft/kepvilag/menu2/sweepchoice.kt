@@ -17,33 +17,33 @@ import com.badlogic.gdx.utils.TimeUtils
  * Contains a collection of `Actor`s that may be too high to fit vertically, so it shows one at a time,
  * with horizontal transitions between them and vertical scroll for each.
  * The display area is known as **Sight**.
- * Each child `Actor` is called a **Ascender**, as its scrolls vertically.
+ * Each child `Actor` is called a **Panel**, as its scrolls vertically.
  *
  */
 class SweepChoice(
     private val preferredWidth : Float,
     private val preferredHeight : Float,
     /**
-     * The distance between [.currentRollIndex] and [.disappearingRollIndex].
+     * The distance between [currentPanelIndex] and [disappearingPanelIndex].
      */
-    private val interRollMargin : Float,
-    vararg slabs : Actor
-) : WidgetGroup( *slabs ) {
+    private val interPanelMargin : Float,
+    vararg panels : Actor
+) : WidgetGroup( *panels ) {
 
-  private val currentRollIndex = 0
-  private val disappearingRollIndex = -1
+  private val currentPanelIndex = 0
+  private val disappearingPanelIndex = -1
 
-  private val currentRollIsCullable = false
-  private val disappearingRollIsCullable = false
+  private val currentPanelIsCullable = false
+  private val disappearingPanelIsCullable = false
 
   /**
    * Gets incremented by [InputListener.touchDragged],
    * gets zeroed by [Actor.act].
    */
-  private var scrollAmount = 0f
+//  private var scrollAmount = 0f
 
   /**
-   * Initial value to compute decreasing [.scrollVelocity] from.
+   * Initial value to compute decreasing [scrollVelocity] from.
    */
   private var initialScrollVelocity = 0f
 
@@ -53,14 +53,14 @@ class SweepChoice(
   private var lastMouseScrollTime:Long = 0
 
   /**
-   * The area in Sight for corresponding Ascender, in its own coordinates.
-   * Value of [.currentAscenderCullingArea], and scissors area are derived from it.
+   * The area in Sight for corresponding Panel, in its own coordinates.
+   * Value of [.currentPanelCullingArea], and scissors area are derived from it.
    */
-  private val currentAscenderAreaBounds = Rectangle()
+  private val currentPanelAreaBounds = Rectangle()
 
-  private val currentAscenderCullingArea = Rectangle()
-  private val disappearingAscenderAreaBounds = Rectangle()
-  private val disappearingAscenderCullingArea = Rectangle()
+  private val currentPanelCullingArea = Rectangle()
+  private val disappearingPanelAreaBounds = Rectangle()
+  private val disappearingPanelCullingArea = Rectangle()
 
   private val sightBounds = Rectangle()
   private val scissorBounds = Rectangle()
@@ -70,7 +70,7 @@ class SweepChoice(
 
   /**
    * Same as in [com.badlogic.gdx.scenes.scene2d.ui.ScrollPane.flingTimer].
-   * Only mutate with [.prepareInertialScrolling], or by zeroing it.
+   * Only mutate with [prepareInertialScrolling], or by zeroing it.
    */
   private var flingTimer:Float = 0.toFloat()
 
@@ -85,6 +85,8 @@ class SweepChoice(
    * `null` when no drag or other scroll operation.
    */
   private var scrollAxis:ScrollAxis? = null
+
+  private val kineticScrollEngine = continuous()
 
 
 // ======
@@ -104,6 +106,7 @@ class SweepChoice(
     UNDEFINED, VERTICAL, HORIZONTAL
   }
 
+  @Deprecated( "Done in KineticScrollEngine" )
   private enum class OverscrollPhase {
     FORWARD,
     BACKWARD
@@ -123,15 +126,16 @@ class SweepChoice(
       ) : Boolean {
         logDebug("#touchDown( event=" + event + ", x=" + x + ", y=" + y + ", " +
         "pointer=" + pointer + ", button=" + button + " )")
-        scrollAxis = null
-        initialScrollVelocity = 0f
-        scrollAmount = 0f
-        scrollVelocity = 0f
-        flingTimer = 0f
-        overscrollPhase = null
+        kineticScrollEngine.beginDrag( TimeUtils.millis(), y)
+//        scrollAxis = null
+//        initialScrollVelocity = 0f
+//        scrollAmount = 0f
+//        scrollVelocity = 0f
+//        flingTimer = 0f
+//        overscrollPhase = null
         lastPoint.set(x, y)
-        touchDownTime = TimeUtils.millis()
-        lastMouseScrollTime = 0
+//        touchDownTime = TimeUtils.millis()
+//        lastMouseScrollTime = 0
           stage.scrollFocus = this@SweepChoice
         return true
       }
@@ -152,16 +156,13 @@ class SweepChoice(
             previousScrollAxis == null ||
             previousScrollAxis == ScrollAxis.UNDEFINED
         ) {
-        val inertialScrollingLastDuration = TimeUtils.timeSinceMillis(touchDownTime).toFloat()
-        touchDownTime = TimeUtils.millis()
-         // Very approximative: the longer this first gesture lasted,
-                            // the greater the scroll velocity.
+          val inertialScrollingLastDuration = TimeUtils.timeSinceMillis(touchDownTime).toFloat()
+          touchDownTime = TimeUtils.millis()
+          // Very approximative: the longer this first gesture lasted,
+          // the greater the scroll velocity.
           when (scrollAxis) {
             SweepChoice.ScrollAxis.VERTICAL -> {
-             // Forcing amount to some reasonable value avoids delay
-                                        // before scroll begins.
-                                        scrollAmount = deltaY
-              prepareInertialScrolling(deltaY * inertialScrollingLastDuration)
+              kineticScrollEngine.pursueDrag( TimeUtils.millis(), y)
             }
             SweepChoice.ScrollAxis.HORIZONTAL -> {}
             else -> {}
@@ -182,6 +183,7 @@ class SweepChoice(
           button:Int
       ) {
           logDebug("#touchUp( event=$event, x=$x, y=$y, pointer=$pointer, button=$button )")
+        kineticScrollEngine.endDrag( TimeUtils.millis(), y)
       }
 
       override fun scrolled(
@@ -192,7 +194,7 @@ class SweepChoice(
       ) : Boolean {
         logDebug( "#scrolled( event=$event, x=$x, y=$y, amount=$amount )" )
         scrollAxis = ScrollAxis.VERTICAL
-        scrollAmount = amount * SCROLL_AMOUNT_CORRECTION
+        kineticScrollEngine.forceScroll(amount * SCROLL_AMOUNT_CORRECTION)
         return true
       }
 
@@ -205,23 +207,23 @@ class SweepChoice(
     if(! CHECK_INVARIANTS) return
     if(scrollAxis == null) {
       check(overscrollPhase == null, "overscrollPhase should be null")
-      check(disappearingRollIndex < 0, "disappearingRoll should be undefined when not scrolling")
+      check(disappearingPanelIndex < 0, "disappearingPane should be undefined when not scrolling")
     }
     else {
       if(overscrollPhase != null) {
-        check(disappearingRollIndex < 0, "disappearingRoll should be undefined when overscrolling")
+        check(disappearingPanelIndex < 0, "disappearingPane should be undefined when overscrolling")
       }
     }
 
-    val currentRoll = children.items[currentRollIndex]
-    if(currentRollIsCullable) {
-      check(currentRoll is Cullable, "currentRoll should be Cullable")
+    val currentPane = children.items[currentPanelIndex]
+    if(currentPanelIsCullable) {
+      check(currentPane is Cullable, "currentPane should be Cullable")
     }
 
-    if(disappearingRollIndex >= 0) {
-      val disappearingRoll = children.items[disappearingRollIndex]
-      if(disappearingRollIsCullable) {
-        check(disappearingRoll is Cullable, "disappearingRoll should be Cullable")
+    if(disappearingPanelIndex >= 0) {
+      val disappearingPane = children.items[disappearingPanelIndex]
+      if(disappearingPanelIsCullable) {
+        check(disappearingPane is Cullable, "disappearingPane should be Cullable")
       }
     }
   }
@@ -254,47 +256,25 @@ class SweepChoice(
     logDebug("#prepareInertialScrolling( $initialScrollVelocity )")
   }
 
-  private fun slowDownInertialScrolling(deltaSecond : Float) {
-    if(flingTimer <= 0) {
-      initialScrollVelocity = 0f
-      scrollVelocity = 0f
-      scrollAxis = null
-    }
-    else {
-      flingTimer -= deltaSecond
-      val flingProgress = flingTimer / flingDuration
-      scrollVelocity = initialScrollVelocity * flingProgress
-      scrollAmount += scrollVelocity * (deltaSecond / flingDuration)
-      if(Math.abs(scrollVelocity) < 0.1) {
-        scrollAmount = 0f
-      }
-
-      logDebug("#slowDownInertialScrolling( $deltaSecond ): scrollVelocity=$scrollVelocity, " +
-          "scrollAmount=$scrollAmount")
-    }
-  }
 
   private fun applyScrolling(deltaSecond : Float) {
-    if(scrollAxis != null && scrollAmount != 0f) {
-      val Ascender = children.get(currentRollIndex)
+    if(scrollAxis != null ) {
+      val panel = children.get(currentPanelIndex)
       when(scrollAxis) {
         SweepChoice.ScrollAxis.VERTICAL -> {
-          logDebug(
-              "Applying scroll amount of " + scrollAmount + " on Y axis. " +
-                  "Velocity updated to " + scrollVelocity + ". " +
-                  "End of scroll in " + flingTimer + " s."
-          )
-          Ascender.y = Ascender.y + scrollAmount
+          val scrollAmount = kineticScrollEngine.scrollAmountAfter( deltaSecond )
+          if( scrollAmount != 0f ) {
+            logDebug("Applying scroll amount of $scrollAmount on Y axis. ")
+            panel.y = panel.y + scrollAmount
+          }
         }
         SweepChoice.ScrollAxis.HORIZONTAL -> {
         }
         else -> {
         }
       }
-      scrollAmount = 0f
     }
 
-    slowDownInertialScrolling(deltaSecond)
   }
 
   override fun sizeChanged() {
@@ -303,83 +283,83 @@ class SweepChoice(
   }
 
   /**
-   * Sets every Ascender's coordinates according to [.getWidth] and [.getHeight].
-   * An unscrolled Ascender has its top's y -- not its y -- equal to [SweepChoice.getHeight] .
-   * For a given [.getWidth] each Ascender's horizontal width and height are constant.
+   * Sets every Panel's coordinates according to [.getWidth] and [.getHeight].
+   * An unscrolled Panel has its top's y -- not its y -- equal to [SweepChoice.getHeight] .
+   * For a given [.getWidth] each Panel's horizontal width and height are constant.
    * Components' reference for coordinates is bottom-left corner.
-   *
    * <pre>
+
+    ^ x goes up
+    |                 .....      -+
+          .....       .   .        > A Ascender may "go up" of this height
+          .   .       .   .       |  (until its bottom hits Sight's bottom).
+    +---+ +---+ +---+ +---+      -+
+    |   | |   | |   | |   |        > This is Sight's height.
+    |   | |   | +---+ |   |       |
+y=0-+---+ |   |       |   |      -+
+    |     |   |       |   |        > For the tallest Ascender, this is the
+    x=0   +---+       |   |       |  distance on which it can go "up".
+                      +---+      -+
+    |   |
+    +- -+
+      v
+      This is Sight's width.
+
+     </pre>
    *
-   * ^ x goes up
-   * |                 .....      -+
-   * .....       .   .        > A Ascender may "go up" of this height
-   * .   .       .   .       |  (until its bottom hits Sight's bottom).
-   * +---+ +---+ +---+ +---+      -+
-   * |   | |   | |   | |   |        > This is Sight's height.
-   * |   | |   | +---+ |   |       |
-   * y=0-+---+ |   |       |   |      -+
-   * |     |   |       |   |        > For the tallest Ascender, this is the
-   * x=0   +---+       |   |       |  distance on which it can go "up".
-   * +---+      -+
-   * |   |
-   * +- -+
-   * v
-   * This is Sight's width.
-   *
-  </pre> *
    */
   override fun layout() {
     logDebug(("#layout() begins: w=" + width + ", h=" + height + ", " +
-        "currentRollIndex=" + currentRollIndex))
+        "currentPanelIndex=" + currentPanelIndex))
     if(sizeChanged) {
       logDebug("Applying full layout because of size change.")
-      var previousRoll : Actor? = null
-      for(rollIndex in 0 until children.size) {
-        val ascender = children.get(rollIndex)
-        val isLayout = ascender is Layout
+      var previousPanel : Actor? = null
+      for(panelIndex in 0 until children.size) {
+        val Panel = children.get(panelIndex)
+        val isLayout = Panel is Layout
         if(isLayout) {
-          val ascenderAsLayout = ascender as Layout
-          ascenderAsLayout.layout()
+          val PanelAsLayout = Panel as Layout
+          PanelAsLayout.layout()
           // When word-wrapping, a Label returns 0 for its preferred size,
           // which also depends on current width. So we set current width
           // before calculating preferred size.
-          if(ascenderAsLayout.prefWidth <= 0) {
-            ascender.width = width
+          if(PanelAsLayout.prefWidth <= 0) {
+            Panel.width = width
           }
           else {
-            ascender.width = Math.min(ascenderAsLayout.prefWidth, width)
+            Panel.width = Math.min(PanelAsLayout.prefWidth, width)
           }
-          ascender.height = ascenderAsLayout.prefHeight
+          Panel.height = PanelAsLayout.prefHeight
         }
         else {
-          ascender.setSize(width, height)
+          Panel.setSize(width, height)
         }
 
-        if(previousRoll == null) {
-          ascender.x = 0f
+        if(previousPanel == null) {
+          Panel.x = 0f
         }
         else {
-          ascender.x = previousRoll !!.x + width + interRollMargin
+          Panel.x = previousPanel !!.x + width + interPanelMargin
         }
 
-        ascender.y = height - ascender.height
+        Panel.y = height - Panel.height
         if(previousHeight == height) {
         }
         else {
           // Some resize happened, so we want to maintain Y offset basing on a ratio.
         }
 
-        previousRoll = ascender
+        previousPanel = Panel
 
         logDebug(
-            ("Ascender[" + rollIndex + "]: " +
-                "x=" + ascender.x + ", " +
-                "y=" + ascender.y + ", " +
-                "w=" + ascender.width + ", " +
-                "h=" + ascender.height)
+            ("Panel[" + panelIndex + "]: " +
+                "x=" + Panel.x + ", " +
+                "y=" + Panel.y + ", " +
+                "w=" + Panel.width + ", " +
+                "h=" + Panel.height)
         )
       }
-      sightBounds.set(width * currentRollIndex, 0f, width, height)
+      sightBounds.set(width * currentPanelIndex, 0f, width, height)
       previousHeight = height
       sizeChanged = false
 
@@ -402,7 +382,7 @@ class SweepChoice(
     validate()
 
     val transform = computeTransform()
-    transform.translate(- currentRollIndex * (width + interRollMargin), 0f, 0f)
+    transform.translate(- currentPanelIndex * (width + interPanelMargin), 0f, 0f)
 
     // Setup transform for this group.
     applyTransform(batch !!, transform)
@@ -485,19 +465,23 @@ class SweepChoice(
     // =============
 
     private fun logDebug(message : String) {
-      Gdx.app.debug(SweepChoice::class.java.simpleName, message)
+      if( DEBUG ) {
+        Gdx.app.debug(SweepChoice::class.java.simpleName, message)
+      }
     }
+
+    public const val DEBUG = true
   }
 
 }
 
 /**
- * Contract for programmatically modifying Ascender
+ * Contract for programmatically modifying Panel
  * This is useful when using another controller than touch, e.g. keyboard or on-screen buttons.
  */
 interface ChoiceNavigator {
   /**
-   * Triggers scrollup of current Ascender, or unveils of next Ascender if any.
+   * Triggers scrollup of current Panel, or unveils of next Panel if any.
    */
   fun goForward()
 

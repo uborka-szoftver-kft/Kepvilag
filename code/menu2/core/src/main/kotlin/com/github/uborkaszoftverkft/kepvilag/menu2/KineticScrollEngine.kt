@@ -1,5 +1,7 @@
 package com.github.uborkaszoftverkft.kepvilag.menu2
 
+import com.badlogic.gdx.Gdx
+
 
 interface KineticScrollEngine {
 
@@ -25,6 +27,13 @@ interface KineticScrollEngine {
    * Typical use is window resize, or change of inner component.
    */
   fun resize( newSightLength : Float, newAvailableLength : Float )
+
+  /**
+   *
+   * @param scrollDelta The increase of the scroll, in the same unit as [sightLength].
+
+   */
+  fun forceScroll( scrollDelta : Float )
 
   /**
    * Indicates that some drag gesture has begun.
@@ -63,7 +72,13 @@ interface KineticScrollEngine {
 
 }
 
-class AbstractKineticScrollEngine : KineticScrollEngine {
+class AbstractKineticScrollEngine(
+    /**
+     * Very suspicious. Should be 1000 because we convert delta time in milliseconds
+     * to a speed in seconds.
+     */
+    private val velocityCorrection : Float = 100f
+) : KineticScrollEngine {
 
   override var sightLength = 0f
 
@@ -123,6 +138,11 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
     setGeometry( newSightLength, newAvailableLength, scrollAmount * oldRatio )
   }
 
+
+  override fun forceScroll(scrollDelta : Float) {
+    scrollAmount += scrollDelta
+  }
+
   /**
    * Indicates that some drag gesture has begun.
    * This method mirrors [com.badlogic.gdx.scenes.scene2d.InputListener.touchDown].
@@ -134,8 +154,10 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
   override fun beginDrag( time : Long, position : Float ) {
     check( ! dragging )
     check( position >= 0 )
+    checkUpdateTime(time)
     lastUpdateTime = time
     lastPosition = position
+    dragging = true
   }
 
   /**
@@ -146,19 +168,31 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
    * @throws IllegalStateException if [beginDrag] or [pursueDrag] was not called before.
    */
   override fun pursueDrag( time : Long, position : Float ) {
-    check( dragging )
-    check( time > lastUpdateTime )
-    check( position >= 0 )
-    val distance = lastPosition - position
+    doDrag( "#pursueDrag", time, position )
+  }
+
+  private fun doDrag( logCategory : String, time : Long, position : Float ) {
+    check( dragging ) { "Not dragging" }
+    checkUpdateTime(time)
+//    check( position >= 0 ) { "Inconsistent position: $position" }
+    val distance = position - lastPosition
 
     // The drag takes immediate effect.
     scrollAmount += distance
 
+    val deltaTime = time - lastUpdateTime
+
     // We derive only the last value. It would be better to use a ring of position-time values.
-    velocity = distance * 1000 / time - lastUpdateTime  // We have milliseconds here.
+    velocity = if( distance == 0f || deltaTime == 0L ) 0f else velocityCorrection * distance / deltaTime
 
     lastUpdateTime = time
     lastPosition = position
+
+    logDebug( "$logCategory, scrollAmount=$scrollAmount, velocity=$velocity, lastPosition=$lastPosition" )
+  }
+
+  private fun checkUpdateTime(time : Long) {
+    check( time >= lastUpdateTime ) { "Inconsistent time: $time, last update is $lastUpdateTime" }
   }
 
   /**
@@ -169,7 +203,7 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
    * @throws IllegalStateException if [pursueDrag] was not called before.
    */
   override fun endDrag( time : Long, position : Float ) {
-    pursueDrag( time, position )
+    doDrag( "#endDrag", time, position )
     dragging = false
   }
 
@@ -179,14 +213,28 @@ class AbstractKineticScrollEngine : KineticScrollEngine {
    * @param elapsedTimeInSecond mirrors the [com.badlogic.gdx.scenes.scene2d.Actor.act] method.
    */
   override fun scrollAmountAfter( elapsedTimeInSecond : Float ) : Float {
+    check( elapsedTimeInSecond >= 0f) { "Incorrect value for elapsedTimeInSecond: $elapsedTimeInSecond" }
     val displacement = velocity * elapsedTimeInSecond
-    scrollAmount += displacement
-    velocity -= 0.1f * elapsedTimeInSecond
+    val calculatedScrollAmount = scrollAmount + displacement
+    val velocityDelta = 0.1f * elapsedTimeInSecond
+    velocity -= if( velocity > 0f ) velocityDelta else -velocityDelta
     if( Math.abs( velocity ) < 0.01f ) velocity = 0f
-    return scrollAmount
+    scrollAmount = 0f
+    return calculatedScrollAmount
+  }
+
+  private fun logDebug(message : String) {
+    @Suppress("ConstantConditionIf")
+    if( SweepChoice.DEBUG ) {
+      Gdx.app.debug(KineticScrollEngine::class.java.simpleName, message)
+    }
   }
 
 }
 
-fun simple() = AbstractKineticScrollEngine()
+/**
+ * Returns a fresh [KineticScrollEngine] that scrolls continuously on
+ * [KineticScrollEngine.availableLength].
+ */
+fun continuous() = AbstractKineticScrollEngine()
 
