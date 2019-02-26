@@ -1,0 +1,153 @@
+== SweepChoice
+
+=== Expression du //Momentum// 
+
+On connaît la date de début, la position d'origine, la durée, la vitesse. 
+
+libGDX fournit [plusieurs fonctions d'interpolation]
+https://github.com/libgdx/libgdx/wiki/Interpolation
+.
+
+
+La vitesse doit atteindre 0 lorsque la durée expire. On peut faire décroître linéairement dans un premier temps, pour étudier le contrat de l'interpolateur. Idéalement on utilise l'``Interpolation`` de libGDX qui a le mérite d'exister. 
+
+Faut-il fournir une courbe d'interpolation pour la vitesse ou la position ? Intuitivement c'est plus facile pour la vitesse, comme ça l'interpolateur reste dans les bornes convenues (`[0, 1]`). Mais ça nécessite une intégration, donc autant le faire au niveau de la courbe d'interpolation.
+
+--- Pour une décélération simple une pente de type ``pow2out`` fait l'affaire : la vitesse décroît de plus en plus vite.
+
+--- S'il y a juste un overscroll on revient en place avec une décélération du même type.
+
+--- S'il y a un rebond il faut cependant terminer dans le temps imparti. La courbe connaît un point d'inflexion (la dérivée change de signe) pour une valeur `> 1`. Pour ça on a le ``swingout``. Mais il faut trouver le point d'inflexion.
+
+
+<<<
+static public class SwingOut extends Interpolation {
+    private final float scale ;  // Default is 2f.
+
+    public SwingOut ( float scale ) {
+      this.scale = scale ;
+    }
+
+    public float apply ( float a ) {
+      a-- ;
+      return a * a * ( ( scale + 1 ) * a + scale) + 1 ;
+    }
+  }
+>>>  
+
+Ça [donne]
+https://www.desmos.com/calculator
+(pour `scale=2`):
+
+<<<
+x^2 * (3x + 3) + 1
+>>>
+
+./2019-02-26/Swingout.png
+
+Il faut trouver la tangeante en un point et les deux extremum locaux. À partir de là on peut ajuster les valeurs (notamment la pente de la tangeante) pour avoir la bonne vitesse et s'arrêter au bon moment. Le freinage sans rebond correspond à la partie de la courbe pour x inférieur à l'abscisse du premier extremum.
+
+L'[extremum local]
+https://fr.wikiversity.org/wiki/Fonction_d%C3%A9riv%C3%A9e/Extremum_local
+est un point où la dérivée change de signe.
+
+(Le [point d'inflexion]
+https://fr.khanacademy.org/math/calculus-home/derivative-applications-calc/points-of-inflection-calc/a/inflection-points-review
+c'est là où la concavité change de sens.)
+
+
+La [dérivée]
+http://tanopah.jo.free.fr/ADS/bloc4/derive1.html
+de `x^2 * (3x + 3) + 1` (en vert) : 
+
+<<<
+(2x * (3x + 3) ) + (x^2 * 3)
+>>>
+
+(Vérifiée par [Wolfram Alpha]
+https://www.wolframalpha.com/input/?i=x%5E2+*+(3x+%2B+3)+%2B+1
+.)
+
+Et on a les extremum locaux là où la dérivée s'annule. On résoud une [équation du second degré]
+https://www.mathematiquesfaciles.com/equations-equation-du-second-degre_2_33929.htm
+:
+
+<<<
+(2x * (3x + 3) ) + (x^2 * 3) = 0
+6x^2 + 6x + 3x^2 = 3( 2x^2 + 2x + x^2) = 0
+3x^2 + 2x = 0    donc a=3, b=2, c=0
+delta = b^2 - 4ac = 4 - 0 = 4 = 2^2
+solution1 = (-b - sqr(delta)) / 2a = -2 -2 / 6 = -0,6666
+solution2 = (-b + sqr(delta)) / 2a = -2 + 2 / 6 = 0
+>>>
+
+
+La [tangeante] 
+https://fr.wikiversity.org/wiki/Fonction_d%C3%A9riv%C3%A9e/%C3%89quation_d%27une_tangente
+:
+
+<<
+Si f est dérivable en `x=a`, alors l'équation de la tangente à la courbe de f au point `(a,f(a))` est :
+
+`y = f'(a) (x-a) + f(a)`
+>>
+
+Considérant que la méthode de calcul de vitesse par échantillonnage (``VelocityRecorderTest``) soit une approximation correcte. Il faut alors se projeter sur le bon repère. 
+
+
+
+=== Paramétrisation
+
+./2019-02-26/SwingoutFormula.png
+
+Points de réglages :
+- ``h1`` : //horizontal shift//.
+- ``h2`` : //horizontal stretch//.
+- ``z`` : //zeroifier//. Si `< 0` le 1^er extremum est en (0,0) sinon c'est le second.
+- ``s1``, ``s2`` : //slope variation//. Toujours `> 0`. ``s2`` permet de doser plus finement. Conserve l'x des extremums et du passage à ``y=0``.
+- ``d`` : //depth//. Toujours `> 0`. Augmente la profondeur du "sursaut" sans affecter la pente ni le passage en (0,0).
+
+
+Version textuelle :
+
+<<<
+s1( ( x / h2 ) + h1 )^2  * s2( d * ( ( x / h2 ) + h1 ) + z )
+>>>
+
+
+Dans le [grapheur]
+https://www.desmos.com/calculator
+on écrit la formule paramétrique comme suit :
+
+<<<
+s_1\left(\frac{x}{h_2}+\ h_1\ \right)^2\cdot s_2\left(d\left(\frac{x}{h_2}\ +\ h_1\ \right)+z\right)\ 
+>>>
+
+
+Si on dérive sur [Wolfram Alpha]
+https://www.wolframalpha.com/input/?i=s1(+(+x+%2F+h2+)+%2B+h1+)%5E2++*+s2(+d+*+(+(+x+%2F+h2+)+%2B+h1+)+%2B+z+)
+le résultat est faux. Heureusement [Derivative Calculator]
+https://www.derivative-calculator.net/
+nous sauve la mise.
+
+<<<
+s_1*s_2*(x/h_2+h_1)^2*(d*(x/h_2+h_1)+z)
+>>>
+
+L'original est convenablement interprété :
+
+./2019-02-26/ParametricOriginal.png
+
+Après simplification :
+
+./2019-02-26/ParametricSimplified.png
+
+Dérivée, avec simplification :
+
+./2019-02-26/ParametricDerivativeWithSimplification.png
+
+Ce qui se prête à une vérification visuelle :
+
+./2019-02-26/ParametricDerivativeGraph.png
+
+

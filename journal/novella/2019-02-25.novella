@@ -1,0 +1,170 @@
+== Le ``SweepChoice`` après câblage du ``KineticScrollEngine``
+
+Défilement réussi, mais on dirait que l'élan perdure juste parce que ``touchUp`` arrive en retard :
+
+<<<
+[SweepChoice] Applying scroll amount of 2.9903947E-4 on Y axis. 
+[SweepChoice] #touchDown( event=touchDown, x=143.99994, y=257.99997, pointer=0, button=0 )
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=256.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-1.9999695, velocity=0.0, lastPosition=256.0
+[SweepChoice] Applying scroll amount of -1.9999695 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=256.0, pointer=0 )
+[SweepChoice] No scroll initiated, scrollAxis=UNDEFINED and previousScrollAxis=VERTICAL.
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=249.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-6.0000305, velocity=-37.50019, lastPosition=249.99997
+[SweepChoice] Applying scroll amount of -6.606325 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=243.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-6.0, velocity=-35.294117, lastPosition=243.99997
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=231.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-18.0, velocity=0.0, lastPosition=231.99997
+[SweepChoice] Applying scroll amount of -18.0 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=219.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-12.0, velocity=-70.588234, lastPosition=219.99997
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=201.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-30.0, velocity=0.0, lastPosition=201.99997
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=187.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-44.0, velocity=0.0, lastPosition=187.99997
+[SweepChoice] Applying scroll amount of -44.0 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=171.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-16.0, velocity=-94.117645, lastPosition=171.99997
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=152.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-35.99997, velocity=0.0, lastPosition=152.0
+[SweepChoice] Applying scroll amount of -35.99997 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=143.99994, y=129.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-22.00003, velocity=-137.50018, lastPosition=129.99997
+[SweepChoice] #touchDragged( event=touchDragged, x=141.99994, y=105.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-46.00003, velocity=0.0, lastPosition=105.99997
+[SweepChoice] Applying scroll amount of -46.00003 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=141.99994, y=86.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-19.99997, velocity=-117.64688, lastPosition=86.0
+[SweepChoice] #touchDragged( event=touchDragged, x=139.99994, y=51.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-54.0, velocity=0.0, lastPosition=51.99997
+[SweepChoice] Applying scroll amount of -54.0 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=139.99994, y=23.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=-28.0, velocity=-175.0, lastPosition=23.99997
+[SweepChoice] Applying scroll amount of -30.774488 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9299083 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9701924 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.7979634 on Y axis. 
+[SweepChoice] Applying scroll amount of -3.1137795 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.8936088 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9120135 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.938324 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.8352997 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9189343 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9255545 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.979179 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.8188322 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9006784 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.929749 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.969622 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.913276 on Y axis. 
+[SweepChoice] Applying scroll amount of -3.0058928 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.8096268 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.8354964 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9923112 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9359198 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9273064 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9184098 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9194834 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9141657 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9311574 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9349906 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9067223 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.8565252 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.962014 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9408987 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.8321412 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9362028 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9603753 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.8820453 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9202886 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9317944 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9319992 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.9384482 on Y axis. 
+[SweepChoice] Applying scroll amount of -2.930653 on Y axis. 
+[SweepChoice] #touchUp( event=touchUp, x=139.99994, y=23.99997, pointer=0, button=0 )
+[KineticScrollEngine] #endDrag, scrollAmount=0.0, velocity=0.0, lastPosition=23.99997
+[SweepChoice] Applying scroll amount of 1.0969336E-5 on Y axis. 
+[SweepChoice] Applying scroll amount of 1.4025978E-5 on Y axis. 
+[SweepChoice] Applying scroll amount of 1.8868312E-4 on Y axis. 
+[SweepChoice] Applying scroll amount of 1.8198072E-4 on Y axis. 
+>>>
+
+Défilement loupé (pas d'élan) :
+
+<<<
+[SweepChoice] #touchDown( event=touchDown, x=175.99994, y=70.0, pointer=0, button=0 )
+[SweepChoice] #touchDragged( event=touchDragged, x=175.99994, y=72.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=2.0, velocity=0.0, lastPosition=72.0
+[SweepChoice] #touchDragged( event=touchDragged, x=179.99994, y=75.99997, pointer=0 )
+[SweepChoice] No scroll initiated, scrollAxis=UNDEFINED and previousScrollAxis=VERTICAL.
+[SweepChoice] #touchDragged( event=touchDragged, x=185.99994, y=86.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=16.0, velocity=82.35294, lastPosition=86.0
+[SweepChoice] #touchDragged( event=touchDragged, x=191.99994, y=96.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=26.0, velocity=0.0, lastPosition=96.0
+[SweepChoice] #touchDragged( event=touchDragged, x=201.99988, y=109.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=39.99997, velocity=0.0, lastPosition=109.99997
+[SweepChoice] Applying scroll amount of 39.99997 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=207.99994, y=124.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=14.0000305, velocity=87.50019, lastPosition=124.0
+[SweepChoice] #touchDragged( event=touchDragged, x=223.99994, y=154.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=44.00003, velocity=0.0, lastPosition=154.0
+[SweepChoice] Applying scroll amount of 44.00003 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=237.99994, y=180.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=26.0, velocity=152.94118, lastPosition=180.0
+[SweepChoice] #touchDragged( event=touchDragged, x=249.99994, y=203.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=49.99997, velocity=0.0, lastPosition=203.99997
+[SweepChoice] Applying scroll amount of 49.99997 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=273.99994, y=247.99997, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=44.0, velocity=258.82352, lastPosition=247.99997
+[SweepChoice] #touchDragged( event=touchDragged, x=291.99988, y=277.99994, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=73.99997, velocity=0.0, lastPosition=277.99994
+[SweepChoice] Applying scroll amount of 73.99997 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=315.99994, y=321.99994, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=44.0, velocity=275.0, lastPosition=321.99994
+[SweepChoice] #touchDragged( event=touchDragged, x=335.99988, y=354.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=76.00006, velocity=0.0, lastPosition=354.0
+[SweepChoice] Applying scroll amount of 76.00006 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=361.99988, y=397.99994, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=43.99994, velocity=258.82318, lastPosition=397.99994
+[SweepChoice] #touchDragged( event=touchDragged, x=373.99994, y=422.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=68.0, velocity=0.0, lastPosition=422.0
+[SweepChoice] Applying scroll amount of 68.0 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=401.99988, y=470.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=48.0, velocity=300.0, lastPosition=470.0
+[SweepChoice] Applying scroll amount of 52.696796 on Y axis. 
+[SweepChoice] #touchDragged( event=touchDragged, x=433.99994, y=523.99994, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=53.99994, velocity=317.64673, lastPosition=523.99994
+[SweepChoice] #touchDragged( event=touchDragged, x=451.99988, y=564.0, pointer=0 )
+[KineticScrollEngine] #pursueDrag, scrollAmount=94.0, velocity=0.0, lastPosition=564.0
+[SweepChoice] Applying scroll amount of 94.0 on Y axis. 
+[SweepChoice] #touchUp( event=touchUp, x=451.99988, y=564.0, pointer=0, button=0 )
+[KineticScrollEngine] #endDrag, scrollAmount=0.0, velocity=0.0, lastPosition=564.0
+[SweepChoice] Applying scroll amount of 9.064999E-6 on Y axis. 
+[SweepChoice] Applying scroll amount of 7.398425E-6 on Y axis. 
+[SweepChoice] Applying scroll amount of 1.813301E-4 on Y axis. 
+>>>
+
+Lors de ces mesures on peut aussi se faire abuser par un événement ``scrolled`` à cause d'une gestuelle imprécise.
+
+=== Moyenne pondérée (weighted average)
+
+<<<
+ v1 t1 + v2 t2 + v3 t3   d1 + d2 + d3  
+ --------------------- = ------------
+     t1 + t2 + t3        t1 + t2 + t3 
+     
+car v = d/t donc vt = d     
+>>>
+
+
+
+
+== Java : articles passionnants sur le temps d'accès à l'horloge
+
+"The slow `currentTimeMillis()`"
+http://pzemtsov.github.io/2017/07/23/the-slow-currenttimemillis.html
+
+"Nanotrusting the Nanotime"
+https://shipilev.net/blog/2014/nanotrusting-nanotime/
