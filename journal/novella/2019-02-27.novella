@@ -1,0 +1,58 @@
+== SweepChoice
+
+=== Version intermédiaire : décroissance linéaire de la vitesse
+
+On veut une vitesse qui varie comme suit :
+
+<<<
+v = at + b
+>>>
+
+Donc la position c'est :
+
+<<<
+((a/2) * t^2) + bt + p0
+>>>
+
+([Vérification] 
+https://www.derivative-calculator.net/
+: `25x^2 + 3x` est dérivée en `50x + 3`.)
+
+Avec cette formule on exprime un ``velocityIntegrationCoefficient``
+
+Pour la pente de la variation de la vitesse on a `v = at + b = 0` pour `t = t0 + d` avec d qui es la durée du //momentum//. 
+
+On connaît t0, v0, d. v0 a été obtenue par échantillonnage. d est la durée du //momentum// (pas la distance). Si on connaît 2 points d'une droite on peut trouver son équation.
+
+
+<<<
+v = at + b ; v0 = at0 + b ; 
+Quand la vitesse devient nulle : a( t0 + d ) + b = 0 
+D'où : 
+at0 + ad + b = 0
+Comme v0 = at0 + b, on a par substitution :
+v0 + ad = 0
+a = -v0/d
+
+On substitue cette nouvelle version de a :
+v0 = (-v0/d)t0 + b
+b = v0 + (v0/d)t0 
+>>>
+
+
+[Vérification]
+https://www.desmos.com/calculator
+avec `v = -2t + 10` la vitesse est nulle en (5,0). Pour `t=2` elle est égale à 6.
+Ça fait : `t0 = 2` ; `v0 = 6` ; `t0 + d = 5` ; `d = 3`.
+On applique et on a bien `a = -v0/d = -6/3 = -2` ; `b = 6 + (6/3)*2 = 10`
+
+Selon la terminologie anglo-saxonne, a est la //slope// et b le //y-intercept//. Donc on calculera une ``velocityHalfSlope`` et un ``velocityYIntercept``.
+
+
+=== Expression du //Momentum// (suite)
+
+Donc le travail suivant c'est de faire coller le début de la courbe aux mesures. 
+
+<<<
+..
+>>>
