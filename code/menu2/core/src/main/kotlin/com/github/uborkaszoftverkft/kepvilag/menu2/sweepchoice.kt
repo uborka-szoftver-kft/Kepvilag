@@ -19,6 +19,10 @@ import com.badlogic.gdx.utils.TimeUtils
  * The display area is known as **Sight**.
  * Each child `Actor` is called a **Panel**, as its scrolls vertically.
  *
+ * <h2>About time</h2>
+ * The time source mentioned here is [System.currentTimeMillis] but we could use [System.nanoTime]
+ * with a right shift of 20 bits (error is
+ * [said to be 5 %](https://stackoverflow.com/a/22494671/1923328))
  */
 class SweepChoice(
     private val preferredWidth : Float,
@@ -37,24 +41,16 @@ class SweepChoice(
   private val disappearingPanelIsCullable = false
 
   /**
-   * Gets incremented by [InputListener.touchDragged],
-   * gets zeroed by [Actor.act].
+   * The y value for a Panel showing its topmost area.
    */
-//  private var scrollAmount = 0f
-
-  /**
-   * Initial value to compute decreasing [scrollVelocity] from.
-   */
-  private var initialScrollVelocity = 0f
-
-  private var scrollVelocity = 0f
+  private val panelBaseY : Array< Float > = Array( children.size ) { 0f }
 
   private var touchDownTime:Long = 0
   private var lastMouseScrollTime:Long = 0
 
   /**
    * The area in Sight for corresponding Panel, in its own coordinates.
-   * Value of [.currentPanelCullingArea], and scissors area are derived from it.
+   * Value of [currentPanelCullingArea], and scissors area are derived from it.
    */
   private val currentPanelAreaBounds = Rectangle()
 
@@ -68,17 +64,6 @@ class SweepChoice(
   //private ScrollDirection scrollDirection = null ;
   private var overscrollPhase:OverscrollPhase? = null
 
-  /**
-   * Same as in [com.badlogic.gdx.scenes.scene2d.ui.ScrollPane.flingTimer].
-   * Only mutate with [prepareInertialScrolling], or by zeroing it.
-   */
-  private var flingTimer:Float = 0.toFloat()
-
-  /**
-   * Same as in [com.badlogic.gdx.scenes.scene2d.ui.ScrollPane.flingTime].
-   */
-  private val flingDuration = FLING_DURATION_SECOND
-
   private val lastPoint = Vector2()
 
   /**
@@ -86,7 +71,7 @@ class SweepChoice(
    */
   private var scrollAxis:ScrollAxis? = null
 
-  private val kineticScrollEngine = continuous()
+  private val kineticScrollEngine = continuousKineticScrollEngine()
 
 
 // ======
@@ -135,7 +120,7 @@ class SweepChoice(
         lastPoint.set(x, y)
 //        touchDownTime = TimeUtils.millis()
 //        lastMouseScrollTime = 0
-          stage.scrollFocus = this@SweepChoice
+        stage.scrollFocus = this@SweepChoice
         return true
       }
 
@@ -180,7 +165,7 @@ class SweepChoice(
           pointer:Int,
           button:Int
       ) {
-          logDebug("#touchUp( x=$x, y=$y ), time=${TimeUtils.millis()}")
+        logDebug( "#touchUp( x=$x, y=$y ), time=${TimeUtils.millis()}" )
         kineticScrollEngine.endDrag( TimeUtils.millis(), y)
       }
 
@@ -192,7 +177,7 @@ class SweepChoice(
       ) : Boolean {
         logDebug( "#scrolled( event=$event, x=$x, y=$y, amount=$amount )" )
         scrollAxis = ScrollAxis.VERTICAL
-        kineticScrollEngine.forceScroll(amount * SCROLL_AMOUNT_CORRECTION)
+        kineticScrollEngine.forceRelativeScroll(amount * SCROLL_AMOUNT_CORRECTION)
         return true
       }
 
@@ -238,8 +223,8 @@ class SweepChoice(
 // ===
 
   override fun act(deltaSecond : Float) {
-    super.act(deltaSecond)
-    applyScrolling(deltaSecond)
+    super.act( deltaSecond )  // TODO: skip children which do not appear within Sight.
+    applyScrolling()
   }
 
 
@@ -247,23 +232,15 @@ class SweepChoice(
 // Scroll
 // ======
 
-  private fun prepareInertialScrolling(initialScrollVelocity : Float) {
-    this.initialScrollVelocity = initialScrollVelocity
-    scrollVelocity = initialScrollVelocity
-    flingTimer = flingDuration
-    logDebug("#prepareInertialScrolling( $initialScrollVelocity )")
-  }
-
-
-  private fun applyScrolling(deltaSecond : Float) {
+  private fun applyScrolling() {
     if(scrollAxis != null ) {
       val panel = children.get(currentPanelIndex)
       when(scrollAxis) {
         SweepChoice.ScrollAxis.VERTICAL -> {
-          val scrollAmount = kineticScrollEngine.scrollAmountAfter( deltaSecond )
+          val scrollAmount = kineticScrollEngine.scrollAmountAt( TimeUtils.millis() )
           if( scrollAmount != 0f ) {
             logDebug("Applying scroll amount of $scrollAmount on Y axis. ")
-            panel.y = panel.y + scrollAmount
+            panel.y = panelBaseY[ currentPanelIndex ] + scrollAmount
           }
         }
         SweepChoice.ScrollAxis.HORIZONTAL -> {
@@ -328,22 +305,21 @@ y=0-+---+ |   |       |   |      -+
             Panel.width = Math.min(PanelAsLayout.prefWidth, width)
           }
           Panel.height = PanelAsLayout.prefHeight
-        }
-        else {
+        } else {
           Panel.setSize(width, height)
         }
 
         if(previousPanel == null) {
           Panel.x = 0f
-        }
-        else {
+        } else {
           Panel.x = previousPanel !!.x + width + interPanelMargin
         }
 
         Panel.y = height - Panel.height
+        panelBaseY[ panelIndex ] = Panel.y
         if(previousHeight == height) {
-        }
-        else {
+
+        } else {
           // Some resize happened, so we want to maintain Y offset basing on a ratio.
         }
 
@@ -501,4 +477,365 @@ interface ChoiceListener {
 
   fun selected(choice : Int)
 
+}
+
+
+
+interface KineticScrollEngine {
+
+  /**
+   * The visible area on which scrolling happens.
+   */
+  val sightLength : Float
+
+  /**
+   * The length of the component to scroll, in the same unit as [sightLength].
+   *
+   *
+   */
+  val availableLength : Float
+
+  /**
+   * @param newScrollAmount 0-based, a value of 0 means no scroll.
+   */
+  fun setGeometry(
+      newSightLength : Float,
+      newAvailableLength : Float,
+      newScrollAmount : Float = 0f,
+      cancelScrolling : Boolean = false
+  )
+
+  /**
+   * Use this method to resize while keeping the scroll ratio.
+   * Typical use is window resize, or change of inner component.
+   */
+  fun resize( newSightLength : Float, newAvailableLength : Float )
+
+  /**
+   *
+   * @param scrollDelta The increase of the scroll, in the same unit as [sightLength].
+   */
+  fun forceRelativeScroll( scrollDelta : Float )
+
+  /**
+   * Indicates that some drag gesture has begun.
+   * This method mirrors [com.badlogic.gdx.scenes.scene2d.InputListener.touchDown].
+   *
+   * @param position in the same unit as [sightLength].
+   * @throws IllegalStateException if not the first `*Drag` method called, or if
+   *     [endDrag] was not called before.
+   */
+  fun beginDrag( time : Long, position : Float )
+
+  /**
+   * Indicates that some drag gesture is going on.
+   * This method mirrors [com.badlogic.gdx.scenes.scene2d.InputListener.touchDragged].
+   *
+   * @param position, in the same unit as [sightLength].
+   * @throws IllegalStateException if [beginDrag] or [pursueDrag] was not called before.
+   */
+  fun pursueDrag( time : Long, position : Float )
+
+  /**
+   * Indicates that some drag gesture ended.
+   * This method mirrors [com.badlogic.gdx.scenes.scene2d.InputListener.touchUp].
+   *
+   * @param position in the same unit as [sightLength].
+   * @throws IllegalStateException if [pursueDrag] was not called before.
+   */
+  fun endDrag( time : Long, position : Float )
+
+  /**
+   * Compute the scroll amount, in the same unit as [sightLength].
+   *
+   * @param elapsedTimeInSecond mirrors the [com.badlogic.gdx.scenes.scene2d.Actor.act] method.
+   */
+  fun scrollAmountAt( time : Long ) : Float
+
+}
+
+/**
+ * Scrolls upon drag, when drag is release the scroll pursues during [momentumDurationMs]
+ * with a speed decreasing linearly.
+ *
+ * Velocity can be written as:
+ * ```
+ * v = at + b
+ * ```
+ * where `t` is the time, `a` the slope, and `b` the y-intercept.
+ * `v0` is the initial velocity (calculated from drag gesture by [velocityRecorder]),
+ * `t0` the time at which momentum begins, and `d` the [momentumDurationMs]. So far we can write:
+ * ```
+ * a ​= ​-v0/d
+ * b = v0 + (v0/d)t0
+ * ```
+ *
+ * By integrating velocity we obtain the position as:
+ * ```
+ * p = ((a/2) * t^2) + bt + p0
+ * ```
+ * In the code `a/2` is the [velocityHalfSlope]. `b` is the [velocityYIntercept].
+ * `t0` is [momentumStartTime]. `p0` is [momentumStartPosition].
+ *
+ */
+class ContinuousKineticScrollEngine(
+    private val momentumDurationMs : Int = 1000,
+    private val logger : Logger = gdxLogger( "ScrollEngine")
+) : KineticScrollEngine {
+
+  override var sightLength = 0f
+
+  override var availableLength = 0f
+
+  /**
+   * The last time (as [System.currentTimeMillis]) set by [pursueDrag].
+   */
+  private var lastUpdateTime = 0L
+
+  /**
+   * Scroll amount, in the same unit as [sightLength].
+   * A value of 0 means no scroll (panel position has the value kept in [SweepChoice.panelBaseY]).
+   */
+  private var scrollAmount = 0f
+
+  /**
+   * Indicates that [beginDrag] got called, and [endDrag] has not been called yet.
+   */
+  private var dragging = false
+
+  /**
+   * The time at which momentum begins (as [System.currentTimeMillis]), set by [endDrag].
+   */
+  private var momentumStartTime = 0L
+
+  /**
+   * The position at which momentum begins (in the same unit as [sightLength]), set by [endDrag].
+   */
+  private var momentumStartPosition = 0f
+
+  /**
+   * Meaningful only when [dragging] is `true`. A value of -1 means the value is undefined.
+   */
+  private var lastPosition = -1f
+
+
+  /**
+   * Velocity decreases linearly in the form `v = at + b`.
+   * From that we integrate position as `p = ((a/2) * x^2) + bx + x0`.
+   * `a/2` is the [velocityHalfSlope].
+   */
+  private var velocityHalfSlope = 0f
+  private var velocityYIntercept = 0f
+
+  private val velocityRecorder = VelocityRecorder()
+
+  private fun cancelScrolling() {
+    velocityRecorder.clear()
+    dragging = false
+  }
+
+  override fun setGeometry(
+      newSightLength : Float,
+      newAvailableLength : Float,
+      newScrollAmount : Float,
+      cancelScrolling : Boolean
+  ) {
+    check( newSightLength >= 0 )
+    check( newAvailableLength >= 0 )
+    check( newScrollAmount < newAvailableLength - newSightLength )
+    sightLength = newSightLength
+    availableLength = newAvailableLength
+    scrollAmount = newScrollAmount
+    if( cancelScrolling ) cancelScrolling()
+  }
+
+  override fun resize( newSightLength : Float, newAvailableLength : Float ) {
+    val oldRatio = sightLength / availableLength
+    setGeometry( newSightLength, newAvailableLength, scrollAmount * oldRatio )
+  }
+
+
+  override fun forceRelativeScroll(scrollDelta : Float) {
+    scrollAmount += scrollDelta
+  }
+
+  /**
+   * Indicates that some drag gesture has begun.
+   * This method mirrors [com.badlogic.gdx.scenes.scene2d.InputListener.touchDown].
+   *
+   * @param position in the same unit as [sightLength].
+   * @throws IllegalStateException if not the first `*Drag` method called, or if
+   *     [endDrag] was not called before.
+   */
+  override fun beginDrag( time : Long, position : Float ) {
+    check( ! dragging )
+    check( position >= 0 )
+    checkUpdateTime(time)
+    velocityRecorder.clear()
+    lastUpdateTime = time
+    lastPosition = position
+    dragging = true
+  }
+
+  /**
+   * Indicates that some drag gesture is going on.
+   * This method mirrors [com.badlogic.gdx.scenes.scene2d.InputListener.touchDragged].
+   *
+   * @param position, in the same unit as [sightLength], 0 means no-scroll position.
+   * @throws IllegalStateException if [beginDrag] or [pursueDrag] was not called before.
+   */
+  override fun pursueDrag( time : Long, position : Float ) {
+    check(dragging) { "Not dragging" }
+    checkUpdateTime(time)
+    val distance = position - lastPosition
+    scrollAmount = position
+    val deltaTime = time - lastUpdateTime
+    lastPosition = position
+
+    velocityRecorder.record( distance, deltaTime.toFloat() )
+    lastUpdateTime = time
+    logDebug( "#pursueDrag, scrollAmount=$scrollAmount, lastPosition=$lastPosition, " +
+        "distance=$distance, time=$time, deltaTime=$deltaTime" )
+  }
+
+  private fun checkUpdateTime(time : Long) {
+    check( time >= lastUpdateTime ) { "Inconsistent time: $time, last update is $lastUpdateTime" }
+  }
+
+  /**
+   * Indicates that some drag gesture ended.
+   * This method mirrors [com.badlogic.gdx.scenes.scene2d.InputListener.touchUp].
+   *
+   * @param position in the same unit as [sightLength]. Happens to be the same value as in last
+   *     call to [pursueDrag] so it cannot be used for speed derivation at this point.
+   * @throws IllegalStateException if [pursueDrag] was not called before.
+   */
+  override fun endDrag( time : Long, position : Float ) {
+    dragging = false
+    momentumStartTime = time
+    momentumStartPosition = position
+    val velocity = velocityRecorder.average()
+    velocityHalfSlope = ( - velocity / momentumDurationMs ) / 2
+    velocityYIntercept = velocity + ( momentumStartTime * velocity / momentumDurationMs )
+    logDebug( "#endDrag, velocity=$velocity, " +
+        "velocityHalfSlope=$velocityHalfSlope, velocityYIntercept=$velocityYIntercept." )
+    velocityRecorder.clear()
+  }
+
+  /**
+   * Compute the scroll amount, in the same unit as [sightLength].
+   *
+   * @param time as returned by [System.currentTimeMillis].
+   */
+  override fun scrollAmountAt( time : Long ) : Float {
+    if( ! dragging ) {
+      check( time >= momentumStartTime ) {
+        "Incorrect value for time: $time, greater than $momentumStartTime" }
+      val elapsedTimeMillis = time - momentumStartTime
+      scrollAmount = ( velocityHalfSlope * elapsedTimeMillis * elapsedTimeMillis ) +
+          ( velocityYIntercept * elapsedTimeMillis ) + momentumStartPosition
+    }
+    return scrollAmount
+  }
+
+  private fun logDebug(message : String) {
+    @Suppress("ConstantConditionIf")
+    if( SweepChoice.DEBUG ) {
+      logger.logDebug( message )
+    }
+  }
+
+}
+
+
+/**
+ * Records distances and the time it took, and produces a moving average of the recorded speeds,
+ * weighted by durations.
+ */
+class VelocityRecorder( private val capacity : Int = 10 ) {
+
+  /**
+   * Holds couples of value: distance, duration.
+   */
+  private val records : Array< Float >
+
+  private var size : Int = 0
+
+  /**
+   * Indice of next element to [record].
+   */
+  private var next : Int = 0
+
+  init {
+    check( capacity > 0 )
+    records = Array( capacity * 2 ) { 0f }
+  }
+
+  fun record( distance : Float, duration : Float ) {
+    if( next > records.size - 1 ) { next = 0 }
+    records[ next ++ ] = distance
+    records[ next ++ ] = duration
+    if( size < capacity ) size ++
+  }
+
+  /**
+   * Calculates the average speed weighted by measurement duration.
+   *
+   * <pre>
+  v1.t1 + v2.t2 + v3.t3   d1 + d2 + d3
+  --------------------- = ------------
+      t1 + t2 + t3        t1 + t2 + t3
+
+  v = d/t => vt = d
+
+   * </pre>
+   */
+  fun average() : Float {
+    var readIndex = next - 1
+    var readCount = 0
+    var distanceSum = 0f
+    var durationSum = 0f
+    while( readCount < size ) {
+      if( readIndex > records.size ) readIndex = 0
+      else if( readIndex < 0 ) readIndex = records.size - 1
+      durationSum += records[ readIndex -- ]
+      distanceSum += records[ readIndex -- ]
+      readCount ++
+    }
+    return if( durationSum == 0f ) 0f else distanceSum / durationSum
+  }
+
+  fun clear() {
+    next = 0
+    size = 0
+  }
+
+}
+
+/**
+ * Returns a fresh [KineticScrollEngine] that scrolls continuously on
+ * [KineticScrollEngine.availableLength].
+ */
+fun continuousKineticScrollEngine() = ContinuousKineticScrollEngine()
+
+interface Logger {
+  fun logDebug( message : String )
+
+}
+
+fun gdxLogger( tag : String ) : Logger {
+  return object: Logger {
+    override fun logDebug(message : String) {
+      Gdx.app.debug( tag, message )
+    }
+  }
+}
+
+fun consoleLogger( tag : String ) : Logger {
+  return object : Logger {
+    override fun logDebug(message : String) {
+      println( "[$tag] $message" )
+    }
+
+  }
 }
