@@ -555,8 +555,8 @@ interface KineticScrollEngine {
 }
 
 /**
- * Scrolls upon drag, when drag is release the scroll pursues during [momentumDurationMs]
- * with a speed decreasing linearly.
+ * Scrolls upon drag, when drag is release the scroll pursues during a given time, with a speed
+ * decreasing linearly.
  *
  * Velocity can be written as:
  * ```
@@ -564,7 +564,7 @@ interface KineticScrollEngine {
  * ```
  * where `t` is the time, `a` the slope, and `b` the y-intercept.
  * `v0` is the initial velocity (calculated from drag gesture by [velocityRecorder]),
- * `t0` the time at which momentum begins, and `d` the [momentumDurationMs]. So far we can write:
+ * `t0` the time at which momentum begins, and `d` the [momentumDurationS]. So far we can write:
  * ```
  * a ​= ​-v0/d
  * b = v0 + (v0/d)t0
@@ -577,14 +577,25 @@ interface KineticScrollEngine {
  * In the code `a/2` is the [velocityHalfSlope]. `b` is the [velocityYIntercept].
  * `t0` is [momentumStartTime]. `p0` is [momentumStartPosition].
  *
+ * Unit for distance is the same as [sightLength]'.
+ *
+ * Unit for [velocityRecorder] is millisecond, unit for [scrollAmount] is second.
+ * This avoids some rounding problems.
+ *
+ * Momentum calculation translates [momentumStartTime] to 0, so [velocityYIntercept] calculation
+ * skips the `t0` member of the equation shown above.
+
  */
 class ContinuousKineticScrollEngine(
-    private val momentumDurationMs : Int = 1000,
+    private val momentumDurationS : Float = 1f,
     private val logger : Logger = gdxLogger( "ScrollEngine")
 ) : KineticScrollEngine {
 
   override var sightLength = 0f
 
+  /**
+   * The overall length of what can be scrolled, in the same unit as [sightLength].
+   */
   override var availableLength = 0f
 
   /**
@@ -620,11 +631,13 @@ class ContinuousKineticScrollEngine(
 
 
   /**
-   * Velocity decreases linearly in the form `v = at + b`.
-   * From that we integrate position as `p = ((a/2) * x^2) + bx + x0`.
-   * `a/2` is the [velocityHalfSlope].
+   * Describes the speed at which velocity decreases, for a time given in seconds.
    */
   private var velocityHalfSlope = 0f
+
+  /**
+   * Describes the speed at which velocity decreases, for a time given in seconds.
+   */
   private var velocityYIntercept = 0f
 
   private val velocityRecorder = VelocityRecorder()
@@ -685,8 +698,8 @@ class ContinuousKineticScrollEngine(
    * @throws IllegalStateException if [beginDrag] or [pursueDrag] was not called before.
    */
   override fun pursueDrag( time : Long, position : Float ) {
-    check(dragging) { "Not dragging" }
-    checkUpdateTime(time)
+    check( dragging ) { "Not dragging" }
+    checkUpdateTime( time )
     val distance = position - lastPosition
     scrollAmount = position
     val deltaTime = time - lastUpdateTime
@@ -714,11 +727,14 @@ class ContinuousKineticScrollEngine(
     dragging = false
     momentumStartTime = time
     momentumStartPosition = position
-    val velocity = velocityRecorder.average()
-    velocityHalfSlope = ( - velocity / momentumDurationMs ) / 2
-    velocityYIntercept = velocity + ( momentumStartTime * velocity / momentumDurationMs )
-    logDebug( "#endDrag, velocity=$velocity, " +
-        "velocityHalfSlope=$velocityHalfSlope, velocityYIntercept=$velocityYIntercept." )
+    val velocity = velocityRecorder.average() * 1000  // Converting ms to s.
+    velocityHalfSlope = ( - velocity / momentumDurationS ) / 2
+    velocityYIntercept = velocity  // Skipping some other terms from original equation.
+    logDebug(
+        "#endDrag, velocity=$velocity, " +
+        "velocityHalfSlope=$velocityHalfSlope, velocityYIntercept=$velocityYIntercept, " +
+        "momentumStartPosition=$momentumStartPosition."
+    )
     velocityRecorder.clear()
   }
 
@@ -731,14 +747,16 @@ class ContinuousKineticScrollEngine(
     if( ! dragging ) {
       check( time >= momentumStartTime ) {
         "Incorrect value for time: $time, greater than $momentumStartTime" }
-      val elapsedTimeMillis = time - momentumStartTime
-      scrollAmount = ( velocityHalfSlope * elapsedTimeMillis * elapsedTimeMillis ) +
-          ( velocityYIntercept * elapsedTimeMillis ) + momentumStartPosition
+      if( time <= momentumStartTime + momentumDurationS * 1000f ) {
+        val elapsedTimeSeconds = ( time - momentumStartTime) / 1000f
+        scrollAmount = (velocityHalfSlope * elapsedTimeSeconds * elapsedTimeSeconds) +
+            ( velocityYIntercept * elapsedTimeSeconds ) + momentumStartPosition
+      }
     }
     return scrollAmount
   }
 
-  private fun logDebug(message : String) {
+  private fun logDebug( message : String ) {
     @Suppress("ConstantConditionIf")
     if( SweepChoice.DEBUG ) {
       logger.logDebug( message )
