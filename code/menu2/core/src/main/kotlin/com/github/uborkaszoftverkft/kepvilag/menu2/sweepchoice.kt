@@ -2,6 +2,7 @@ package com.github.uborkaszoftverkft.kepvilag.menu2
 
 import com.badlogic.gdx.Gdx
 import com.badlogic.gdx.graphics.g2d.Batch
+import com.badlogic.gdx.input.GestureDetector
 import com.badlogic.gdx.math.Rectangle
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Actor
@@ -109,17 +110,9 @@ class SweepChoice(
           pointer:Int,
           button:Int
       ) : Boolean {
-        logDebug("#touchDown( x=$x, y=$y ), time=${TimeUtils.millis()}")
+        logDebug( "#touchDown( x=$x, y=$y ), time=${TimeUtils.millis()}" )
         kineticScrollEngine.beginDrag( TimeUtils.millis(), y)
-//        scrollAxis = null
-//        initialScrollVelocity = 0f
-//        scrollAmount = 0f
-//        scrollVelocity = 0f
-//        flingTimer = 0f
-//        overscrollPhase = null
         lastPoint.set(x, y)
-//        touchDownTime = TimeUtils.millis()
-//        lastMouseScrollTime = 0
         stage.scrollFocus = this@SweepChoice
         return true
       }
@@ -139,7 +132,6 @@ class SweepChoice(
             previousScrollAxis == null ||
             previousScrollAxis == ScrollAxis.UNDEFINED
         ) {
-          val inertialScrollingLastDuration = TimeUtils.timeSinceMillis(touchDownTime).toFloat()
           touchDownTime = TimeUtils.millis()
           // Very approximative: the longer this first gesture lasted,
           // the greater the scroll velocity.
@@ -166,7 +158,7 @@ class SweepChoice(
           button:Int
       ) {
         logDebug( "#touchUp( x=$x, y=$y ), time=${TimeUtils.millis()}" )
-        kineticScrollEngine.endDrag( TimeUtils.millis(), y)
+        kineticScrollEngine.endDrag( TimeUtils.millis(), y )
       }
 
       override fun scrolled(
@@ -237,10 +229,13 @@ class SweepChoice(
       val panel = children.get(currentPanelIndex)
       when(scrollAxis) {
         SweepChoice.ScrollAxis.VERTICAL -> {
-          val scrollAmount = kineticScrollEngine.scrollAmountAt( TimeUtils.millis() )
-          if( scrollAmount != 0f ) {
-            logDebug("Applying scroll amount of $scrollAmount on Y axis. ")
-            panel.y = panelBaseY[ currentPanelIndex ] + scrollAmount
+          val time = TimeUtils.millis()
+          if( kineticScrollEngine.animatingScroll( time ) ){
+            val scrollAmount = kineticScrollEngine.scrollAmountAt( time )
+            if( scrollAmount != 0f ) {
+              logDebug( "Applying scroll amount of $scrollAmount on Y axis. " )
+              panel.y = panelBaseY[ currentPanelIndex ] + scrollAmount
+            }
           }
         }
         SweepChoice.ScrollAxis.HORIZONTAL -> {
@@ -548,9 +543,15 @@ interface KineticScrollEngine {
   /**
    * Compute the scroll amount, in the same unit as [sightLength].
    *
-   * @param elapsedTimeInSecond mirrors the [com.badlogic.gdx.scenes.scene2d.Actor.act] method.
+   * @param time as returned by [System.currentTimeMillis].
    */
   fun scrollAmountAt( time : Long ) : Float
+
+  /**
+   * @param time as returned by [System.currentTimeMillis].
+   * @return `true` is scrolling has started, and has not ended yet.
+   */
+  fun animatingScroll( time : Long ) : Boolean
 
 }
 
@@ -620,6 +621,11 @@ class ContinuousKineticScrollEngine(
   private var momentumStartTime = 0L
 
   /**
+   * The time at which momentum ends (as [System.currentTimeMillis]), set by [endDrag].
+   */
+  private var momentumEndTime = 0L
+
+  /**
    * The position at which momentum begins (in the same unit as [sightLength]), set by [endDrag].
    */
   private var momentumStartPosition = 0f
@@ -687,6 +693,8 @@ class ContinuousKineticScrollEngine(
     velocityRecorder.clear()
     lastUpdateTime = time
     lastPosition = position
+    momentumStartTime = 0L
+    momentumEndTime = 0L
     dragging = true
   }
 
@@ -726,6 +734,7 @@ class ContinuousKineticScrollEngine(
   override fun endDrag( time : Long, position : Float ) {
     dragging = false
     momentumStartTime = time
+    momentumEndTime = time + ( momentumDurationS * 1000f ).toLong()
     momentumStartPosition = position
     val velocity = velocityRecorder.average() * 1000  // Converting ms to s.
     velocityHalfSlope = ( - velocity / momentumDurationS ) / 2
@@ -738,22 +747,21 @@ class ContinuousKineticScrollEngine(
     velocityRecorder.clear()
   }
 
-  /**
-   * Compute the scroll amount, in the same unit as [sightLength].
-   *
-   * @param time as returned by [System.currentTimeMillis].
-   */
   override fun scrollAmountAt( time : Long ) : Float {
     if( ! dragging ) {
       check( time >= momentumStartTime ) {
         "Incorrect value for time: $time, greater than $momentumStartTime" }
-      if( time <= momentumStartTime + momentumDurationS * 1000f ) {
-        val elapsedTimeSeconds = ( time - momentumStartTime) / 1000f
-        scrollAmount = (velocityHalfSlope * elapsedTimeSeconds * elapsedTimeSeconds) +
+      if( animatingScroll( time ) ) {
+        val elapsedTimeSeconds = ( time - momentumStartTime ) / 1000f
+        scrollAmount = ( velocityHalfSlope * elapsedTimeSeconds * elapsedTimeSeconds) +
             ( velocityYIntercept * elapsedTimeSeconds ) + momentumStartPosition
       }
     }
     return scrollAmount
+  }
+
+  override fun animatingScroll( time : Long ) : Boolean {
+    return time <= momentumEndTime
   }
 
   private fun logDebug( message : String ) {

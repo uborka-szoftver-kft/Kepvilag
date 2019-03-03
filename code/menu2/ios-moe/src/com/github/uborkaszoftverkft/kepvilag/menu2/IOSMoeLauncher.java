@@ -17,7 +17,7 @@ public class IOSMoeLauncher extends IOSApplication.Delegate {
     protected IOSApplication createApplication() {
         IOSApplicationConfiguration config = new IOSApplicationConfiguration();
         config.useAccelerometer = false;
-        return new IOSApplication(new Menu2(), config);
+        return new IOSApplication(new Menu2K(), config);
     }
 
     public static void main(String[] argv) {

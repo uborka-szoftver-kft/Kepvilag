@@ -49,10 +49,3 @@ On applique et on a bien `a = -v0/d = -6/3 = -2` ; `b = 6 + (6/3)*2 = 10`
 Selon la terminologie anglo-saxonne, a est la //slope// et b le //y-intercept//. Donc on calculera une ``velocityHalfSlope`` et un ``velocityYIntercept``.
 
 
-=== Expression du //Momentum// (suite)
-
-Donc le travail suivant c'est de faire coller le début de la courbe aux mesures. 
-
-<<<
-..
->>>

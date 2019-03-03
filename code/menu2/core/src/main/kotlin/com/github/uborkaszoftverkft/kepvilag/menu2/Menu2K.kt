@@ -3,7 +3,9 @@ package com.github.uborkaszoftverkft.kepvilag.menu2
 import com.badlogic.gdx.Application
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.InputMultiplexer
 import com.badlogic.gdx.graphics.GL20
+import com.badlogic.gdx.input.GestureDetector
 import com.badlogic.gdx.math.Vector2
 import com.badlogic.gdx.scenes.scene2d.Actor
 import com.badlogic.gdx.scenes.scene2d.Stage
@@ -11,6 +13,7 @@ import com.badlogic.gdx.scenes.scene2d.ui.HorizontalGroup
 import com.badlogic.gdx.scenes.scene2d.ui.Label
 import com.badlogic.gdx.scenes.scene2d.ui.Skin
 import com.badlogic.gdx.scenes.scene2d.ui.Table
+import com.badlogic.gdx.utils.TimeUtils
 import java.util.*
 
 class Menu2K : ApplicationAdapter(){
@@ -22,6 +25,15 @@ class Menu2K : ApplicationAdapter(){
     Gdx.app.logLevel = Application.LOG_DEBUG
     stage = Stage()
     val skin = Skin(Gdx.files.internal("skin/dark-hdpi/Holo-dark-hdpi.json"))
+    val inputMultiplexer = InputMultiplexer()
+    inputMultiplexer.addProcessor( GestureDetector( object : GestureDetector.GestureAdapter() {
+      override fun fling( velocityX : Float, velocityY : Float, button : Int ) : Boolean {
+        Gdx.app.debug( "Menu2K", "#fling( vx=$velocityX, vy=$velocityY, time=${TimeUtils.millis()}" )
+        return super.fling( velocityX, velocityY, button )
+      }
+    } ) )
+    inputMultiplexer.addProcessor( stage )
+//    Gdx.input.inputProcessor = inputMultiplexer
     Gdx.input.inputProcessor = stage
 
     // Gdx.graphics.setVSync(false);
