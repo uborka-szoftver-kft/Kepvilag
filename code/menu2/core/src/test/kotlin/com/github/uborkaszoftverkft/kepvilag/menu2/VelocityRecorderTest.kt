@@ -13,7 +13,7 @@ internal class VelocityRecorderTest {
 
   @Test
   internal fun record() {
-    val velocityRecorder = VelocityRecorder()
+    val velocityRecorder = VelocityRecorder( 10, 1 )
     velocityRecorder.record( 10f, 1f )
     velocityRecorder.record( 70f, 3f )
     assertEquals( velocityRecorder.average(), 20f )
@@ -23,7 +23,7 @@ internal class VelocityRecorderTest {
 
   @Test
   internal fun recordWithCycle() {
-    val velocityRecorder = VelocityRecorder( 3 )
+    val velocityRecorder = VelocityRecorder( 3, 3 )
     velocityRecorder.record( 100f, 0f )
     velocityRecorder.record( 1f, 1f )
     velocityRecorder.record( 3f, 1f )

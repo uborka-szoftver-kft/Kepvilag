@@ -233,7 +233,7 @@ class SweepChoice(
           if( kineticScrollEngine.animatingScroll( time ) ){
             val scrollAmount = kineticScrollEngine.scrollAmountAt( time )
             if( scrollAmount != 0f ) {
-              logDebug( "Applying scroll amount of $scrollAmount on Y axis. " )
+              logDebug( "Applying scroll amount of $scrollAmount on Y axis, time=${TimeUtils.millis()}. " )
               panel.y = panelBaseY[ currentPanelIndex ] + scrollAmount
             }
           }
@@ -542,7 +542,7 @@ interface KineticScrollEngine {
   fun endDrag( time : Long, position : Float )
 
   /**
-   * Compute the scroll amount, in the same unit as [sightLength], _and_ sets the time.
+   * Compute the scroll amount, in the same unit as [sightLength], _and_ sets time of last update.
    *
    * @param time as returned by [System.currentTimeMillis].
    */
@@ -585,14 +585,14 @@ abstract class AbstractKineticScrollEngine(
    */
   private var dragging = false
 
+  protected fun dragging() : Boolean = dragging
 
   /**
    * Meaningful only when [dragging] is `true`. A value of -1 means the value is undefined.
    */
-  protected var lastPosition = -1f
+  private var lastPosition = -1f
 
-
-  protected fun dragging() : Boolean = dragging
+  protected fun lastPosition() = lastPosition
 
   protected open fun cancelScrolling() {
     dragging = false
@@ -667,6 +667,7 @@ abstract class AbstractKineticScrollEngine(
   }
 
 }
+
 /**
  * Scrolls upon drag, when drag is release the scroll pursues during a given time, with a speed
  * decreasing linearly.
@@ -688,7 +689,7 @@ abstract class AbstractKineticScrollEngine(
  * p = ((a/2) * t^2) + bt + p0
  * ```
  * In the code `a/2` is the [velocityHalfSlope]. `b` is the [velocityYIntercept].
- * `t0` is [momentumStartTime]. `p0` is [momentumStartPosition].
+ * `t0` is [momentumStartTime]. `p0` is [momentumStartScrollAmount].
  *
  * Unit for distance is the same as [sightLength]'.
  *
@@ -716,9 +717,10 @@ class ContinuousKineticScrollEngine(
   private var momentumEndTime = 0L
 
   /**
-   * The position at which momentum begins (in the same unit as [sightLength]), set by [endDrag].
+   * Value of [scrollAmount] at which momentum begins (in the same unit as [sightLength]),
+   * set by [endDrag].
    */
-  private var momentumStartPosition = 0f
+  private var momentumStartScrollAmount = 0f
 
 
   /**
@@ -737,7 +739,6 @@ class ContinuousKineticScrollEngine(
     velocityRecorder.clear()
     super.cancelScrolling()
   }
-
 
 
   /**
@@ -760,8 +761,18 @@ class ContinuousKineticScrollEngine(
     val distance = super.pursueDrag( time, position )
     val deltaTime = time - lastUpdateTimeBeforeUpdate
     velocityRecorder.record( distance, deltaTime.toFloat() )
-    logDebug( "#pursueDrag, scrollAmount=$scrollAmount, lastPosition=$lastPosition, " +
-        "distance=$distance, time=$time, deltaTime=$deltaTime" )
+    momentumStartTime = time
+    momentumEndTime = time + ( momentumDurationS * 1000f ).toLong()
+    momentumStartScrollAmount = scrollAmount
+    val velocity = velocityRecorder.average() * 1000  // Converting ms to s.
+    velocityHalfSlope = ( - velocity / momentumDurationS ) / 2
+    velocityYIntercept = velocity  // Skipping some other terms from original equation.
+    logDebug( "#pursueDrag, " +
+        "scrollAmount=$scrollAmount, lastPosition=${lastPosition()}, " +
+        "distance=$distance, time=$time, deltaTime=$deltaTime," +
+        "velocityHalfSlope=$velocityHalfSlope, velocityYIntercept=$velocityYIntercept, " +
+        "momentumStartScrollAmount=$momentumStartScrollAmount"
+    )
     return distance
   }
 
@@ -775,35 +786,27 @@ class ContinuousKineticScrollEngine(
    */
   override fun endDrag( time : Long, position : Float ) {
     super.endDrag( time, position )
-    momentumStartTime = time
-    momentumEndTime = time + ( momentumDurationS * 1000f ).toLong()
-    momentumStartPosition = position
-    val velocity = velocityRecorder.average() * 1000  // Converting ms to s.
-    velocityHalfSlope = ( - velocity / momentumDurationS ) / 2
-    velocityYIntercept = velocity  // Skipping some other terms from original equation.
     logDebug(
-        "#endDrag, velocity=$velocity, " +
+        "#endDrag, " +
         "velocityHalfSlope=$velocityHalfSlope, velocityYIntercept=$velocityYIntercept, " +
-        "momentumStartPosition=$momentumStartPosition."
+        "momentumStartScrollAmount=$momentumStartScrollAmount."
     )
     velocityRecorder.clear()
   }
 
   override fun scrollAmountAt( time : Long ) : Float {
-    if( ! dragging() ) {
-      check( time >= momentumStartTime ) {
-        "Incorrect value for time: $time, greater than $momentumStartTime" }
-      if( animatingScroll( time ) ) {
-        val elapsedTimeSeconds = ( time - momentumStartTime ) / 1000f
-        scrollAmount = ( velocityHalfSlope * elapsedTimeSeconds * elapsedTimeSeconds) +
-            ( velocityYIntercept * elapsedTimeSeconds ) + momentumStartPosition
-      }
+    check( time >= momentumStartTime ) {
+      "Incorrect value for time: $time, greater than $momentumStartTime" }
+    if( animatingScroll( time ) ) {
+      val elapsedTimeSeconds = ( time - momentumStartTime ) / 1000f
+      scrollAmount = ( velocityHalfSlope * elapsedTimeSeconds * elapsedTimeSeconds) +
+          ( velocityYIntercept * elapsedTimeSeconds ) + momentumStartScrollAmount
     }
     return scrollAmount
   }
 
   override fun animatingScroll( time : Long ) : Boolean {
-    return time <= momentumEndTime
+    return dragging() || time <= momentumEndTime
   }
 
 }
@@ -811,13 +814,13 @@ class ContinuousKineticScrollEngine(
 /**
  * Scrolls only upon User drag, no momentum effect.
  */
+@Suppress("unused")
 class PassiveScrollEngine : AbstractKineticScrollEngine() {
 
   override fun pursueDrag( time : Long, position : Float ) : Float {
     val distance = super.pursueDrag( time, position )
-
     scrollAmount += distance
-    logDebug( "#pursueDrag, scrollAmount=$scrollAmount, lastPosition=$lastPosition, " +
+    logDebug( "#pursueDrag, scrollAmount=$scrollAmount, lastPosition=${lastPosition()}, " +
         "distance=$distance, time=$time" )
     scrollAmountChanged = true
     return distance
@@ -825,15 +828,12 @@ class PassiveScrollEngine : AbstractKineticScrollEngine() {
 
   var scrollAmountChanged = false
 
-  /**
-   * Twisting the contract a bit: we don't take time in account.
-   */
   override fun scrollAmountAt( time : Long ) : Float {
     scrollAmountChanged = false
     return scrollAmount
   }
 
-  override fun forceRelativeScroll(scrollDelta : Float) {
+  override fun forceRelativeScroll( scrollDelta : Float ) {
     super.forceRelativeScroll( scrollDelta )
     scrollAmountChanged = true
   }
@@ -849,7 +849,7 @@ class PassiveScrollEngine : AbstractKineticScrollEngine() {
  *
  * @see com.badlogic.gdx.input.GestureDetector.VelocityTracker
  */
-class VelocityRecorder( private val capacity : Int = 10 ) {
+class VelocityRecorder( private val capacity : Int = 10, private val meaningfulness : Int = 3 ) {
 
   /**
    * Holds couples of value: distance, duration.
