@@ -1,0 +1,10 @@
+== Inspiration
+
+[Éva Le Roi, réinventer Paris]
+http://www.eva-le-roi.com/index.php/project/reinventer-paris
+
+== SweepChoice
+
+Vu que le ``touchUp`` arrive en retard même sur le simulateur il faut appliquer l'élan immédiatement. On peut tricher en maintenant la vitesse jusqu'au ``touchUp``. 
+
+Et si on développait tout de suite un ``PassiveScrollEngine`` qui se contente de propager le déplacement sans élan ?

@@ -1,0 +1,10 @@
+== SweepChoice
+
+Problème : l'événement ``touchUp`` arrive 1 seconde après relâchement. Ça veut dire que le défilement commence avec 1 seconde de délai. C'est observable avec le simulateur Android et le Desktop.
+
+On n'est probablement pas branché sur le bon événement. Ou alors on ne branche pas le Listener au bon endroit. Si on veut des gestuelles ça se fait avec ``Gdx.input.setInputProcessor( new GestureDetector( new MyGestureListener() ) )``. Dans ``Menu2K`` on a déjà ``    Gdx.input.inputProcessor = stage``.
+
+Intéressant : le ``com.badlogic.gdx.input.GestureDetector.VelocityTracker`` fait déjà le boulot de dérivation.
+
+
+
