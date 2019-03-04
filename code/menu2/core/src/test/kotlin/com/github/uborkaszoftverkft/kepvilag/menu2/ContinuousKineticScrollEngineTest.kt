@@ -43,14 +43,14 @@ internal class ContinuousKineticScrollEngineTest {
     }
 
     assertAll(
-        scrollAmount( 2000,    0f    ),
-        scrollAmount( 2500,    2.75f ),
-        scrollAmount( 3000,    5.00f ),
-        scrollAmount( 3500,    6.75f ),
-        scrollAmount( 4000,    8.00f ),
-        scrollAmount( 4500,    8.75f ),
-        scrollAmount( 5000,    9.00f ),
-        scrollAmount( 5500,    9.00f )
+        scrollAmount( 2000,  6.00f ),
+        scrollAmount( 2500,  8.75f ),
+        scrollAmount( 3000, 11.00f ),
+        scrollAmount( 3500, 12.75f ),
+        scrollAmount( 4000, 14.00f ),
+        scrollAmount( 4500, 14.75f ),
+        scrollAmount( 5000, 15.00f ),
+        scrollAmount( 5500, 15.00f )
     )
 
   }

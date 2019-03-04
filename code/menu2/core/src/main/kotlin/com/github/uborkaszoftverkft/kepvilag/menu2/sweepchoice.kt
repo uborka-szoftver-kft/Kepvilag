@@ -232,10 +232,11 @@ class SweepChoice(
           val time = TimeUtils.millis()
           if( kineticScrollEngine.animatingScroll( time ) ){
             val scrollAmount = kineticScrollEngine.scrollAmountAt( time )
-            if( scrollAmount != 0f ) {
+//            if( scrollAmount != 0f ) {
               logDebug( "Applying scroll amount of $scrollAmount on Y axis, time=${TimeUtils.millis()}. " )
               panel.y = panelBaseY[ currentPanelIndex ] + scrollAmount
-            }
+//              invalidate()
+//            }
           }
         }
         SweepChoice.ScrollAxis.HORIZONTAL -> {
@@ -722,6 +723,13 @@ class ContinuousKineticScrollEngine(
    */
   private var momentumStartScrollAmount = 0f
 
+  /**
+   * When `true` the distance in [pursueDrag] is applied directly instead of velocity.
+   * This is required to obtain scrolling when dragging, otherwise scrolling looked like "stuck"
+   * because [momentumStartScrollAmount] was set to [scrollAmount] before the latter got updated.
+   */
+  private var preMomentum = false
+
 
   /**
    * Describes the speed at which velocity decreases, for a time given in seconds.
@@ -763,6 +771,8 @@ class ContinuousKineticScrollEngine(
     velocityRecorder.record( distance, deltaTime.toFloat() )
     momentumStartTime = time
     momentumEndTime = time + ( momentumDurationS * 1000f ).toLong()
+    preMomentum = true
+    scrollAmount += distance
     momentumStartScrollAmount = scrollAmount
     val velocity = velocityRecorder.average() * 1000  // Converting ms to s.
     velocityHalfSlope = ( - velocity / momentumDurationS ) / 2
@@ -797,11 +807,13 @@ class ContinuousKineticScrollEngine(
   override fun scrollAmountAt( time : Long ) : Float {
     check( time >= momentumStartTime ) {
       "Incorrect value for time: $time, greater than $momentumStartTime" }
-    if( animatingScroll( time ) ) {
+    if( ! preMomentum && animatingScroll( time ) ) {
       val elapsedTimeSeconds = ( time - momentumStartTime ) / 1000f
       scrollAmount = ( velocityHalfSlope * elapsedTimeSeconds * elapsedTimeSeconds) +
           ( velocityYIntercept * elapsedTimeSeconds ) + momentumStartScrollAmount
+      logDebug( "#scrollAmountAt( $time ) updating scrollAmount=$scrollAmount" )
     }
+    preMomentum = false
     return scrollAmount
   }
 
@@ -878,14 +890,14 @@ class VelocityRecorder( private val capacity : Int = 10, private val meaningfuln
   /**
    * Calculates the average speed weighted by measurement duration.
    *
-   * <pre>
+   * ```
   v1.t1 + v2.t2 + v3.t3   d1 + d2 + d3
   --------------------- = ------------
-      t1 + t2 + t3        t1 + t2 + t3
+  ,    t1 + t2 + t3       t1 + t2 + t3
 
   v = d/t => vt = d
 
-   * </pre>
+   * ```
    */
   fun average() : Float {
     var readIndex = next - 1
